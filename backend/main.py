@@ -12,8 +12,51 @@ import subprocess
 from lab_parser import LabParser
 from cloud_init import CloudInitBuilder
 from engine import LabEngine
+import time
+import glob
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="BrokenOps Backend")
+LAB_TIMEOUT_SECONDS = 3600
+
+async def cleanup_expired_labs():
+    while True:
+        try:
+            overlay_dir = os.path.join(PROJECT_ROOT, "data", "overlays")
+            if os.path.exists(overlay_dir):
+                ready_files = glob.glob(os.path.join(overlay_dir, "*.ready"))
+                now = time.time()
+                for ready_file in ready_files:
+                    mtime = os.path.getmtime(ready_file)
+                    if now - mtime >= LAB_TIMEOUT_SECONDS:
+                        lab_id = os.path.basename(ready_file).replace(".ready", "")
+                        print(f"Lab {lab_id} expired. Stopping VM.")
+                        # Parse lab to get VM name and stop it
+                        try:
+                            parser = LabParser(PROJECT_ROOT)
+                            engine = LabEngine()
+                            lab_config = parser.parse_lab(lab_id)
+                            vm_name = lab_config["vm"]["name"]
+                            engine.stop_vm(vm_name)
+                            engine.close()
+                        except Exception as e:
+                            print(f"Error stopping expired lab {lab_id}: {e}")
+                        
+                        try:
+                            os.remove(ready_file)
+                        except Exception:
+                            pass
+        except Exception as e:
+            print(f"Error in cleanup task: {e}")
+            
+        await asyncio.sleep(60)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(cleanup_expired_labs())
+    yield
+    task.cancel()
+
+app = FastAPI(title="BrokenOps Backend", lifespan=lifespan)
 
 # Initialize global components
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -100,6 +143,13 @@ def launch_lab(lab_id: str):
         if not os.path.exists(base_image_path):
             raise HTTPException(status_code=500, detail="Base image not found. Please download it first.")
             
+        ready_file = os.path.join(PROJECT_ROOT, "data", "overlays", f"{lab_id}.ready")
+        if os.path.exists(ready_file):
+            try:
+                os.remove(ready_file)
+            except Exception:
+                pass
+                
         engine.stop_vm(vm_name)
         
         if os.path.exists(overlay_path):
@@ -177,6 +227,13 @@ def stop_lab(lab_id: str):
         vm_name = lab_config["vm"]["name"]
         
         engine.stop_vm(vm_name) # Ignore success/failure so reset works
+        
+        ready_file = os.path.join(PROJECT_ROOT, "data", "overlays", f"{lab_id}.ready")
+        if os.path.exists(ready_file):
+            try:
+                os.remove(ready_file)
+            except Exception:
+                pass
             
         return {"status": "stopped", "lab_id": lab_id}
     except Exception as e:
@@ -210,7 +267,20 @@ async def lab_status(lab_id: str):
                 if "status: running" in str(result.stdout):
                     return {"status": "provisioning", "ip": vm_ip}
                 else:
-                    return {"status": "running", "ip": vm_ip}
+                    ready_file = os.path.join(PROJECT_ROOT, "data", "overlays", f"{lab_id}.ready")
+                    if not os.path.exists(ready_file):
+                        with open(ready_file, "w") as f:
+                            f.write("ready")
+                            
+                    mtime = os.path.getmtime(ready_file)
+                    elapsed = time.time() - mtime
+                    remaining = int(max(0, LAB_TIMEOUT_SECONDS - elapsed))
+                    
+                    if remaining <= 0:
+                        stop_lab(lab_id)
+                        return {"status": "stopped", "ip": None}
+                        
+                    return {"status": "running", "ip": vm_ip, "remaining_seconds": remaining}
         except Exception:
             # SSH not ready yet
             return {"status": "provisioning", "ip": vm_ip}

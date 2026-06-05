@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Square, RotateCcw, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Square, RotateCcw, CheckCircle, Loader2, Timer } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import TerminalWindow from '../TerminalWindow';
 
@@ -27,6 +27,7 @@ export default function LabView() {
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
   const [provisioningStatus, setProvisioningStatus] = useState<'idle'|'launching'|'waiting_ip'|'provisioning'|'ready'>('idle');
   const [vmIp, setVmIp] = useState<string | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   
   // Verify state
   const [verifyResult, setVerifyResult] = useState<{score: string, output: string} | null>(null);
@@ -64,6 +65,18 @@ export default function LabView() {
           setVmIp(data.ip);
           if (data.status === 'running') {
             setProvisioningStatus('ready');
+            if (data.remaining_seconds !== undefined) {
+              setRemainingSeconds(data.remaining_seconds);
+            }
+          } else if (data.status === 'stopped') {
+            setProvisioningStatus('idle');
+            setVmIp(null);
+            setRemainingSeconds(null);
+            // If the lab expired and stopped behind our back, send them to dashboard
+            if (provisioningStatus === 'ready') {
+              alert('Lab time has expired! The environment was automatically destroyed.');
+              navigate('/');
+            }
           } else if (data.status === 'provisioning') {
             setProvisioningStatus('provisioning');
           } else if (data.status === 'running' && provisioningStatus !== 'launching') {
@@ -73,7 +86,23 @@ export default function LabView() {
       } catch (e) {}
     }, 2000);
     return () => clearInterval(interval);
-  }, [labId, provisioningStatus]);
+  }, [labId, provisioningStatus, navigate]);
+
+  // Local timer for smooth countdown
+  useEffect(() => {
+    if (remainingSeconds === null || remainingSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setRemainingSeconds(prev => prev !== null && prev > 0 ? prev - 1 : 0);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [remainingSeconds !== null]);
+
+  // Format time
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const handleAction = async (action: 'launch' | 'stop' | 'reset') => {
     setActionLoading(action);
@@ -186,6 +215,11 @@ export default function LabView() {
           <h1 className="text-xl font-bold text-slate-800">{lab.name}</h1>
         </div>
         <div className="flex items-center gap-3">
+          {remainingSeconds !== null && provisioningStatus === 'ready' && (
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold border ${remainingSeconds < 300 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+              <Timer className="w-4 h-4" /> {formatTime(remainingSeconds)}
+            </div>
+          )}
           <button 
             onClick={handleVerify} disabled={isVerifying || provisioningStatus !== 'ready'}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
@@ -244,7 +278,7 @@ export default function LabView() {
               {verifyResult && (
                 <div className={`mb-6 p-6 border rounded-lg ${verifyResult.score === '100' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
                   <h3 className="mt-0">Verification Result: {verifyResult.score}/100</h3>
-                  <pre className="mt-2 text-sm whitespace-pre-wrap font-mono bg-white/50 p-4 rounded border">{verifyResult.output}</pre>
+                  <pre className="mt-2 text-sm whitespace-pre-wrap font-mono bg-white p-4 rounded border border-slate-200 text-slate-900 font-bold shadow-sm">{verifyResult.output}</pre>
                 </div>
               )}
               
