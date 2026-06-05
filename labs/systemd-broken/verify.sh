@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # 1. Check if the script exists and is executable
 if [ ! -x /usr/local/bin/demo.sh ]; then

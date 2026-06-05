@@ -1,4 +1,4 @@
-### Scenario
+﻿### Scenario
 
 You have been handed a server where a custom background service named `demo` is supposed to run automatically and log data to `/var/log/demo.log`. However, the service is currently inactive and fails to start.
 

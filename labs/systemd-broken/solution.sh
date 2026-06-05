@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # Remove any carriage returns from the service file first
 sed -i 's/\r//g' /etc/systemd/system/demo.service
