@@ -51,6 +51,11 @@ jobs:
           ssh-keygen -t ed25519 -f keys/id_ed25519 -N ""
           chmod 600 keys/id_ed25519
           chmod 644 keys/id_ed25519.pub
+          
+          # Allow libvirt-qemu to traverse the runner's home directory
+          sudo chmod 755 /home/runner
+          sudo chmod 755 /home/runner/work
+          sudo chmod 755 /home/runner/work/BrokenOps
 
       - name: Download Base Ubuntu Image
         if: steps.changed-files.outputs.any_changed == 'true'
