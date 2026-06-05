@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     gcc \
     gosu \
+    xorriso \
+    genisoimage \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
