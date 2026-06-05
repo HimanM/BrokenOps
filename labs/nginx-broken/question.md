@@ -1,13 +1,19 @@
 ### Scenario
 
-You have just joined a new company as a junior sysadmin. A developer frantically messages you:
-> "Hey! The main Nginx web server is completely down on our internal staging box. The service won't start at all after I accidentally rebooted it! I need to test my new frontend right now, can you please fix it?"
+Nginx was reconfigured to use port **8080** on a host where SELinux is expected to remain enforcing.  
+The service appears configured, but the app is unreachable.
 
 ### Objective
 
-Investigate why the `nginx` service is failing to start on this machine, fix the root cause, and ensure the service is running. 
-Once running, the web server should be accessible via the **"Open Port 80"** button in the top navigation bar. When clicked, it should display the default Nginx welcome page.
+Find and fix the SELinux policy issue preventing HTTP service on the custom port while keeping SELinux enforcing.
+
+When solved:
+- Nginx should run on **port 8080**
+- SELinux should allow HTTP traffic on 8080 (`http_port_t` mapping)
+- The **"Open Port 8080"** button should load the Nginx default page
 
 ### Useful Commands
 - `systemctl status nginx`
 - `journalctl -xeu nginx.service`
+- `ausearch -m avc -ts recent`
+- `semanage port -l | grep http_port_t`

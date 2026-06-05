@@ -1,42 +1,40 @@
 ### The Issue
 
-The developer or someone else accidentally configured Nginx to listen on a port that it doesn't have permission to bind to, or they made a syntax error in the configuration file!
+Nginx was moved to TCP port `8080`, but SELinux policy did not allow HTTP services on that port.
+So nginx fails to bind when SELinux is enforcing.
 
 ### Step-by-Step Fix
 
-1. **Check the service status to get a hint:**
+1. **Check nginx status and logs:**
    ```bash
    systemctl status nginx
+   journalctl -xeu nginx.service
    ```
-   You should see it failing.
 
-2. **Test the Nginx configuration for syntax errors:**
+2. **Check SELinux denials:**
    ```bash
-   sudo nginx -t
+   ausearch -m avc -ts recent
    ```
-   This will pinpoint exactly which file and line number contains the bad configuration. You'll likely see an error pointing to `/etc/nginx/sites-available/default` trying to listen on port `80808` or a typo like `lissten 80`.
 
-3. **Fix the configuration file:**
-   Open the file with your favorite editor:
+3. **Confirm the custom port is not mapped to `http_port_t`:**
    ```bash
-   sudo nano /etc/nginx/sites-available/default
-   ```
-   Find the incorrect line and fix it back to listening on a standard port like `80`:
-   ```nginx
-   server {
-       listen 80 default_server;
-       listen [::]:80 default_server;
-       # ...
-   }
+   semanage port -l | grep http_port_t
    ```
 
-4. **Restart the Nginx service:**
+4. **Map TCP 8080 for HTTP services:**
+   ```bash
+   sudo semanage port -a -t http_port_t -p tcp 8080
+   ```
+   If it already exists with a different type, modify it instead:
+   ```bash
+   sudo semanage port -m -t http_port_t -p tcp 8080
+   ```
+
+5. **Restart nginx and verify:**
    ```bash
    sudo systemctl restart nginx
+   ss -tuln | grep ':8080 '
+   curl -I http://127.0.0.1:8080
    ```
 
-5. **Verify it's running:**
-   ```bash
-   systemctl status nginx
-   ```
-   It should now say **active (running)**. You've solved the lab!
+You have solved the lab once nginx is reachable on port `8080` with SELinux still enforcing.

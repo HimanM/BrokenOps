@@ -1,8 +1,16 @@
 #cloud-config
 packages:
   - nginx
+  - policycoreutils
+  - selinux-utils
+  - policycoreutils-python-utils
+  - auditd
 
 runcmd:
-  # Intentional break: configure nginx to listen on invalid port to break it
-  - sed -i 's/listen 80 default_server;/listen 80808 default_server;/' /etc/nginx/sites-available/default
+  # Intentional break: move nginx to 8080, but do not allow SELinux http_port_t on 8080.
+  - sed -i 's/listen 80 default_server;/listen 8080 default_server;/' /etc/nginx/sites-available/default
+  - sed -i 's/listen \[::\]:80 default_server;/listen [::]:8080 default_server;/' /etc/nginx/sites-available/default
+  - systemctl enable --now auditd || true
+  - setenforce 1 || true
+  - semanage port -d -t http_port_t -p tcp 8080 || true
   - systemctl restart nginx || true

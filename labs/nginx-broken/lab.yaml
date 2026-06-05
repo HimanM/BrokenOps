@@ -1,6 +1,6 @@
 id: nginx-broken
 
-name: Nginx Service Down
+name: SELinux Denies Nginx on Custom Port
 
 category: linux
 difficulty: beginner
@@ -17,18 +17,18 @@ vm:
 cloud_init: cloud-init.yaml
 verify_script: verify.sh
 exposed_ports:
-  - 80
+  - 8080
 
 verify: verify.sh
 
 description:
-  summary: "Nginx is not running after reboot"
-  story: "A server reboot caused nginx to stop."
+  summary: "Nginx runs but app is unreachable on port 8080"
+  story: "Nginx was moved to port 8080, but SELinux policy was never updated."
   objectives:
-    - Start nginx
-    - Enable service on boot
-    - Confirm HTTP response
+    - Investigate SELinux denials for nginx
+    - Map TCP port 8080 to http_port_t
+    - Confirm HTTP response on port 8080
 
 tags:
-  - systemd
+  - selinux
   - nginx
