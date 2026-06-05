@@ -193,16 +193,28 @@ def reset_lab(lab_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/labs/{lab_id}/status")
-def lab_status(lab_id: str):
+async def lab_status(lab_id: str):
     try:
         lab_config = parser.parse_lab(lab_id)
         vm_name = lab_config["vm"]["name"]
         
         vm_ip = engine.get_vm_ip(vm_name)
-        if vm_ip:
-            return {"status": "running", "ip": vm_ip}
-        else:
+        if not vm_ip:
             return {"status": "stopped", "ip": None}
+            
+        # We have an IP, check if cloud-init is done
+        ssh_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
+        try:
+            async with asyncssh.connect(vm_ip, username="root", client_keys=[ssh_key_path], known_hosts=None, connect_timeout=1) as conn:
+                result = await conn.run("cloud-init status", check=False)
+                if "status: running" in str(result.stdout):
+                    return {"status": "provisioning", "ip": vm_ip}
+                else:
+                    return {"status": "running", "ip": vm_ip}
+        except Exception:
+            # SSH not ready yet
+            return {"status": "provisioning", "ip": vm_ip}
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

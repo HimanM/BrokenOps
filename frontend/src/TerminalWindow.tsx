@@ -120,8 +120,7 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
       </div>
-      {/* Force flex-1 min-h-0 so the terminal div stays constrained, with left padding */}
-      <div className="flex-1 min-h-0 min-w-0 pl-4 py-2 overflow-hidden" ref={terminalRef}></div>
+      <div className="flex-1 min-h-0 min-w-0 pl-4 pr-6 pb-6 pt-2 overflow-hidden" ref={terminalRef}></div>
     </div>
   );
 }

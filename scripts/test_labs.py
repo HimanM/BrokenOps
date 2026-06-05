@@ -30,16 +30,19 @@ def run_ssh_command(ip, username, key_filename, command):
     return exit_status, out, err
 
 def upload_and_run(ip, username, key_filename, local_script, remote_script):
+    # For full-disk labs, we can't upload via SFTP because the disk is full.
+    # Instead, we pipe the script directly to bash.
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(ip, username=username, key_filename=key_filename)
     
-    sftp = client.open_sftp()
-    sftp.put(local_script, remote_script)
-    sftp.chmod(remote_script, 0o755)
-    sftp.close()
+    with open(local_script, 'r') as f:
+        script_content = f.read()
+        
+    stdin, stdout, stderr = client.exec_command("sudo bash -s")
+    stdin.write(script_content)
+    stdin.channel.shutdown_write()
     
-    stdin, stdout, stderr = client.exec_command(remote_script)
     exit_status = stdout.channel.recv_exit_status()
     out = stdout.read().decode().strip()
     err = stderr.read().decode().strip()

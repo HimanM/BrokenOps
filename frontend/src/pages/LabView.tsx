@@ -25,7 +25,7 @@ export default function LabView() {
   
   // Provisioning state
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
-  const [provisioningStatus, setProvisioningStatus] = useState<'idle' | 'launching' | 'waiting_ip' | 'ready'>('idle');
+  const [provisioningStatus, setProvisioningStatus] = useState<'idle'|'launching'|'waiting_ip'|'provisioning'|'ready'>('idle');
   const [vmIp, setVmIp] = useState<string | null>(null);
   
   // Verify state
@@ -62,8 +62,10 @@ export default function LabView() {
         if (res.ok) {
           const data = await res.json();
           setVmIp(data.ip);
-          if (data.ip) {
+          if (data.status === 'running') {
             setProvisioningStatus('ready');
+          } else if (data.status === 'provisioning') {
+            setProvisioningStatus('provisioning');
           } else if (data.status === 'running' && provisioningStatus !== 'launching') {
             setProvisioningStatus('waiting_ip');
           }
@@ -290,12 +292,16 @@ export default function LabView() {
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white z-20">
               <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6" />
               <h3 className="text-xl font-bold text-slate-100 mb-2">
-                {provisioningStatus === 'launching' ? 'Provisioning Environment' : 'Acquiring IP Address'}
+                {provisioningStatus === 'launching' ? 'Provisioning Environment' 
+                 : provisioningStatus === 'provisioning' ? 'Configuring System' 
+                 : 'Acquiring IP Address'}
               </h3>
               <p className="text-slate-400 text-sm">
                 {provisioningStatus === 'launching' 
                   ? 'Allocating compute resources and attaching overlays...' 
-                  : 'Waiting for cloud-init to configure networking...'}
+                  : provisioningStatus === 'provisioning'
+                  ? 'Waiting for cloud-init to install packages and configure the lab...'
+                  : 'Waiting for network connectivity...'}
               </p>
             </div>
           ) : (
