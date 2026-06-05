@@ -40,7 +40,7 @@ export default function LabView() {
   useEffect(() => {
     const fetchLab = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/labs/${labId}`);
+        const res = await fetch(`/api/labs/${labId}`);
         if (res.ok) {
           const data = await res.json();
           setLab(data);
@@ -79,7 +79,7 @@ export default function LabView() {
     
     try {
       const method = action === 'stop' ? 'DELETE' : 'POST';
-      const res = await fetch(`http://localhost:8080/labs/${labId}/${action}`, { method });
+      const res = await fetch(`/api/labs/${labId}/${action}`, { method });
       
       if (res.ok) {
         if (action === 'stop') {
