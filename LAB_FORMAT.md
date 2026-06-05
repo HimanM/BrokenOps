@@ -1,0 +1,70 @@
+# BrokenOps Lab Format Guide
+
+This guide explains how to create new intentionally broken labs for the BrokenOps platform.
+
+Each lab must be placed in its own folder under the `labs/` directory (e.g., `labs/nginx-broken/`).
+
+## 1. `lab.yaml` (Required)
+
+This is the core definition of your lab. It defines metadata, VM specs, and verification info.
+
+```yaml
+id: "nginx-broken"
+name: "Nginx Service Down"
+category: "linux"
+difficulty: "beginner"
+description:
+  summary: "Nginx is not running after reboot"
+vm:
+  name: "nginx-lab"
+  memory: 1024 # Memory in MB
+  cpu: 1
+  disk: "10G" # Disk overlay size
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
+exposed_ports:
+  - 80
+```
+
+- **`verify_script`**: (Optional) Name of the verification script inside the lab folder.
+- **`exposed_ports`**: (Optional) List of ports that the web UI should provide "Open" buttons for.
+
+## 2. `cloud-init.yaml` (Required)
+
+This file tells the `ubuntu-24.04-base.qcow2` image how to configure itself on first boot. Use this to intentionally break the system.
+
+```yaml
+#cloud-config
+packages:
+  - nginx
+
+runcmd:
+  # Intentional break: configure nginx to listen on invalid port to break it
+  - sed -i 's/listen 80 default_server;/listen 80808 default_server;/' /etc/nginx/sites-available/default
+  - systemctl restart nginx || true
+```
+
+## 3. `verify.sh` (Optional but Recommended)
+
+A bash script executed by the backend via SSH to score the user's progress. 
+- Print custom output explaining what passed or failed.
+- Exit with status `0` if the lab is fully solved (Score 100).
+- Exit with status `>0` if the lab is incomplete (Score 0).
+
+```bash
+#!/bin/bash
+systemctl is-active --quiet nginx
+if [ $? -eq 0 ]; then
+  echo "SUCCESS: Nginx is running!"
+  exit 0
+else
+  echo "FAILURE: Nginx is not running."
+  exit 1
+fi
+```
+
+## 4. `question.md` & `solution.md` (Optional)
+
+Markdown files containing the task description and the solution guide. 
+- **`question.md`**: Presented immediately to the user.
+- **`solution.md`**: Hidden behind a "Reveal Solution" button that only appears after the user attempts Verification.

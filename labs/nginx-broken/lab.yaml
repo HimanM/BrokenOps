@@ -1,0 +1,34 @@
+id: nginx-broken
+
+name: Nginx Service Down
+
+category: linux
+difficulty: beginner
+
+provider: libvirt
+
+vm:
+  name: nginx-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+
+verify: verify.sh
+
+description:
+  summary: "Nginx is not running after reboot"
+  story: "A server reboot caused nginx to stop."
+  objectives:
+    - Start nginx
+    - Enable service on boot
+    - Confirm HTTP response
+
+tags:
+  - systemd
+  - nginx

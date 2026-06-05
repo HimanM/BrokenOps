@@ -1,0 +1,39 @@
+# init spec
+init.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+backend/.venv/
+backend/brokenops.db
+*.db-journal
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtual Machines & Data
+data/images/*.qcow2
+data/images/*.img
+data/vms/
+backend/keys/
+
+# Logs
+*.log
+backend/backend.log
+
+# Virtual Environments
+venv/
+backend/venv/
