@@ -21,9 +21,9 @@ LAB_TIMEOUT_SECONDS = 3600
 async def cleanup_expired_labs():
     while True:
         try:
-            overlay_dir = os.path.join(PROJECT_ROOT, "data", "overlays")
-            if os.path.exists(overlay_dir):
-                ready_files = glob.glob(os.path.join(overlay_dir, "*.ready"))
+            vms_dir = os.path.join(PROJECT_ROOT, "data", "vms")
+            if os.path.exists(vms_dir):
+                ready_files = glob.glob(os.path.join(vms_dir, "*.ready"))
                 now = time.time()
                 for ready_file in ready_files:
                     mtime = os.path.getmtime(ready_file)
@@ -143,7 +143,7 @@ def launch_lab(lab_id: str):
         if not os.path.exists(base_image_path):
             raise HTTPException(status_code=500, detail="Base image not found. Please download it first.")
             
-        ready_file = os.path.join(PROJECT_ROOT, "data", "overlays", f"{lab_id}.ready")
+        ready_file = os.path.join(PROJECT_ROOT, "data", "vms", f"{lab_id}.ready")
         if os.path.exists(ready_file):
             try:
                 os.remove(ready_file)
@@ -228,7 +228,7 @@ def stop_lab(lab_id: str):
         
         engine.stop_vm(vm_name) # Ignore success/failure so reset works
         
-        ready_file = os.path.join(PROJECT_ROOT, "data", "overlays", f"{lab_id}.ready")
+        ready_file = os.path.join(PROJECT_ROOT, "data", "vms", f"{lab_id}.ready")
         if os.path.exists(ready_file):
             try:
                 os.remove(ready_file)
@@ -267,7 +267,7 @@ async def lab_status(lab_id: str):
                 if "status: running" in str(result.stdout):
                     return {"status": "provisioning", "ip": vm_ip}
                 else:
-                    ready_file = os.path.join(PROJECT_ROOT, "data", "overlays", f"{lab_id}.ready")
+                    ready_file = os.path.join(PROJECT_ROOT, "data", "vms", f"{lab_id}.ready")
                     if not os.path.exists(ready_file):
                         with open(ready_file, "w") as f:
                             f.write("ready")
