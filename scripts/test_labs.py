@@ -130,9 +130,11 @@ def main():
             all_passed = False
             continue
             
-        # Give cloud-init a moment to finish adding keys
-        time.sleep(10)
-
+        print("⏳ Waiting for cloud-init to finish provisioning...")
+        code, out, err = run_ssh_command(ip, "root", args.key, "cloud-init status --wait")
+        if code != 0:
+            print(f"⚠️ Warning: cloud-init wait returned exit code {code}")
+            
         try:
             print("🔧 Running solution.sh...")
             code, out, err = upload_and_run(ip, "root", args.key, solution_path, "/tmp/solution.sh")
