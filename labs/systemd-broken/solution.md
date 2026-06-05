@@ -28,10 +28,11 @@ The systemd unit file for the `demo` service (`/etc/systemd/system/demo.service`
    ExecStart=/usr/local/bin/demo.sh
    ```
 
-4. **Reload systemd and restart the service:**
-   Any time you modify a systemd service file, you must reload the systemd manager configuration:
+4. **Reload systemd, reset failed state, and start the service:**
+   Any time you modify a systemd service file, you must reload the systemd manager configuration. Since the service repeatedly failed during boot, it may have hit systemd's start limit rate-limiting. Reset the failed status before starting the service:
    ```bash
    sudo systemctl daemon-reload
+   sudo systemctl reset-failed demo
    sudo systemctl start demo
    ```
 
