@@ -1,0 +1,24 @@
+id: cron-broken
+name: Cron Job Never Executes
+category: linux
+difficulty: beginner
+provider: libvirt
+vm:
+  name: cron-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A scheduled cleanup cron job is failing to run."
+  story: "A system administrator set up a cron job to run a cleanup script every minute. However, the logs show that the script is never executed. Investigate the cron job setup and the script to fix the execution failure."
+  objectives:
+    - Check the cron schedule and locate the cleanup script
+    - Identify why the script is failing to execute (check permissions and shebang)
+    - Fix the script permissions and interpreter path so that it runs successfully
+tags:
+  - linux
+  - cron
+  - permissions

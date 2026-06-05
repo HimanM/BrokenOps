@@ -1,0 +1,19 @@
+#cloud-config
+packages:
+  - cron
+
+runcmd:
+  # Start and enable cron
+  - systemctl enable --now cron
+  # Create /opt/cleanup.sh with a broken shebang and incorrect permissions (non-executable)
+  - mkdir -p /opt
+  - |
+    cat <<'EOF' > /opt/cleanup.sh
+    #!/bin/sh_invalid
+    echo "Cleanup run at $(date)" >> /var/log/cleanup.log
+    EOF
+  - chmod 644 /opt/cleanup.sh
+  # Add the cron job schedule in cron.d
+  - echo "* * * * * root /opt/cleanup.sh" > /etc/cron.d/cleanup
+  - chmod 644 /etc/cron.d/cleanup
+  - systemctl restart cron
