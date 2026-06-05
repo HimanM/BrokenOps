@@ -16,4 +16,4 @@ What is the actual underlying issue that the user needs to find and fix?
 How should this lab be built? (e.g. what packages to install, what config files to modify).
 
 ## Expected Resolution Steps
-How would a user solve this? List the commands or actions needed.
+How would a user solve this? List the commands or actions needed. Note that when implementing this lab, a `solution.sh` must be provided to automate these steps for CI testing.

@@ -1,0 +1,37 @@
+name: Manual Pre-Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g., v1.0.0-rc.1)'
+        required: true
+        type: string
+      is_prerelease:
+        description: 'Mark as pre-release'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Release Archive
+        run: |
+          mkdir -p release_package
+          cp -r docker-compose.yml deploy.sh backend frontend labs release_package/
+          zip -r brokenops-release.zip release_package/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          prerelease: ${{ inputs.is_prerelease }}
+          files: brokenops-release.zip
+          generate_release_notes: true
