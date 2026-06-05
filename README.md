@@ -5,6 +5,7 @@
 <!-- BANNER_END -->
 
 <!-- telemetry-svg-start -->
+![Workflow Timeline](workflow_status.svg)
 <!-- telemetry-svg-end -->
 # BrokenOps
 
