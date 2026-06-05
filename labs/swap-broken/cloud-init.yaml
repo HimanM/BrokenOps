@@ -1,0 +1,9 @@
+#cloud-config
+packages: []
+
+runcmd:
+  # Create a 512MB swap file at /swapfile
+  - dd if=/dev/zero of=/swapfile bs=1M count=512
+  - chmod 600 /swapfile
+  - mkswap /swapfile
+  # Note: we do not mount it (swapon) or add it to /etc/fstab to simulate the state after reboot.
