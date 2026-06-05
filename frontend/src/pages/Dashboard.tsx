@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Terminal, Server, Shield, Network, RefreshCw, Search, Filter, Play } from 'lucide-react';
+import { Terminal, Server, Shield, Network, RefreshCw, Search, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Lab {
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [completedLabs, setCompletedLabs] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -96,22 +97,35 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {!loading && labs.length > 0 && (
-            <div className="flex flex-wrap gap-2 bg-slate-100/80 backdrop-blur p-1.5 rounded-xl border border-slate-200/60">
-              {['all', ...Array.from(new Set(labs.map(lab => lab.category)))].map(category => (
-                <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all ${activeCategory === category
-                      ? 'bg-white shadow-sm text-blue-700 border border-slate-200/50'
-                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 border border-transparent'
-                    }`}
-                >
-                  {category}
-                </button>
-              ))}
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search labs..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
+              />
             </div>
-          )}
+            
+            {!loading && labs.length > 0 && (
+              <div className="flex flex-wrap gap-2 bg-slate-100/80 backdrop-blur p-1.5 rounded-xl border border-slate-200/60 w-full md:w-auto">
+                {['all', ...Array.from(new Set(labs.map(lab => lab.category)))].map(category => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all ${activeCategory === category
+                        ? 'bg-white shadow-sm text-blue-700 border border-slate-200/50'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 border border-transparent'
+                      }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -120,7 +134,12 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(activeCategory === 'all' ? labs : labs.filter(lab => lab.category === activeCategory)).map((lab) => (
+            {labs.filter(lab => {
+              const matchesCategory = activeCategory === 'all' || lab.category === activeCategory;
+              const matchesSearch = lab.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    lab.description.summary.toLowerCase().includes(searchQuery.toLowerCase());
+              return matchesCategory && matchesSearch;
+            }).map((lab) => (
               <div
                 key={lab.id}
                 className="group relative bg-white border border-slate-200 hover:border-blue-200 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 cursor-pointer"

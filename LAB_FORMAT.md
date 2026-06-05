@@ -26,7 +26,7 @@ exposed_ports:
   - 80
 ```
 
-- **`verify_script`**: (Optional) Name of the verification script inside the lab folder.
+- **`verify_script`**: Name of the verification script inside the lab folder.
 - **`exposed_ports`**: (Optional) List of ports that the web UI should provide "Open" buttons for.
 
 ## 2. `cloud-init.yaml` (Required)
@@ -63,8 +63,7 @@ else
 fi
 ```
 
-## 4. `question.md` & `solution.md` (Optional)
-
+## 4. `question.md` & `solution.md`
 Markdown files containing the task description and the solution guide. 
 - **`question.md`**: Presented immediately to the user.
 - **`solution.md`**: Hidden behind a "Reveal Solution" button that only appears after the user attempts Verification.
