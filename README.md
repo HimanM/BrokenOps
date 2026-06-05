@@ -1,3 +1,9 @@
+<!-- BANNER_START -->
+<p align="center">
+  <img src="./.banner/banner.svg" width="100%" alt="Project Banner">
+</p>
+<!-- BANNER_END -->
+
 # BrokenOps
 
 **BrokenOps** is an interactive, open-source DevOps and Sysadmin training platform. It automatically spins up intentionally broken virtual machines and challenges you to troubleshoot, fix, and verify real-world system failures right from your browser.
