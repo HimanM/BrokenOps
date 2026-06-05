@@ -37,7 +37,7 @@ def upload_and_run(ip, username, key_filename, local_script, remote_script):
     client.connect(ip, username=username, key_filename=key_filename)
     
     with open(local_script, 'r') as f:
-        script_content = f.read()
+        script_content = f.read().replace("\r\n", "\n").replace("\r", "\n")
         
     stdin, stdout, stderr = client.exec_command("sudo bash -s")
     stdin.write(script_content)

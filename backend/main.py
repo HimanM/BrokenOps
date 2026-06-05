@@ -164,7 +164,7 @@ def launch_lab(lab_id: str):
         
         # Read cloud-init user-data
         with open(cloud_init_yaml_path, "r") as f:
-            user_data_content = f.read()
+            user_data_content = f.read().replace("\r\n", "\n").replace("\r", "\n")
             
         # Inject SSH key
         ssh_pub_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519.pub")
@@ -395,7 +395,7 @@ async def verify_lab(lab_id: str):
         priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
         
         with open(script_path, "r") as f:
-            script_content = f.read()
+            script_content = f.read().replace("\r\n", "\n").replace("\r", "\n")
             
         async with asyncssh.connect(vm_ip, username='root', client_keys=[priv_key_path], known_hosts=None) as conn:
             # Run the script by piping it to bash
