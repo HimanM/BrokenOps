@@ -71,7 +71,14 @@ EOF
 
 echo -e "${GREEN}Generated .env file for Docker Compose.${NC}"
 
-# 5. Build and Start via Docker Compose
+# 5. Generate SSH keys if they don't exist
+if [ ! -f "keys/id_ed25519" ]; then
+    echo -e "${YELLOW}Generating SSH keys for VM access...${NC}"
+    mkdir -p keys
+    ssh-keygen -t ed25519 -f keys/id_ed25519 -N ""
+fi
+
+# 6. Build and Start via Docker Compose
 echo -e "${BLUE}Building and starting Docker containers...${NC}"
 docker compose up -d --build
 
