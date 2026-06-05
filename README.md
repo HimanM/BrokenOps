@@ -14,6 +14,10 @@
 
 ---
 
+<!-- telemetry-svg-start -->
+![Workflow Timeline](workflow_status.svg)
+<!-- telemetry-svg-end -->
+
 ## 🌟 Features
 
 - **Instant Environments**: Uses blazing-fast `qcow2` overlay disks to boot fully isolated Ubuntu environments in seconds.
