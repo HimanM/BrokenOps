@@ -1,0 +1,7 @@
+#cloud-config
+runcmd:
+  # Intentional break: invalid local DNS resolver
+  - systemctl stop systemd-resolved || true
+  - systemctl disable systemd-resolved || true
+  - rm -f /etc/resolv.conf
+  - printf 'nameserver 127.0.0.99\n' > /etc/resolv.conf
