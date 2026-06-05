@@ -9,4 +9,11 @@ sed -i 's|ExecStart=/usr/local/bin/demo-service.sh|ExecStart=/usr/local/bin/demo
 # Reload daemon and restart service
 systemctl daemon-reload
 systemctl enable demo
-systemctl restart demo
+
+if ! systemctl restart demo; then
+  echo "=== DEBUG: systemctl status demo ==="
+  systemctl status demo --no-pager
+  echo "=== DEBUG: journalctl -u demo ==="
+  journalctl -u demo -n 50 --no-pager
+  exit 1
+fi
