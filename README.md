@@ -4,6 +4,8 @@
 </p>
 <!-- BANNER_END -->
 
+<!-- telemetry-svg-start -->
+<!-- telemetry-svg-end -->
 # BrokenOps
 
 **BrokenOps** is an interactive, open-source DevOps and Sysadmin training platform. It automatically spins up intentionally broken virtual machines and challenges you to troubleshoot, fix, and verify real-world system failures right from your browser.
@@ -14,8 +16,6 @@
 
 ---
 
-<!-- telemetry-svg-start -->
-<!-- telemetry-svg-end -->
 
 ## 🌟 Features
 
