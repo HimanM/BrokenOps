@@ -11,31 +11,47 @@
 </style>
 <rect class="bg" width="880" height="350" rx="10" ry="10"/>
 <text x="25" y="35" class="text title">Workflow Execution Report</text>
-<text x="25" y="55" class="text subtitle">Commit: a0dc113 • Triggered: 2026-06-05 13:28:35</text>
+<text x="25" y="55" class="text subtitle">Commit: 11f2d59 • Triggered: 2026-06-05 14:23:50</text>
 <rect x="20" y="70" width="840" height="55" class="card" />
-<circle cx="35" cy="95" r="6" fill="#238636" />
-<text x="50" y="95" class="text wf-name">Remove Solutions on Main</text>
-<text x="50" y="112" class="text timestamp">2026-06-05 13:28:19 • trigger: push</text>
+<circle cx="35" cy="95" r="6" fill="#da3633" />
+<text x="50" y="95" class="text wf-name">CI Verify Labs</text>
+<text x="50" y="112" class="text timestamp">2026-06-05 14:23:38 • trigger: pull_request</text>
 <clipPath id="pill-clip-0"><rect x="685" y="105" width="160" height="8" rx="4" ry="4" /></clipPath>
 <g clip-path="url(#pill-clip-0)">
 <rect x="685" y="105" width="160" height="8" fill="#ebecf0" />
-<rect x="685.0" y="105" width="32.0" height="8" fill="#238636" />
-<line x1="717.0" y1="105" x2="717.0" y2="113" stroke="#ffffff" stroke-width="1.5" />
-<rect x="717.0" y="105" width="32.0" height="8" fill="#238636" />
-<line x1="749.0" y1="105" x2="749.0" y2="113" stroke="#ffffff" stroke-width="1.5" />
-<rect x="749.0" y="105" width="32.0" height="8" fill="#238636" />
-<line x1="781.0" y1="105" x2="781.0" y2="113" stroke="#ffffff" stroke-width="1.5" />
-<rect x="781.0" y="105" width="32.0" height="8" fill="#238636" />
-<line x1="813.0" y1="105" x2="813.0" y2="113" stroke="#ffffff" stroke-width="1.5" />
-<rect x="813.0" y="105" width="32.0" height="8" fill="#238636" />
+<rect x="685.0" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="697.3076923076923" y1="105" x2="697.3076923076923" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="697.3076923076923" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="709.6153846153845" y1="105" x2="709.6153846153845" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="709.6153846153846" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="721.9230769230769" y1="105" x2="721.9230769230769" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="721.9230769230769" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="734.2307692307692" y1="105" x2="734.2307692307692" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="734.2307692307693" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="746.5384615384615" y1="105" x2="746.5384615384615" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="746.5384615384615" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="758.8461538461538" y1="105" x2="758.8461538461538" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="758.8461538461538" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="771.1538461538461" y1="105" x2="771.1538461538461" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="771.1538461538462" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="783.4615384615385" y1="105" x2="783.4615384615385" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="783.4615384615385" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="795.7692307692307" y1="105" x2="795.7692307692307" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="795.7692307692307" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="808.076923076923" y1="105" x2="808.076923076923" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="808.0769230769231" y="105" width="12.307692307692308" height="8" fill="#da3633" />
+<line x1="820.3846153846154" y1="105" x2="820.3846153846154" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="820.3846153846154" y="105" width="12.307692307692308" height="8" fill="#238636" />
+<line x1="832.6923076923076" y1="105" x2="832.6923076923076" y2="113" stroke="#ffffff" stroke-width="1.5" />
+<rect x="832.6923076923077" y="105" width="12.307692307692308" height="8" fill="#238636" />
 </g>
-<text x="845" y="95" class="text wf-meta" fill="#238636">SUCCESS (6s)</text>
+<text x="845" y="95" class="text wf-meta" fill="#da3633">FAILURE (154s)</text>
 <rect x="20" y="135" width="840" height="55" class="card" />
 <circle cx="35" cy="160" r="6" fill="#238636" />
-<text x="50" y="160" class="text wf-name">CI Verify Labs</text>
-<text x="50" y="177" class="text timestamp">2026-06-05 12:25:41 • prev trigger: pull_request</text>
+<text x="50" y="160" class="text wf-name">Remove Solutions on Main</text>
+<text x="50" y="177" class="text timestamp">2026-06-05 13:28:19 • prev trigger: push</text>
 <rect x="685" y="170" width="160" height="8" rx="4" ry="4" fill="#238636" />
-<text x="845" y="160" class="text wf-meta" fill="#238636">SUCCESS (Last: 122s)</text>
+<text x="845" y="160" class="text wf-meta" fill="#238636">SUCCESS (Last: 6s)</text>
 <rect x="20" y="200" width="840" height="55" class="card" />
 <circle cx="35" cy="225" r="6" fill="#6e7681" />
 <text x="50" y="225" class="text wf-name">Generate and Embed Banner</text>
