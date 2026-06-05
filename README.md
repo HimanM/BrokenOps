@@ -1,43 +1,50 @@
 # BrokenOps
 
-BrokenOps is a self-hosted DevOps training platform that runs locally on your machine.
-It spins up intentionally broken Linux environments using Libvirt and QEMU, allowing you to troubleshoot real system issues, verify your fixes, and reset the environments easily.
+**BrokenOps** is an interactive, open-source DevOps and Sysadmin training platform. It automatically spins up intentionally broken virtual machines and challenges you to troubleshoot, fix, and verify real-world system failures right from your browser.
 
-## Features
-- **Local-first**: Runs entirely on your machine.
-- **Reproducible & Resettable**: Broken states are generated via `cloud-init` on top of an immutable base image.
-- **Category-driven Learning**: Labs are organized by categories like Linux, Docker, Kubernetes, etc.
+> ⚠️ **IMPORTANT: Linux Required**  
+> BrokenOps relies heavily on native **KVM (Kernel-based Virtual Machine)** and **Libvirt** to provision and manage lightweight virtual machines in milliseconds. Because of this architectural dependency, **this platform ONLY works on native Linux machines.**  
+> *(WSL2 and nested Linux VMs are not officially supported due to complex bridging and routing limitations.)*
 
-## Setup
+---
 
-### Prerequisites
-- Linux host with KVM/Libvirt installed and configured.
-- Python 3.12+
-- Node.js & npm
+## 🌟 Features
 
-### Installation
-1. Clone this repository.
-2. Initialize the backend:
+- **Instant Environments**: Uses blazing-fast `qcow2` overlay disks to boot fully isolated Ubuntu environments in seconds.
+- **In-Browser Terminal**: A fully integrated, multiplexed `xterm.js` pseudo-terminal lets you SSH directly into the broken instances without leaving the UI.
+- **Automated Verification**: Click **Verify** to run dynamic grading scripts against your VM to see if your fix actually worked.
+- **Dynamic Port Exposing**: If a lab requires you to fix a web service, the UI will automatically expose a clickable button to test your fix in the browser once the VM boots.
+- **Gamified Tracking**: Automatically saves your progress locally. Earn a "COMPLETED" badge for every scenario you conquer!
+
+## 🚀 Getting Started
+
+BrokenOps includes a fully interactive, cross-distro setup wizard that will automatically check your dependencies, install missing packages, set up your Python environments, and start the application.
+
+1. Clone the repository:
    ```bash
-   cd backend
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install fastapi uvicorn pydantic pyyaml libvirt-python
-   ```
-3. Initialize the frontend:
-   ```bash
-   cd frontend
-   npm install
-   ```
-4. Download the base image:
-   ```bash
-   mkdir -p data/images
-   cd data/images
-   wget https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img -O ubuntu-24.04-base.qcow2
+   git clone https://github.com/HimanM/BrokenOps.git
+   cd BrokenOps
    ```
 
-### Running the application
-- Start the backend: `cd backend && uvicorn main:app --reload`
-- Start the frontend: `cd frontend && npm run dev`
+2. Run the interactive setup script:
+   ```bash
+   ./start.sh
+   ```
 
-Navigate to the frontend URL to view the Lab Browser and launch your first lab!
+3. The script will automatically download the necessary Ubuntu base images and start both the **FastAPI Backend** and the **React Frontend**.
+4. Access the UI at: `http://localhost:5173`
+
+## 🛠️ Architecture Stack
+
+- **Frontend**: React 18, Vite, TailwindCSS v4, `xterm.js` for the terminal interface.
+- **Backend**: FastAPI (Python), `asyncssh` for real-time terminal websocket multiplexing, `libvirt-python` for hypervisor orchestration.
+- **Virtualization**: Libvirt, KVM, QEMU, `cloud-init` for zero-touch provisioning.
+
+## 📚 Creating Custom Labs
+
+Want to build your own intentionally broken scenario? It's incredibly easy! 
+
+Read our comprehensive [Lab Creator Guide (LAB_FORMAT.md)](./LAB_FORMAT.md) to learn how to structure your `lab.yaml`, `cloud-init.yaml`, and write custom `verify.sh` grading scripts.
+
+---
+*Built with ❤️ for engineers who love breaking things.*

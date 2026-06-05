@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loading, setLoading] = useState(true);
   const [completedLabs, setCompletedLabs] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,8 +60,8 @@ export default function Dashboard() {
   };
 
   const getDifficultyColor = (difficulty: string) => {
-    return difficulty === 'beginner' 
-      ? 'bg-emerald-100 text-emerald-700' 
+    return difficulty === 'beginner'
+      ? 'bg-emerald-100 text-emerald-700'
       : 'bg-orange-100 text-orange-700';
   };
 
@@ -85,7 +86,7 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-12 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
               DevOps Training Labs
@@ -94,6 +95,23 @@ export default function Dashboard() {
               Launch intentionally broken environments. Troubleshoot real system issues. Verify your fixes in a reproducible sandbox.
             </p>
           </div>
+
+          {!loading && labs.length > 0 && (
+            <div className="flex flex-wrap gap-2 bg-slate-100/80 backdrop-blur p-1.5 rounded-xl border border-slate-200/60">
+              {['all', ...Array.from(new Set(labs.map(lab => lab.category)))].map(category => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all ${activeCategory === category
+                      ? 'bg-white shadow-sm text-blue-700 border border-slate-200/50'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 border border-transparent'
+                    }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -102,9 +120,9 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {labs.map((lab) => (
-              <div 
-                key={lab.id} 
+            {(activeCategory === 'all' ? labs : labs.filter(lab => lab.category === activeCategory)).map((lab) => (
+              <div
+                key={lab.id}
                 className="group relative bg-white border border-slate-200 hover:border-blue-200 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 cursor-pointer"
                 onClick={() => navigate(`/labs/${lab.id}?autoLaunch=true`)}
               >
@@ -134,7 +152,7 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-                
+
                 <p className="text-sm text-slate-600 mb-6 font-medium">
                   {lab.description.summary}
                 </p>
