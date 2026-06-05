@@ -26,13 +26,18 @@ BrokenOps includes a fully interactive, cross-distro setup wizard that will auto
    cd BrokenOps
    ```
 
-2. Run the interactive setup script:
+2. Run the deployment script to build and start the Docker containers:
    ```bash
-   ./start.sh
+   ./deploy.sh
    ```
+   > ⚠️ **IMPORTANT: Docker Desktop Users**  
+   > If you have Docker Desktop installed on your Linux machine, it will intercept the deployment and run the backend inside its hidden VM. This breaks the required Libvirt socket mapping. To force a deployment to your native Linux Docker daemon, run:
+   > ```bash
+   > DOCKER_HOST=unix:///var/run/docker.sock ./deploy.sh
+   > ```
 
 3. The script will automatically download the necessary Ubuntu base images and start both the **FastAPI Backend** and the **React Frontend**.
-4. Access the UI at: `http://localhost:5173`
+4. Access the UI at: `http://localhost:80`
 
 ## 🛠️ Architecture Stack
 
