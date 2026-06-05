@@ -1,0 +1,24 @@
+id: docker-restart-loop
+name: Container Restart Loop
+category: containers
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: docker-restart-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A Docker container keeps restarting in a loop due to a bad healthcheck."
+  story: "A web application container was deployed with a restart policy and a healthcheck. However, the container constantly restarts, causing downtime. Investigate the healthcheck failures and stop the restart loop."
+  objectives:
+    - Identify that the container is restarting repeatedly
+    - Diagnose the healthcheck command failure using docker inspect
+    - Fix the healthcheck definition in the startup service and restore application health
+tags:
+  - docker
+  - healthcheck
+  - systemd
