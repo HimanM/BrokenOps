@@ -43,7 +43,9 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
 
     term.writeln('\x1b[1;34m[BrokenOps]\x1b[0m Starting terminal connection...');
 
-    const ws = new WebSocket(`ws://localhost:8080/labs/${labId}/terminal`);
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/labs/${labId}/terminal`;
+    const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {

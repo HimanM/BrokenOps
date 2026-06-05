@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: brokenops_backend
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - LIBVIRT_GID=${LIBVIRT_GID:-104}
+    volumes:
+      - ./data:/app/data
+      - ./labs:/app/labs
+      - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+    # We do NOT expose ports here, keeping the backend completely hidden in the docker network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: brokenops_frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

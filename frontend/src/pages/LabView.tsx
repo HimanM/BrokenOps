@@ -58,7 +58,7 @@ export default function LabView() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:8080/labs/${labId}/status`);
+        const res = await fetch(`/api/labs/${labId}/status`);
         if (res.ok) {
           const data = await res.json();
           setVmIp(data.ip);
@@ -107,7 +107,7 @@ export default function LabView() {
   const handleVerify = async () => {
     setIsVerifying(true);
     try {
-      const res = await fetch(`http://localhost:8080/labs/${labId}/verify`, { method: 'POST' });
+      const res = await fetch(`/api/labs/${labId}/verify`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setVerifyResult(data);

@@ -23,7 +23,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const res = await fetch('http://localhost:8080/labs');
+        const res = await fetch('/api/labs');
         if (res.ok) {
           const data = await res.json();
           setLabs(data);
