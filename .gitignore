@@ -1,5 +1,6 @@
 # init spec
 init.md
+create_issues.ps1   
 
 # Python
 __pycache__/

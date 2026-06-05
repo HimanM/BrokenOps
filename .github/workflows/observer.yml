@@ -5,9 +5,6 @@ on:
   push:
     paths-ignore:
       - 'README.md'
-  pull_request:
-    paths-ignore:
-      - 'README.md'
   workflow_dispatch:
   # Automatically triggers the Observer if specific workflows are fired manually (workflow_dispatch)
   # You must maintain this list with the names of any workflows you want to monitor manually.
