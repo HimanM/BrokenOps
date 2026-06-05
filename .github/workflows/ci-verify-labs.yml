@@ -63,6 +63,7 @@ jobs:
           export PUID=$(id -u)
           export PGID=$(id -g)
           export LIBVIRT_GID=$(getent group libvirt | cut -d: -f3 || echo "104")
+          export HOST_PROJECT_ROOT=${PWD}
           sudo chmod 666 /var/run/libvirt/libvirt-sock
           
           docker compose up -d

@@ -8,6 +8,7 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - LIBVIRT_GID=${LIBVIRT_GID:-104}
+      - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
     volumes:
       - ./data:/app/data
       - ./labs:/app/labs
