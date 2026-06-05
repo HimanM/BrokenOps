@@ -1,0 +1,45 @@
+name: New Lab Scenario Idea
+description: Propose a new intentionally broken environment for the platform
+title: "Lab Idea: [Lab Name]"
+labels: ["lab-idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out the following details so we can understand the context and how to build this scenario.
+  - type: input
+    id: category
+    attributes:
+      label: Category
+      description: e.g., Linux, Docker, Networking, Database
+    validations:
+      required: true
+  - type: textarea
+    id: storyline
+    attributes:
+      label: Scenario Storyline
+      description: Provide the background story. What went wrong? How did it happen?
+      placeholder: "A junior developer accidentally ran..."
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What is the player trying to achieve?
+    validations:
+      required: true
+  - type: textarea
+    id: cloud_init
+    attributes:
+      label: Cloud-Init Strategy
+      description: How should the lab be intentionally broken during VM provisioning?
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification Logic
+      description: What should the `verify.sh` script check to grade the lab?
+    validations:
+      required: true
