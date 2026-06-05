@@ -1,4 +1,4 @@
-﻿### The Issue
+### The Issue
 
 The systemd unit file for the `demo` service (`/etc/systemd/system/demo.service`) has a misconfigured `ExecStart` path. It points to a non-existent file `/usr/local/bin/demo-service.sh` instead of the actual script located at `/usr/local/bin/demo.sh`.
 

@@ -1,4 +1,4 @@
-﻿#cloud-config
+#cloud-config
 write_files:
   - path: /usr/local/bin/demo.sh
     owner: root:root
