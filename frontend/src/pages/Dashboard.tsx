@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Terminal, Server, Shield, Network, RefreshCw, Play } from 'lucide-react';
+import { Terminal, Server, Shield, Network, RefreshCw, Play, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Lab {
