@@ -103,7 +103,7 @@ success "Frontend setup complete."
 
 # Start Frontend
 step "Starting Vite frontend server..."
-npm run build && npm run preview -- --port 5173 --host &
+npm run dev &
 FRONTEND_PID=$!
 cd ..
 
