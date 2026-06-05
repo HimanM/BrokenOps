@@ -50,10 +50,9 @@ class LabInfo(BaseModel):
 @app.get("/labs", response_model=List[LabInfo])
 def list_labs():
     labs = []
-    labs_dir = os.path.join(os.path.dirname(__file__), "..", "labs")
-    if os.path.exists(labs_dir):
-        for lab_folder in os.listdir(labs_dir):
-            lab_yaml = os.path.join(labs_dir, lab_folder, "lab.yaml")
+    if os.path.exists(LABS_DIR):
+        for lab_folder in os.listdir(LABS_DIR):
+            lab_yaml = os.path.join(LABS_DIR, lab_folder, "lab.yaml")
             if os.path.exists(lab_yaml):
                 with open(lab_yaml, "r") as f:
                     data = yaml.safe_load(f)
