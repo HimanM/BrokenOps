@@ -5,6 +5,8 @@ packages:
 runcmd:
   # Enable and start docker
   - systemctl enable --now docker
+  # Pre-pull the image to cache it and avoid race conditions during testing
+  - docker pull nginx:alpine
   # Create the systemd service file for the web app
   - |
     cat <<'EOF' > /etc/systemd/system/web-app.service
