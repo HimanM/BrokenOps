@@ -1,0 +1,34 @@
+#cloud-config
+packages: []
+
+runcmd:
+  # Create the actual script at /usr/local/bin/demo.sh
+  - mkdir -p /usr/local/bin
+  - |
+    cat <<'EOF' > /usr/local/bin/demo.sh
+    #!/bin/bash
+    while true; do
+      echo "Demo service is running at $(date)" >> /var/log/demo.log
+      sleep 10
+    done
+    EOF
+  - chmod +x /usr/local/bin/demo.sh
+  # Create the broken service file pointing to non-existent /usr/local/bin/demo-service.sh
+  - |
+    cat <<'EOF' > /etc/systemd/system/demo.service
+    [Unit]
+    Description=Demo Background Service
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/demo-service.sh
+    Restart=on-failure
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - systemctl daemon-reload
+  # Enable the service (it will fail when started, which is correct)
+  - systemctl enable demo
+  - systemctl start demo || true
