@@ -24,7 +24,7 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
         foreground: '#f8fafc',
         cursor: '#3b82f6',
       },
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      fontFamily: '"FiraCode Nerd Font", "Hack Nerd Font", "MesloLGS NF", Menlo, Monaco, "Courier New", monospace',
       fontSize: 14,
     });
     

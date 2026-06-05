@@ -1,6 +1,9 @@
-### Objective
+### Scenario
 
 A developer was trying to configure the Docker daemon to use a custom data root (`/var/lib/docker_custom`), but something went wrong and now the `docker` service refuses to start. 
+
+### Objective
+
 
 Your task is to:
 1. Locate the Docker daemon configuration file.

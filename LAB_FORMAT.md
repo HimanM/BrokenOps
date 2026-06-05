@@ -79,3 +79,31 @@ systemctl restart nginx
 Markdown files containing the task description and the solution guide. 
 - **`question.md`**: Presented immediately to the user.
 - **`solution.md`**: Hidden behind a "Reveal Solution" button that only appears after the user attempts Verification.
+
+**Both files MUST follow these strict format templates.**
+
+### `question.md` Template
+```markdown
+### Scenario
+[A brief story or context about the failure]
+
+### Objective
+[A bulleted list or paragraph describing what needs to be accomplished]
+
+### Useful Commands
+- `command1`
+- `command2`
+```
+
+### `solution.md` Template
+```markdown
+### The Issue
+[A brief explanation of what was actually broken]
+
+### Step-by-Step Fix
+1. **[Action name]**:
+   ```bash
+   [command]
+   ```
+2. ...
+```

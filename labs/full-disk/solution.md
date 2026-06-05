@@ -1,8 +1,8 @@
-# Solution: The Full Filesystem
+### The Issue
 
-When a system is completely out of disk space, it can cause services to crash, databases to corrupt, and prevent users from logging in.
+When a system is completely out of disk space, it can cause services to crash, databases to corrupt, and prevent users from logging in. In this case, a massive rogue file is filling up the `/var/log` directory.
 
-## Step-by-Step Fix
+### Step-by-Step Fix
 
 1. **Verify the filesystem usage:**
    Run the `df` command to see mounted filesystems and their usage.

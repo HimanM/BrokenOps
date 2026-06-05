@@ -1,6 +1,9 @@
-### Objective
+### Scenario
 
 A developer was trying to configure the Redis server to accept connections from outside localhost. They modified the `redis.conf` file, but something went wrong and now the `redis-server` service is crashing on startup.
+
+### Objective
+
 
 Your task is to:
 1. Figure out why the Redis daemon is failing.

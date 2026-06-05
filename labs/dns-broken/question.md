@@ -1,6 +1,9 @@
-### Objective
+### Scenario
 
 A teammate changed DNS settings on this server. Since then, the machine can reach raw IP addresses (for example `8.8.8.8`) but domain names (for example `google.com`) fail to resolve.
+
+### Objective
+
 
 Your task is to:
 1. Confirm the difference between IP connectivity and DNS lookup.

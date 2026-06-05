@@ -133,56 +133,78 @@ export default function Dashboard() {
             <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {labs.filter(lab => {
-              const matchesCategory = activeCategory === 'all' || lab.category === activeCategory;
-              const matchesSearch = lab.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                    lab.description.summary.toLowerCase().includes(searchQuery.toLowerCase());
-              return matchesCategory && matchesSearch;
-            }).map((lab) => (
-              <div
-                key={lab.id}
-                className="group relative bg-white border border-slate-200 hover:border-blue-200 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 cursor-pointer"
-                onClick={() => navigate(`/labs/${lab.id}?autoLaunch=true`)}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                      {getCategoryIcon(lab.category)}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-lg mb-1">{lab.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md uppercase tracking-wider">
-                          {lab.category}
-                        </span>
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-md uppercase tracking-wider ${getDifficultyColor(lab.difficulty)}`}>
-                          {lab.difficulty}
-                        </span>
+          <div className="flex flex-col gap-12">
+            {Array.from(new Set(labs.map(lab => lab.category)))
+              .filter(category => activeCategory === 'all' || activeCategory === category)
+              .map(category => {
+                const categoryLabs = labs.filter(lab => {
+                  const matchesSearch = lab.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                        lab.description.summary.toLowerCase().includes(searchQuery.toLowerCase());
+                  return lab.category === category && matchesSearch;
+                });
+
+                if (categoryLabs.length === 0) return null;
+
+                return (
+                  <div key={category} className="flex flex-col gap-6">
+                    <div className="flex items-center gap-3 border-b border-slate-200/60 pb-3">
+                      <div className="text-blue-600 bg-blue-50/80 p-2 rounded-xl shadow-sm border border-blue-100">
+                        {getCategoryIcon(category)}
                       </div>
+                      <h2 className="text-2xl font-extrabold text-slate-800 capitalize tracking-tight">
+                        {category} Labs
+                      </h2>
+                      <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-full ml-2">
+                        {categoryLabs.length}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {categoryLabs.map((lab) => (
+                        <div
+                          key={lab.id}
+                          className="group relative bg-white border border-slate-200 hover:border-blue-300 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-xl hover:shadow-blue-900/10 cursor-pointer"
+                          onClick={() => navigate(`/labs/${lab.id}?autoLaunch=true`)}
+                        >
+                          <div className="flex justify-between items-start mb-5">
+                            <div className="flex items-center gap-3">
+                              <div className="p-3 bg-slate-50 text-slate-500 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm border border-slate-100 group-hover:border-blue-500">
+                                {getCategoryIcon(lab.category)}
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-slate-900 text-lg mb-1 leading-tight group-hover:text-blue-600 transition-colors">{lab.name}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={`text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm border border-white/50 ${getDifficultyColor(lab.difficulty)}`}>
+                                    {lab.difficulty}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {completedLabs.includes(lab.id) && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black tracking-widest shadow-sm border border-emerald-200">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                DONE
+                              </div>
+                            )}
+                          </div>
+
+                          <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">
+                            {lab.description.summary}
+                          </p>
+
+                          <div className="pt-5 border-t border-slate-100/80 flex gap-3">
+                            <button className="flex-1 flex items-center justify-center gap-2 bg-slate-50 group-hover:bg-blue-600 group-hover:text-white text-slate-700 py-3 rounded-xl text-sm font-bold transition-all shadow-sm border border-slate-200/60 group-hover:border-blue-600">
+                              <Play className="w-4 h-4" /> Start Lab Environment
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  {completedLabs.includes(lab.id) && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold shadow-sm border border-emerald-200">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      COMPLETED
-                    </div>
-                  )}
-                </div>
-
-                <p className="text-sm text-slate-600 mb-6 font-medium">
-                  {lab.description.summary}
-                </p>
-
-                <div className="pt-4 border-t border-slate-100 flex gap-3">
-                  <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 group-hover:bg-blue-600 group-hover:text-white text-slate-700 py-2.5 rounded-lg text-sm font-bold transition-all">
-                    <Play className="w-4 h-4" /> View Lab
-                  </button>
-                </div>
-              </div>
-            ))}
+                );
+              })}
           </div>
         )}
       </main>
