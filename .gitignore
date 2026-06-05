@@ -25,8 +25,8 @@ frontend/dist/
 Thumbs.db
 
 # Virtual Machines & Data
-data/images/*.qcow2
-data/images/*.img
+*.qcow2
+*.img
 data/vms/
 backend/keys/
 

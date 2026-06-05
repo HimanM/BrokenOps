@@ -229,10 +229,18 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
                         pass
                         
                 async def read_ws():
+                    import json
                     try:
                         while True:
-                            data = await websocket.receive_text()
-                            process.stdin.write(data)
+                            msg = await websocket.receive_text()
+                            try:
+                                payload = json.loads(msg)
+                                if payload.get("type") == "data":
+                                    process.stdin.write(payload["data"])
+                                elif payload.get("type") == "resize":
+                                    process.change_terminal_size(payload["cols"], payload["rows"], 0, 0)
+                            except json.JSONDecodeError:
+                                process.stdin.write(msg)
                     except WebSocketDisconnect:
                         process.terminate()
                         

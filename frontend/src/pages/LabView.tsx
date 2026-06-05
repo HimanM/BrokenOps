@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Square, RotateCcw, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Square, RotateCcw, CheckCircle, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import TerminalWindow from '../TerminalWindow';
 
@@ -22,8 +22,13 @@ export default function LabView() {
   const [loading, setLoading] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  // Provisioning state
   const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
+  const [provisioningStatus, setProvisioningStatus] = useState<'idle' | 'launching' | 'waiting_ip' | 'ready'>('idle');
   const [vmIp, setVmIp] = useState<string | null>(null);
+  
+  // Verify state
   const [verifyResult, setVerifyResult] = useState<{score: string, output: string} | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -49,6 +54,7 @@ export default function LabView() {
     fetchLab();
   }, [labId]);
 
+  // Poll for status and IP
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -56,33 +62,44 @@ export default function LabView() {
         if (res.ok) {
           const data = await res.json();
           setVmIp(data.ip);
+          if (data.ip) {
+            setProvisioningStatus('ready');
+          } else if (data.status === 'running' && provisioningStatus !== 'launching') {
+            setProvisioningStatus('waiting_ip');
+          }
         }
       } catch (e) {}
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
-  }, [labId]);
+  }, [labId, provisioningStatus]);
 
   const handleAction = async (action: 'launch' | 'stop' | 'reset') => {
     setActionLoading(action);
+    if (action === 'launch' || action === 'reset') setProvisioningStatus('launching');
+    
     try {
       const method = action === 'stop' ? 'DELETE' : 'POST';
       const res = await fetch(`http://localhost:8080/labs/${labId}/${action}`, { method });
+      
       if (res.ok) {
         if (action === 'stop') {
           navigate('/');
-        } else if (action !== 'launch') {
-          alert(`Successfully executed: ${action}`);
+        } else if (action === 'launch' || action === 'reset') {
+          setProvisioningStatus('waiting_ip');
         }
       } else {
         const error = await res.json();
         alert(`Failed to ${action} lab: ${error.detail}`);
+        setProvisioningStatus('idle');
       }
     } catch (err) {
       alert(`Network error during ${action}.`);
+      setProvisioningStatus('idle');
     } finally {
       setActionLoading(null);
       if (action === 'stop' || action === 'reset') {
         setVerifyResult(null);
+        setVmIp(null);
       }
     }
   };
@@ -94,6 +111,15 @@ export default function LabView() {
       if (res.ok) {
         const data = await res.json();
         setVerifyResult(data);
+        
+        // Save completion status to localStorage
+        if (data.score === '100') {
+          const stored = JSON.parse(localStorage.getItem('completedLabs') || '[]');
+          if (!stored.includes(labId)) {
+            stored.push(labId);
+            localStorage.setItem('completedLabs', JSON.stringify(stored));
+          }
+        }
       } else {
         const error = await res.json();
         alert(`Failed to verify: ${error.detail}`);
@@ -159,7 +185,7 @@ export default function LabView() {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={handleVerify} disabled={isVerifying || !vmIp}
+            onClick={handleVerify} disabled={isVerifying || provisioningStatus !== 'ready'}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
           >
             <CheckCircle className="w-4 h-4" /> {isVerifying ? 'Verifying...' : 'Verify'}
@@ -168,23 +194,23 @@ export default function LabView() {
             onClick={() => handleAction('stop')} disabled={!!actionLoading}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
           >
-            <Square className="w-4 h-4" /> {actionLoading === 'stop' ? '...' : 'Stop'}
+            <Square className="w-4 h-4" /> {actionLoading === 'stop' ? 'Stopping...' : 'Stop'}
           </button>
           <button 
             onClick={() => handleAction('reset')} disabled={!!actionLoading}
             className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
           >
-            <RotateCcw className="w-4 h-4" /> {actionLoading === 'reset' ? '...' : 'Reset'}
+            <RotateCcw className="w-4 h-4" /> {actionLoading === 'reset' ? 'Resetting...' : 'Reset'}
           </button>
         </div>
       </nav>
 
       {/* Split Pane Container */}
-      <div className="flex-1 flex overflow-hidden" ref={containerRef}>
+      <div className="flex-1 flex overflow-hidden min-h-0 min-w-0" ref={containerRef}>
         
         {/* Left Pane (Documentation) */}
         <div 
-          className="h-full overflow-y-auto bg-slate-50 p-8"
+          className="h-full overflow-y-auto bg-slate-50 p-8 min-h-0"
           style={{ width: `${leftWidth}%` }}
         >
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 prose prose-slate max-w-none">
@@ -195,7 +221,7 @@ export default function LabView() {
               <p>No specific markdown question provided for this lab.</p>
             )}
 
-            {lab.exposed_ports && lab.exposed_ports.length > 0 && vmIp && (
+            {lab.exposed_ports && lab.exposed_ports.length > 0 && vmIp && provisioningStatus === 'ready' && (
               <div className="mt-8 flex flex-wrap gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
                 <p className="w-full text-sm font-semibold text-blue-800 m-0">Exposed Services:</p>
                 {lab.exposed_ports.map(port => (
@@ -255,12 +281,26 @@ export default function LabView() {
           onMouseDown={startDragging}
         />
 
-        {/* Right Pane (Terminal) */}
+        {/* Right Pane (Terminal / Loading) */}
         <div 
-          className="h-full bg-slate-900 overflow-hidden"
+          className="h-full bg-slate-900 overflow-hidden relative min-h-0 min-w-0"
           style={{ width: `${100 - leftWidth}%` }}
         >
-          <TerminalWindow labId={labId!} />
+          {provisioningStatus !== 'ready' ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white z-20">
+              <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6" />
+              <h3 className="text-xl font-bold text-slate-100 mb-2">
+                {provisioningStatus === 'launching' ? 'Provisioning Environment' : 'Acquiring IP Address'}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {provisioningStatus === 'launching' 
+                  ? 'Allocating compute resources and attaching overlays...' 
+                  : 'Waiting for cloud-init to configure networking...'}
+              </p>
+            </div>
+          ) : (
+            <TerminalWindow labId={labId!} />
+          )}
         </div>
 
       </div>

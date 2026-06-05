@@ -1,0 +1,8 @@
+#cloud-config
+packages:
+  - redis-server
+
+runcmd:
+  # Intentional break: add an invalid bind directive
+  - sed -i 's/bind 127.0.0.1 ::1/bind 127.0.0.1 256.256.256.256/' /etc/redis/redis.conf
+  - systemctl restart redis-server || true

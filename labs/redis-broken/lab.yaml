@@ -1,0 +1,24 @@
+id: redis-broken
+name: Redis Database Crash
+category: databases
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: redis-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 6379
+description:
+  summary: "The Redis database fails to start due to a bad bind address."
+  story: "A developer tried to make Redis accessible remotely, but used an invalid bind syntax. Fix the configuration so Redis can start."
+  objectives:
+    - Find the syntax error in the redis.conf file
+    - Restart the Redis server
+tags:
+  - redis
+  - systemd

@@ -1,0 +1,23 @@
+id: docker-broken
+name: Docker Daemon Crash
+category: containers
+difficulty: advanced
+provider: libvirt
+vm:
+  name: docker-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "Docker daemon fails to start due to invalid JSON."
+  story: "A developer tried to configure Docker to use a custom data root, but they messed up the daemon.json file syntax. Fix it so containers can run again."
+  objectives:
+    - Locate the Docker daemon config file
+    - Fix the invalid JSON syntax
+    - Start the Docker daemon
+tags:
+  - docker
+  - json

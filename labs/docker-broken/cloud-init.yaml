@@ -1,0 +1,16 @@
+#cloud-config
+packages:
+  - docker.io
+
+runcmd:
+  # Intentional break: bad JSON syntax in daemon.json
+  - mkdir -p /etc/docker
+  - |
+    cat <<EOF > /etc/docker/daemon.json
+    {
+      "data-root": "/var/lib/docker_custom",
+      "log-level": "warn"
+      "storage-driver": "overlay2"
+    }
+    EOF
+  - systemctl restart docker || true

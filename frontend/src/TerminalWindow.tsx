@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import { AttachAddon } from '@xterm/addon-attach';
 import '@xterm/xterm/css/xterm.css';
 import { ExternalLink } from 'lucide-react';
 
@@ -33,7 +32,11 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
     term.loadAddon(fitAddon);
     
     term.open(terminalRef.current);
-    fitAddon.fit();
+    
+    // Initial fit
+    setTimeout(() => {
+      fitAddon.fit();
+    }, 50);
     
     termRef.current = term;
     fitAddonRef.current = fitAddon;
@@ -44,8 +47,27 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
     socketRef.current = ws;
 
     ws.onopen = () => {
-      const attachAddon = new AttachAddon(ws);
-      term.loadAddon(attachAddon);
+      term.onData((data) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'data', data }));
+        }
+      });
+      
+      ws.onmessage = (event) => {
+        term.write(event.data);
+      };
+
+      // Fit after connection and send initial size
+      setTimeout(() => {
+        fitAddon.fit();
+        if (ws.readyState === WebSocket.OPEN && termRef.current) {
+          ws.send(JSON.stringify({ 
+            type: 'resize', 
+            cols: termRef.current.cols, 
+            rows: termRef.current.rows 
+          }));
+        }
+      }, 100);
     };
 
     ws.onclose = () => {
@@ -56,13 +78,27 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
       term.writeln('\r\n\x1b[1;31m[BrokenOps]\x1b[0m Connection error.');
     };
 
-    const resizeObserver = new ResizeObserver(() => {
-      fitAddon.fit();
-    });
+    // Robust resize handling
+    const handleResize = () => {
+      try {
+        fitAddon.fit();
+        if (ws.readyState === WebSocket.OPEN && termRef.current) {
+          ws.send(JSON.stringify({ 
+            type: 'resize', 
+            cols: termRef.current.cols, 
+            rows: termRef.current.rows 
+          }));
+        }
+      } catch (e) {}
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(terminalRef.current);
+    window.addEventListener('resize', handleResize);
 
     return () => {
       resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
       if (ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
@@ -71,7 +107,7 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
   }, [labId]);
 
   return (
-    <div className="w-full h-full bg-slate-900 flex flex-col">
+    <div className="w-full h-full bg-slate-900 flex flex-col min-h-0 min-w-0">
       <div className="h-8 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 select-none shrink-0">
         <span className="text-xs font-medium text-slate-400">root@{labId}:~</span>
         <button 
@@ -82,7 +118,8 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className="flex-1 p-2 min-h-0 overflow-hidden" ref={terminalRef}></div>
+      {/* Force flex-1 min-h-0 so the terminal div stays constrained, with left padding */}
+      <div className="flex-1 min-h-0 min-w-0 pl-4 py-2 overflow-hidden" ref={terminalRef}></div>
     </div>
   );
 }
