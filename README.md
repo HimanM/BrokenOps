@@ -16,6 +16,7 @@
 
 <!-- telemetry-svg-start -->
 ![Workflow Timeline](workflow_status.svg)
+![Workflow Timeline](workflow_status.svg)
 <!-- telemetry-svg-end -->
 
 ## 🌟 Features
