@@ -117,7 +117,7 @@ def launch_lab(lab_id: str):
             user_data_content = f.read()
             
         # Inject SSH key
-        ssh_pub_key_path = os.path.join(BASE_DIR, "keys", "id_ed25519.pub")
+        ssh_pub_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519.pub")
         if os.path.exists(ssh_pub_key_path):
             with open(ssh_pub_key_path, "r") as f:
                 pub_key = f.read().strip()
@@ -201,7 +201,7 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
             
         await websocket.send_text(f"\r\n[Info] Connecting to VM at {vm_ip}...\r\n")
         
-        priv_key_path = os.path.join(BASE_DIR, "keys", "id_ed25519")
+        priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
         
         conn = None
         for _ in range(15): # Try for up to 30 seconds
@@ -282,7 +282,7 @@ async def verify_lab(lab_id: str):
         if not vm_ip:
             raise HTTPException(status_code=400, detail="VM is not running or hasn't obtained an IP yet.")
             
-        priv_key_path = os.path.join(BASE_DIR, "keys", "id_ed25519")
+        priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
         
         with open(script_path, "r") as f:
             script_content = f.read()
