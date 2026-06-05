@@ -19,9 +19,9 @@
 
 3. **Replace with a valid resolver**:
    ```bash
-   sudo tee /etc/resolv.conf >/dev/null <<'EOF2'
+   sudo tee /etc/resolv.conf >/dev/null <<'EOF'
    nameserver 8.8.8.8
-   EOF2
+   EOF
    ```
 
 4. **Verify DNS works again**:
