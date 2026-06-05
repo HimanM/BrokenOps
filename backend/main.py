@@ -21,6 +21,13 @@ if os.path.exists(os.path.join(BASE_DIR, "data")):
     PROJECT_ROOT = BASE_DIR
 else:
     PROJECT_ROOT = os.path.join(BASE_DIR, "..")
+
+def map_to_host_path(path: str) -> str:
+    host_root = os.environ.get("HOST_PROJECT_ROOT")
+    if host_root and path.startswith("/app"):
+        return path.replace("/app", host_root, 1)
+    return path
+
 LABS_DIR = os.path.join(PROJECT_ROOT, "labs")
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 IMAGES_DIR = os.path.join(DATA_DIR, "images")
@@ -98,10 +105,11 @@ def launch_lab(lab_id: str):
         if os.path.exists(overlay_path):
             os.remove(overlay_path)
             
-        # Create overlay qcow2
+        # Create overlay qcow2 using the host path for the backing file (with -u to skip check)
+        base_image_path_host = map_to_host_path(base_image_path)
         subprocess.run([
-            "qemu-img", "create", "-f", "qcow2", "-F", "qcow2",
-            "-b", base_image_path, overlay_path, disk_size
+            "qemu-img", "create", "-f", "qcow2", "-F", "qcow2", "-u",
+            "-b", base_image_path_host, overlay_path, disk_size
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
         # Read cloud-init user-data
