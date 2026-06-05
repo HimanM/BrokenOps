@@ -1,0 +1,35 @@
+#cloud-config
+write_files:
+  - path: /usr/local/bin/demo.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      while true; do
+        echo "Demo service is running at $(date)" >> /var/log/demo.log
+        sleep 10
+      done
+  - path: /etc/systemd/system/demo.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Demo Background Service
+      After=network.target
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/demo-service.sh
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  # Clean up line endings in case they have carriage returns from Windows host
+  - sed -i 's/\r//g' /usr/local/bin/demo.sh
+  - sed -i 's/\r//g' /etc/systemd/system/demo.service
+  # Start the service
+  - systemctl daemon-reload
+  - systemctl enable demo
+  - systemctl start demo || true

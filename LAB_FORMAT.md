@@ -44,7 +44,7 @@ runcmd:
   - systemctl restart nginx || true
 ```
 
-## 3. `verify.sh` (Optional but Recommended)
+## 3. `verify.sh` (Required)
 
 A bash script executed by the backend via SSH to score the user's progress. 
 - Print custom output explaining what passed or failed.
@@ -75,7 +75,7 @@ sed -i 's/listen 80808 default_server;/listen 80 default_server;/' /etc/nginx/si
 systemctl restart nginx
 ```
 
-## 5. `question.md` & `solution.md`
+## 5. `question.md` & `solution.md` (Required)
 Markdown files containing the task description and the solution guide. 
 - **`question.md`**: Presented immediately to the user.
 - **`solution.md`**: Hidden behind a "Reveal Solution" button that only appears after the user attempts Verification.
