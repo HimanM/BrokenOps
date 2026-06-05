@@ -1,0 +1,31 @@
+services:
+  brokenops-be:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: brokenops-be
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - LIBVIRT_GID=${LIBVIRT_GID:-104}
+      - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
+    volumes:
+      - ./data:/app/data
+      - ./labs:/app/labs
+      - ./keys:/app/keys
+      - /var/run/libvirt:/var/run/libvirt
+    network_mode: "host"
+    restart: unless-stopped
+
+  brokenops-fe:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: brokenops-fe
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - brokenops-be
+    restart: unless-stopped

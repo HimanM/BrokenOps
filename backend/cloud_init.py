@@ -21,8 +21,10 @@ class CloudInitBuilder:
         user_data_path = os.path.join(temp_dir, "user-data")
 
         # Write meta-data
+        import uuid
+        unique_id = str(uuid.uuid4())
         with open(meta_data_path, "w") as f:
-            f.write(f"instance-id: {instance_id}\n")
+            f.write(f"instance-id: {unique_id}\n")
             f.write(f"local-hostname: {instance_id}\n")
 
         # Write user-data

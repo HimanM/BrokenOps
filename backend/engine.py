@@ -10,7 +10,15 @@ class LabEngine:
             print(f"Failed to connect to libvirt: {e}")
             self.conn = None
 
+    def _map_to_host_path(self, path: str) -> str:
+        host_root = os.environ.get("HOST_PROJECT_ROOT")
+        if host_root and path.startswith("/app"):
+            return path.replace("/app", host_root, 1)
+        return path
+
     def _generate_domain_xml(self, name, memory_mb, vcpus, disk_path, cloud_iso_path):
+        disk_path_host = self._map_to_host_path(disk_path)
+        cloud_iso_path_host = self._map_to_host_path(cloud_iso_path)
         # A simple QEMU/KVM domain XML
         xml = f"""
         <domain type='kvm'>
@@ -24,21 +32,28 @@ class LabEngine:
           <devices>
             <disk type='file' device='disk'>
               <driver name='qemu' type='qcow2'/>
-              <source file='{disk_path}'/>
+              <source file='{disk_path_host}'/>
               <target dev='vda' bus='virtio'/>
             </disk>
             <disk type='file' device='cdrom'>
               <driver name='qemu' type='raw'/>
-              <source file='{cloud_iso_path}'/>
+              <source file='{cloud_iso_path_host}'/>
               <target dev='hda' bus='ide'/>
               <readonly/>
             </disk>
+            <serial type='file'>
+              <source path='/var/log/libvirt/qemu/{name}-serial.log'/>
+              <target port='0'/>
+            </serial>
+            <console type='file'>
+              <source path='/var/log/libvirt/qemu/{name}-serial.log'/>
+              <target type='serial' port='0'/>
+            </console>
             <interface type='network'>
               <source network='default'/>
               <model type='virtio'/>
             </interface>
             <graphics type='vnc' port='-1'/>
-            <console type='pty'/>
           </devices>
         </domain>
         """

@@ -1,0 +1,36 @@
+name: Remove Solutions on Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  remove-solutions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Remove solution.sh files
+        run: |
+          count=0
+          # Find all solution.sh files inside the labs directory
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              git rm "$file"
+              count=$((count + 1))
+            fi
+          done <<< "$(find labs -name "solution.sh" 2>/dev/null || true)"
+          
+          if [ "$count" -gt 0 ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: Remove solution scripts from main branch"
+            git push
+          else
+            echo "No solution scripts found to remove."
+          fi

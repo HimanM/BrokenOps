@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Terminal, Server, Shield, Network, RefreshCw, Search, Play } from 'lucide-react';
+import { Terminal, Server, Shield, Network, RefreshCw, Play, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Lab {
@@ -23,7 +23,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const res = await fetch('http://localhost:8080/labs');
+        const res = await fetch('/api/labs');
         if (res.ok) {
           const data = await res.json();
           setLabs(data);

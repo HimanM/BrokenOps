@@ -1,0 +1,22 @@
+id: full-disk
+name: The Full Filesystem
+category: linux
+difficulty: beginner
+provider: libvirt
+vm:
+  name: full-disk-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "The system disk is unexpectedly full."
+  story: "A rogue process generated a massive log file in /var/log, filling the disk and causing issues. Find the file and delete it."
+  objectives:
+    - Locate the large file filling the filesystem
+    - Delete the file to free up space
+tags:
+  - linux
+  - filesystem

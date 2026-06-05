@@ -11,6 +11,7 @@
 ## 🌟 Features
 
 - **Instant Environments**: Uses blazing-fast `qcow2` overlay disks to boot fully isolated Ubuntu environments in seconds.
+- **Root Access**: Every VM gives you full `root` privileges out-of-the-box so you can troubleshoot without restrictions.
 - **In-Browser Terminal**: A fully integrated, multiplexed `xterm.js` pseudo-terminal lets you SSH directly into the broken instances without leaving the UI.
 - **Automated Verification**: Click **Verify** to run dynamic grading scripts against your VM to see if your fix actually worked.
 - **Dynamic Port Exposing**: If a lab requires you to fix a web service, the UI will automatically expose a clickable button to test your fix in the browser once the VM boots.
@@ -26,13 +27,18 @@ BrokenOps includes a fully interactive, cross-distro setup wizard that will auto
    cd BrokenOps
    ```
 
-2. Run the interactive setup script:
+2. Run the deployment script to build and start the Docker containers:
    ```bash
-   ./start.sh
+   ./deploy.sh
    ```
+   > ⚠️ **IMPORTANT: Docker Desktop Users**  
+   > If you have Docker Desktop installed on your Linux machine, it will intercept the deployment and run the backend inside its hidden VM. This breaks the required Libvirt socket mapping. To force a deployment to your native Linux Docker daemon, run:
+   > ```bash
+   > DOCKER_HOST=unix:///var/run/docker.sock ./deploy.sh
+   > ```
 
 3. The script will automatically download the necessary Ubuntu base images and start both the **FastAPI Backend** and the **React Frontend**.
-4. Access the UI at: `http://localhost:5173`
+4. Access the UI at: `http://localhost:80`
 
 ## 🛠️ Architecture Stack
 
@@ -44,7 +50,7 @@ BrokenOps includes a fully interactive, cross-distro setup wizard that will auto
 
 Want to build your own intentionally broken scenario? It's incredibly easy! 
 
-Read our comprehensive [Lab Creator Guide (LAB_FORMAT.md)](./LAB_FORMAT.md) to learn how to structure your `lab.yaml`, `cloud-init.yaml`, and write custom `verify.sh` grading scripts.
+Read our comprehensive [Lab Creator Guide (LAB_FORMAT.md)](./LAB_FORMAT.md) to learn how to structure your `lab.yaml`, `cloud-init.yaml`, `solution.sh`, and write custom `verify.sh` grading scripts.
 
 ---
 *Built with ❤️ for engineers who love breaking things.*

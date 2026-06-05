@@ -1,0 +1,6 @@
+#cloud-config
+packages: []
+
+runcmd:
+  # Fill the disk with a large file
+  - dd if=/dev/zero of=/var/log/massive_rogue.log bs=1M count=8000 || true

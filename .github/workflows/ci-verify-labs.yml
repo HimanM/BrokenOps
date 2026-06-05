@@ -1,0 +1,97 @@
+name: CI Verify Labs
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: labs/**
+
+      - name: Extract Changed Labs
+        id: extract-labs
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          LABS=""
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            lab=$(echo "$file" | cut -d'/' -f2)
+            if [[ ! "$LABS" == *"$lab"* ]]; then
+              LABS="$LABS,$lab"
+            fi
+          done
+          LABS=${LABS#,}
+          echo "changed_labs=$LABS" >> $GITHUB_OUTPUT
+          echo "Detected changed labs: $LABS"
+
+      - name: Install KVM and libvirt
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils genisoimage xorriso
+          sudo systemctl enable --now libvirtd
+          sudo usermod -aG libvirt $USER
+          sudo usermod -aG kvm $USER
+
+      - name: Setup Environment and Keys
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          mkdir -p data/images keys
+          ssh-keygen -t ed25519 -f keys/id_ed25519 -N ""
+          chmod 600 keys/id_ed25519
+          chmod 644 keys/id_ed25519.pub
+          
+          # Allow libvirt-qemu to traverse the runner's home directory
+          sudo chmod 755 /home/runner
+          sudo chmod 755 /home/runner/work
+          sudo chmod 755 /home/runner/work/BrokenOps
+
+      - name: Download Base Ubuntu Image
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          curl -L -o data/images/ubuntu-24.04-base.qcow2 https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+
+      - name: Start BrokenOps Engine
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          export PUID=$(id -u)
+          export PGID=$(id -g)
+          export LIBVIRT_GID=$(getent group libvirt | cut -d: -f3 || echo "104")
+          export HOST_PROJECT_ROOT=${PWD}
+          sudo chmod 666 /var/run/libvirt/libvirt-sock
+          
+          docker compose up -d
+
+      - name: Wait for API
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost/api/labs > /dev/null; then
+              echo "API is up!"
+              break
+            fi
+            echo "Waiting for API..."
+            sleep 2
+          done
+
+      - name: Install Test Dependencies
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install paramiko requests pyyaml
+
+      - name: Run Verification Script
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          python scripts/test_labs.py --key keys/id_ed25519 --labs ${{ steps.extract-labs.outputs.changed_labs }}
