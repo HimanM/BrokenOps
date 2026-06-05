@@ -11,6 +11,7 @@
 ## 🌟 Features
 
 - **Instant Environments**: Uses blazing-fast `qcow2` overlay disks to boot fully isolated Ubuntu environments in seconds.
+- **Root Access**: Every VM gives you full `root` privileges out-of-the-box so you can troubleshoot without restrictions.
 - **In-Browser Terminal**: A fully integrated, multiplexed `xterm.js` pseudo-terminal lets you SSH directly into the broken instances without leaving the UI.
 - **Automated Verification**: Click **Verify** to run dynamic grading scripts against your VM to see if your fix actually worked.
 - **Dynamic Port Exposing**: If a lab requires you to fix a web service, the UI will automatically expose a clickable button to test your fix in the browser once the VM boots.
