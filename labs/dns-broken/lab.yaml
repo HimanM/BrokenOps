@@ -1,0 +1,24 @@
+id: dns-broken
+name: DNS Resolution Failure
+category: linux
+difficulty: beginner
+provider: libvirt
+vm:
+  name: dns-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "The server can ping IPs but cannot resolve domain names due to bad DNS configuration."
+  story: "A bad resolver change broke DNS lookups. Restore DNS resolution so domain names resolve again."
+  objectives:
+    - Confirm domain resolution is failing while raw IP connectivity works
+    - Inspect /etc/resolv.conf and identify the broken nameserver
+    - Fix DNS so google.com resolves again
+tags:
+  - linux
+  - dns
+  - networking
