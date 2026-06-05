@@ -3,8 +3,10 @@ name: Observer
 # --- Trigger Configuration ---
 on:
   push:
+    branches:
+      - main
     paths-ignore:
-      - 'README.md'
+      - "README.md"
   workflow_dispatch:
   # Automatically triggers the Observer if specific workflows are fired manually (workflow_dispatch)
   # You must maintain this list with the names of any workflows you want to monitor manually.
@@ -47,7 +49,7 @@ jobs:
           # api_url: ${{ secrets.API_URL }}
           # api_key: ${{ secrets.API_KEY }}
           generate_svg_report: "true"
-          
+
           # Automatically delete older cancelled/skipped observer runs for this commit to keep Actions UI clean
           clean_concurrent_runs: "true"
 
