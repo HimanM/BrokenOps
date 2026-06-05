@@ -49,7 +49,7 @@ BrokenOps includes a fully interactive, cross-distro setup wizard that will auto
 
 Want to build your own intentionally broken scenario? It's incredibly easy! 
 
-Read our comprehensive [Lab Creator Guide (LAB_FORMAT.md)](./LAB_FORMAT.md) to learn how to structure your `lab.yaml`, `cloud-init.yaml`, and write custom `verify.sh` grading scripts.
+Read our comprehensive [Lab Creator Guide (LAB_FORMAT.md)](./LAB_FORMAT.md) to learn how to structure your `lab.yaml`, `cloud-init.yaml`, `solution.sh`, and write custom `verify.sh` grading scripts.
 
 ---
 *Built with ❤️ for engineers who love breaking things.*

@@ -41,12 +41,19 @@ class LabEngine:
               <target dev='hda' bus='ide'/>
               <readonly/>
             </disk>
+            <serial type='file'>
+              <source path='/var/log/libvirt/qemu/{name}-serial.log'/>
+              <target port='0'/>
+            </serial>
+            <console type='file'>
+              <source path='/var/log/libvirt/qemu/{name}-serial.log'/>
+              <target type='serial' port='0'/>
+            </console>
             <interface type='network'>
               <source network='default'/>
               <model type='virtio'/>
             </interface>
             <graphics type='vnc' port='-1'/>
-            <console type='pty'/>
           </devices>
         </domain>
         """

@@ -121,7 +121,27 @@ def launch_lab(lab_id: str):
         if os.path.exists(ssh_pub_key_path):
             with open(ssh_pub_key_path, "r") as f:
                 pub_key = f.read().strip()
-            user_data_content += f"\nusers:\n  - name: ubuntu\n    sudo: ALL=(ALL) NOPASSWD:ALL\n    ssh_authorized_keys:\n      - {pub_key}\n"
+                
+            # Parse YAML to safely append to users block
+            try:
+                ud_yaml = yaml.safe_load(user_data_content) or {}
+                if "users" not in ud_yaml:
+                    ud_yaml["users"] = [{"name": "ubuntu", "ssh_authorized_keys": []}]
+                
+                # Find ubuntu user or create it
+                ubuntu_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == "ubuntu"), None)
+                if not ubuntu_user:
+                    ubuntu_user = {"name": "ubuntu", "ssh_authorized_keys": []}
+                    ud_yaml["users"].append(ubuntu_user)
+                
+                if "ssh_authorized_keys" not in ubuntu_user:
+                    ubuntu_user["ssh_authorized_keys"] = []
+                    
+                ubuntu_user["ssh_authorized_keys"].append(pub_key)
+                
+                user_data_content = "#cloud-config\n" + yaml.dump(ud_yaml, width=10000)
+            except Exception as e:
+                print(f"Warning: Failed to parse user-data YAML: {e}")
 
         # Build cloud-init ISO
         iso_path = cloud_builder.build_iso(vm_name, user_data_content)

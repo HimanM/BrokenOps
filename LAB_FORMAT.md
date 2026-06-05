@@ -63,7 +63,19 @@ else
 fi
 ```
 
-## 4. `question.md` & `solution.md`
+## 4. `solution.sh` (Required)
+
+A mandatory bash script that automatically fixes the broken lab.
+The CI verification pipeline will execute this script via SSH and then run `verify.sh` to ensure the lab is fully solved. If this script is missing or fails, the CI build will fail.
+
+```bash
+#!/bin/bash
+# Fix the nginx configuration
+sed -i 's/listen 80808 default_server;/listen 80 default_server;/' /etc/nginx/sites-available/default
+systemctl restart nginx
+```
+
+## 5. `question.md` & `solution.md`
 Markdown files containing the task description and the solution guide. 
 - **`question.md`**: Presented immediately to the user.
 - **`solution.md`**: Hidden behind a "Reveal Solution" button that only appears after the user attempts Verification.

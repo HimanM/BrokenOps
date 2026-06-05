@@ -12,6 +12,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./labs:/app/labs
+      - ./keys:/app/keys
       - /var/run/libvirt:/var/run/libvirt
     network_mode: "host"
     restart: unless-stopped
