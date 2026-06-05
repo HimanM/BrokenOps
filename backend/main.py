@@ -125,19 +125,27 @@ def launch_lab(lab_id: str):
             # Parse YAML to safely append to users block
             try:
                 ud_yaml = yaml.safe_load(user_data_content) or {}
-                if "users" not in ud_yaml:
-                    ud_yaml["users"] = [{"name": "ubuntu", "ssh_authorized_keys": []}]
                 
-                # Find ubuntu user or create it
-                ubuntu_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == "ubuntu"), None)
-                if not ubuntu_user:
-                    ubuntu_user = {"name": "ubuntu", "ssh_authorized_keys": []}
-                    ud_yaml["users"].append(ubuntu_user)
+                # Allow root SSH login
+                ud_yaml["disable_root"] = False
+                if "users" not in ud_yaml or not isinstance(ud_yaml["users"], list):
+                    ud_yaml["users"] = [{"name": "root", "ssh_authorized_keys": []}]
                 
-                if "ssh_authorized_keys" not in ubuntu_user:
-                    ubuntu_user["ssh_authorized_keys"] = []
+                if "runcmd" not in ud_yaml or not isinstance(ud_yaml["runcmd"], list):
+                    ud_yaml["runcmd"] = []
+                ud_yaml["runcmd"].insert(0, "systemctl restart ssh || systemctl restart sshd")
+                ud_yaml["runcmd"].insert(0, "sed -i 's/.*PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/* || true")
+
+                # Find root user or create it
+                root_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == "root"), None)
+                if not root_user:
+                    root_user = {"name": "root", "ssh_authorized_keys": []}
+                    ud_yaml["users"].append(root_user)
+                
+                if "ssh_authorized_keys" not in root_user:
+                    root_user["ssh_authorized_keys"] = []
                     
-                ubuntu_user["ssh_authorized_keys"].append(pub_key)
+                root_user["ssh_authorized_keys"].append(pub_key)
                 
                 user_data_content = "#cloud-config\n" + yaml.dump(ud_yaml, width=10000)
             except Exception as e:
@@ -226,7 +234,7 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
         conn = None
         for _ in range(15): # Try for up to 30 seconds
             try:
-                conn = await asyncssh.connect(vm_ip, username='ubuntu', client_keys=[priv_key_path], known_hosts=None)
+                conn = await asyncssh.connect(vm_ip, username='root', client_keys=[priv_key_path], known_hosts=None)
                 break
             except Exception:
                 await asyncio.sleep(2)
@@ -307,7 +315,7 @@ async def verify_lab(lab_id: str):
         with open(script_path, "r") as f:
             script_content = f.read()
             
-        async with asyncssh.connect(vm_ip, username='ubuntu', client_keys=[priv_key_path], known_hosts=None) as conn:
+        async with asyncssh.connect(vm_ip, username='root', client_keys=[priv_key_path], known_hosts=None) as conn:
             # Run the script by piping it to bash
             result = await conn.run('sudo bash', input=script_content, check=False)
             

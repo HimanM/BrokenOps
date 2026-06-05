@@ -52,6 +52,12 @@ def main():
     parser.add_argument("--labs", help="Comma-separated list of lab IDs to test")
     args = parser.parse_args()
 
+    # Ensure key has correct permissions (600) so SSH doesn't reject it
+    try:
+        os.chmod(args.key, 0o600)
+    except Exception as e:
+        print(f"⚠️ Warning: Could not set permissions on {args.key}: {e}")
+
     # Get labs
     print("Fetching labs...")
     resp = requests.get(f"{API_URL}/labs")
@@ -129,7 +135,7 @@ def main():
 
         try:
             print("🔧 Running solution.sh...")
-            code, out, err = upload_and_run(ip, "ubuntu", args.key, solution_path, "/tmp/solution.sh")
+            code, out, err = upload_and_run(ip, "root", args.key, solution_path, "/tmp/solution.sh")
             if code != 0:
                 print(f"❌ solution.sh failed with exit code {code}")
                 print(f"Stdout: {out}\nStderr: {err}")
@@ -139,7 +145,7 @@ def main():
             print("✅ solution.sh executed successfully.")
 
             print("🔍 Running verify.sh...")
-            code, out, err = upload_and_run(ip, "ubuntu", args.key, verify_path, "/tmp/verify.sh")
+            code, out, err = upload_and_run(ip, "root", args.key, verify_path, "/tmp/verify.sh")
             if code != 0:
                 print(f"❌ verify.sh failed with exit code {code}")
                 print(f"Stdout: {out}\nStderr: {err}")
