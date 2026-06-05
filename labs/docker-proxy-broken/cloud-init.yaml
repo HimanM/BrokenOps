@@ -1,0 +1,17 @@
+#cloud-config
+packages:
+  - docker.io
+  - tinyproxy
+
+runcmd:
+  - mkdir -p /etc/systemd/system/docker.service.d
+  - |
+    cat <<'DROPIN' > /etc/systemd/system/docker.service.d/10-network-restrict.conf
+    [Service]
+    IPAddressDeny=any
+    IPAddressAllow=localhost
+    DROPIN
+  - systemctl daemon-reload
+  - systemctl enable --now tinyproxy
+  - systemctl enable --now docker
+  - systemctl restart docker || true

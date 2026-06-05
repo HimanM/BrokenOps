@@ -1,0 +1,24 @@
+id: docker-proxy-broken
+name: Docker Pull Behind Proxy
+category: containers
+difficulty: advanced
+provider: libvirt
+vm:
+  name: docker-proxy-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "Docker image pulls fail because the daemon is missing proxy settings."
+  story: "The host can access the internet through a corporate proxy, but Docker pulls time out. Configure Docker daemon proxy settings and verify image pull works."
+  objectives:
+    - Inspect Docker daemon runtime environment
+    - Add a systemd proxy drop-in for Docker
+    - Restart Docker and confirm image pull succeeds
+tags:
+  - docker
+  - proxy
+  - systemd
