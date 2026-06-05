@@ -1,0 +1,24 @@
+id: bind-mount-permissions
+name: Bind Mount Permission Denied
+category: containers
+difficulty: medium
+provider: libvirt
+vm:
+  name: bind-mount-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "Containerized app cannot write to mounted host directory."
+  story: "An app container runs as a non-root UID and fails to write into a bind-mounted data path because host ownership and mode are too restrictive."
+  objectives:
+    - Find why writes to the mounted directory fail
+    - Align host permissions or container user mapping
+    - Re-run the app and confirm writes succeed
+tags:
+  - docker
+  - bind-mount
+  - permissions

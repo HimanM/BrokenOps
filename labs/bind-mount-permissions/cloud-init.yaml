@@ -1,0 +1,18 @@
+#cloud-config
+packages:
+  - docker.io
+
+runcmd:
+  - systemctl enable --now docker
+  - mkdir -p /srv/app-data
+  - chown root:root /srv/app-data
+  - chmod 700 /srv/app-data
+  - docker pull busybox:1.36 || true
+  - |
+    cat <<'SCRIPT' > /usr/local/bin/run-app.sh
+    #!/bin/bash
+    set -e
+    docker run --rm --user 1000:1000 -v /srv/app-data:/data busybox:1.36 sh -c 'echo "app-write-ok" > /data/result.txt'
+    SCRIPT
+  - chmod +x /usr/local/bin/run-app.sh
+  - /usr/local/bin/run-app.sh || true
