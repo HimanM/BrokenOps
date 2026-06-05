@@ -1,0 +1,24 @@
+id: swap-broken
+name: Swap File Not Persistent
+category: linux
+difficulty: beginner
+provider: libvirt
+vm:
+  name: swap-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A configured swap file works temporarily but disappears after a system reboot."
+  story: "A system administrator created a swap file to help with memory pressure. They turned it on, but users noticed it was gone after the next system restart. Find out why it did not persist and make it permanent."
+  objectives:
+    - Verify that the swap file exists on disk but is not active after a reboot
+    - Inspect /etc/fstab to identify missing or incorrect configurations
+    - Configure the swap file permanently and ensure it remains active
+tags:
+  - linux
+  - swap
+  - fstab
