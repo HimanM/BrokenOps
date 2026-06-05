@@ -26,8 +26,13 @@ fi
 # Ensure user is in libvirt group
 usermod -aG libvirt brokenops
 
-# Change ownership of /app to brokenops user (but skip venv if it exists)
-chown -R brokenops:brokenops /app
+# Change ownership of /app directory itself so SQLite can write
+chown brokenops:brokenops /app
+
+# Change ownership of DB if it exists
+if [ -f /app/brokenops.db ]; then
+    chown brokenops:brokenops /app/brokenops.db*
+fi
 
 # Ensure we have permissions to the parent data dir, though the user should own it
 # We won't chown /var/run/libvirt because we don't own it

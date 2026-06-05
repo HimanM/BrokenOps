@@ -17,7 +17,10 @@ app = FastAPI(title="BrokenOps Backend")
 
 # Initialize global components
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.join(BASE_DIR, "..")
+if os.path.exists(os.path.join(BASE_DIR, "data")):
+    PROJECT_ROOT = BASE_DIR
+else:
+    PROJECT_ROOT = os.path.join(BASE_DIR, "..")
 LABS_DIR = os.path.join(PROJECT_ROOT, "labs")
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 IMAGES_DIR = os.path.join(DATA_DIR, "images")
