@@ -3,8 +3,9 @@ import os
 import subprocess
 import asyncio
 import asyncssh
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from lab_parser import LabParser
@@ -15,6 +16,7 @@ from engine import LabEngine
 import time
 import glob
 from contextlib import asynccontextmanager
+import httpx
 
 LAB_TIMEOUT_SECONDS = 3600
 
@@ -429,6 +431,59 @@ async def verify_lab(lab_id: str):
             
             return {"score": score, "output": output}
             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.api_route("/labs/{lab_id}/proxy/{vm_port:int}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_to_vm(lab_id: str, vm_port: int, path: str, request: Request):
+    """Reverse proxy requests to VM exposed ports"""
+    try:
+        lab_config = parser.parse_lab(lab_id)
+        vm_name = lab_config["vm"]["name"]
+        exposed_ports = lab_config.get("exposed_ports", [])
+        
+        # Security check: only allow proxying to exposed ports
+        if vm_port not in exposed_ports:
+            raise HTTPException(status_code=403, detail=f"Port {vm_port} is not exposed by this lab")
+        
+        # Get VM IP and port mapping info
+        port_info = engine.get_vm_port_info(vm_name, vm_port)
+        if not port_info:
+            raise HTTPException(status_code=503, detail=f"Port {vm_port} not available. Lab may not be running.")
+        
+        vm_ip, host_port = port_info
+        
+        # Build target URL
+        target_url = f"http://{vm_ip}:{vm_port}/{path}"
+        if request.url.query:
+            target_url += f"?{request.url.query}"
+        
+        # Forward the request
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Get request body if present
+            body = await request.body()
+            
+            # Forward headers (exclude host)
+            headers = {k: v for k, v in request.headers.items() if k.lower() != 'host'}
+            
+            response = await client.request(
+                method=request.method,
+                url=target_url,
+                headers=headers,
+                content=body,
+                follow_redirects=False
+            )
+            
+            # Return proxied response
+            return StreamingResponse(
+                content=response.iter_bytes(),
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.headers.get('content-type')
+            )
+            
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"Failed to connect to VM service: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

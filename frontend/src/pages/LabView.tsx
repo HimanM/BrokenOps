@@ -282,9 +282,8 @@ export default function LabView() {
                 <div className="flex flex-wrap gap-3">
                   {lab.exposed_ports.map(vmPort => {
                     const hostPort = portMappings[vmPort];
-                    const accessUrl = hostPort 
-                      ? `http://${window.location.hostname}:${hostPort}`
-                      : `http://${vmIp}:${vmPort}`;
+                    // Use proxy endpoint for secure access without elevated privileges
+                    const accessUrl = `/api/labs/${labId}/proxy/${vmPort}/`;
                     
                     return (
                       <div key={vmPort} className="flex flex-col gap-2">
@@ -298,18 +297,16 @@ export default function LabView() {
                         </a>
                         {hostPort && (
                           <span className="text-xs text-slate-600 text-center">
-                            VM:{vmPort} → Host:{hostPort}
+                            Proxied via Backend
                           </span>
                         )}
                       </div>
                     );
                   })}
                 </div>
-                {Object.keys(portMappings).length > 0 && (
-                  <p className="text-xs text-slate-600 mt-3 mb-0">
-                    ✓ These services are accessible from any device on your network at <strong>{window.location.hostname}</strong>
-                  </p>
-                )}
+                <p className="text-xs text-slate-600 mt-3 mb-0">
+                  ✓ These services are accessible from any device via secure reverse proxy
+                </p>
               </div>
             )}
 

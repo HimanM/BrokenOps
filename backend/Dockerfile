@@ -8,12 +8,11 @@ RUN apt-get update && apt-get install -y \
     gosu \
     xorriso \
     genisoimage \
-    iptables \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 # Since we didn't have a requirements.txt before, we'll just pip install directly
-RUN pip install --no-cache-dir fastapi uvicorn pydantic pyyaml libvirt-python asyncssh websockets
+RUN pip install --no-cache-dir fastapi uvicorn pydantic pyyaml libvirt-python asyncssh websockets httpx
 
 COPY . .
 

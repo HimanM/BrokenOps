@@ -1,35 +1,35 @@
-# VM Port Forwarding Feature
+# VM Port Forwarding Feature (Reverse Proxy)
 
 ## Overview
-This feature enables remote access to ports exposed by lab VMs when BrokenOps is hosted on a network-accessible machine. Previously, VM ports (like nginx on port 80) were only accessible from the host machine. Now they can be accessed from any device on the network.
+This feature enables remote access to ports exposed by lab VMs when BrokenOps is hosted on a network-accessible machine. Previously, VM ports (like nginx on port 80) were only accessible from the host machine. Now they can be accessed from any device on the network through a secure reverse proxy.
 
 ## How It Works
 
-### 1. **Automatic Port Mapping**
+### 1. **Reverse Proxy Architecture**
+Instead of using iptables (which requires elevated privileges), the backend acts as a reverse proxy:
+- Client requests go to `/api/labs/{lab_id}/proxy/{vm_port}/...`
+- Backend forwards requests to the VM's internal IP
+- Response is streamed back to the client
+- **No elevated Docker capabilities required** (secure!)
+
+### 2. **Port Mapping Tracking**
 When a lab is launched with `exposed_ports` defined in `lab.yaml`, the system:
 - Detects the VM's IP address once it's provisioned
-- Finds available host ports (starting from 10000 + vm_port)
-- Sets up iptables rules to forward traffic from host ports to VM ports
+- Allocates host port numbers for reference (10000 + vm_port)
+- Tracks mappings in memory: `{vm_name: {vm_port: (vm_ip, host_port)}}`
+- Sets up proxy routes dynamically
 
-### 2. **iptables Port Forwarding**
-The system creates three iptables rules for each exposed port:
-- **PREROUTING** rule: Handles external traffic coming to the host
-- **OUTPUT** rule: Handles localhost traffic from the host itself
-- **FORWARD** rule: Allows forwarding packets to the VM
+### 3. **Security**
+- Only ports defined in `lab.yaml` can be accessed
+- Backend validates port access before proxying
+- No raw network access needed
+- Standard FastAPI request/response handling
 
-Example:
-```bash
-# Forward host:10080 -> VM:80
-iptables -t nat -A PREROUTING -p tcp --dport 10080 -j DNAT --to-destination 192.168.122.X:80
-iptables -t nat -A OUTPUT -p tcp --dport 10080 -j DNAT --to-destination 192.168.122.X:80
-iptables -A FORWARD -p tcp -d 192.168.122.X --dport 80 -j ACCEPT
-```
-
-### 3. **Automatic Cleanup**
+### 4. **Automatic Cleanup**
 When a lab is stopped or reset:
-- All iptables rules are removed
 - Port mappings are cleared from memory
-- Ports become available for other labs
+- No iptables rules to clean up
+- Simple and reliable
 
 ## Usage
 
@@ -47,10 +47,11 @@ exposed_ports:
 1. Launch a lab with exposed ports
 2. Wait for provisioning to complete
 3. See "Exposed Services" section in the UI with clickable links
-4. Access services from any device using: `http://<host-ip>:<mapped-port>`
+4. Access services via: `/api/labs/{lab_id}/proxy/{port}/`
+5. Works from any device - no special network configuration needed!
 
 ### API Response
-The `/labs/{lab_id}/status` endpoint now returns:
+The `/labs/{lab_id}/status` endpoint returns:
 
 ```json
 {
@@ -66,45 +67,74 @@ The `/labs/{lab_id}/status` endpoint now returns:
 }
 ```
 
+### Proxy Endpoint
+Access VM services via:
+```
+GET /api/labs/{lab_id}/proxy/{vm_port}/{path}
+```
+
+Examples:
+- `GET /api/labs/nginx-broken/proxy/80/` - Access nginx homepage
+- `GET /api/labs/nginx-broken/proxy/80/index.html` - Access specific file
+- `POST /api/labs/app-lab/proxy/3000/api/users` - POST to API endpoint
+
 ## Technical Details
 
 ### Backend Changes
 
 #### `engine.py`
-- Added `port_forwards` tracking dictionary
-- `_find_available_host_port()`: Finds free ports on the host
-- `_setup_port_forward()`: Creates iptables rules
-- `_remove_port_forward()`: Cleans up iptables rules
-- `setup_port_forwards()`: Main method to configure forwarding
-- `get_port_mappings()`: Returns current port mappings
+- Added `port_forwards` tracking dictionary: `{vm_name: {vm_port: (vm_ip, host_port)}}`
+- `_find_available_host_port()`: Finds free ports on the host (for reference)
+- `setup_port_forwards()`: Creates port mapping metadata
+- `get_port_mappings()`: Returns port mappings for UI
+- `get_vm_port_info()`: Returns VM IP and host port for proxy
 - Updated `launch_vm()` to accept `exposed_ports` parameter
-- Updated `stop_vm()` to clean up port forwards
+- Updated `stop_vm()` to clean up port mappings
 
 #### `main.py`
+- Added `httpx` for async HTTP client
+- New endpoint: `/labs/{lab_id}/proxy/{vm_port}/{path:path}`
+  - Supports all HTTP methods (GET, POST, PUT, DELETE, etc.)
+  - Validates port is in `exposed_ports`
+  - Forwards headers and body
+  - Streams response back to client
 - Modified `/labs/{lab_id}/launch` to pass `exposed_ports` to engine
 - Enhanced `/labs/{lab_id}/status` to:
   - Setup port forwards when VM becomes ready
   - Return port mappings, host IP, and hostname
-  - Include mappings in response
 
 ### Frontend Changes
 
 #### `LabView.tsx`
-- Added `PortMapping` and `LabStatus` interfaces
-- Track `portMappings`, `hostIp`, and `hostname` state
-- Display port mappings in "Exposed Services" section
-- Show VM port → Host port mapping for each service
-- Use `window.location.hostname` for accessible URLs
-- Clear port mappings on stop/reset
+- Links point to `/api/labs/{lab_id}/proxy/{vm_port}/`
+- Display shows "Proxied via Backend" instead of port numbers
+- Opens in new tab for easy testing
+- Works seamlessly from any network location
 
 ## Network Requirements
 
 ### Host Machine
 - Backend must run with `network_mode: "host"` (already configured)
-- Container requires `NET_ADMIN` and `NET_RAW` capabilities for iptables (configured in docker-compose.yml)
-- `iptables` must be installed in the backend container (added to Dockerfile)
-- Host must allow iptables modifications (requires elevated permissions)
-- Firewall must allow incoming connections on mapped ports (10000-65535 range)
+- **No elevated capabilities needed** ✅ (secure!)
+- **No iptables required** ✅
+- **No firewall configuration needed** ✅ (uses existing backend port)
+
+## Security Advantages
+
+### Compared to iptables approach:
+1. **No elevated privileges**: No `NET_ADMIN` or `NET_RAW` capabilities
+2. **Application-level control**: Full request/response inspection
+3. **Easy logging**: Can log all proxied requests
+4. **Rate limiting**: Can add rate limiting per lab/port
+5. **Authentication**: Can add auth checks before proxying
+6. **No host network pollution**: No iptables rules to manage
+
+### Current Security Features:
+- Port whitelist validation
+- Only lab-specific ports accessible
+- Standard HTTP security headers
+- Request timeout (30 seconds)
+- Automatic cleanup on lab stop
 
 ### Example Firewall Configuration
 ```bash
