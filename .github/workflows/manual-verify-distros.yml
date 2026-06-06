@@ -14,9 +14,9 @@ jobs:
           - distro: Ubuntu 24.04
             image_name: ubuntu-24.04-base.qcow2
             image_url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
-          - distro: Debian 12
-            image_name: debian-12-base.qcow2
-            image_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2
+          - distro: Arch Linux
+            image_name: arch-base.qcow2
+            image_url: https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2
           - distro: Fedora 40
             image_name: fedora-40-base.qcow2
             image_url: https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
