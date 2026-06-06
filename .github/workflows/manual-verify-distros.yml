@@ -5,66 +5,102 @@ on:
 
 jobs:
   verify:
-    name: Verify Deploy and Labs
+    name: Verify on ${{ matrix.distro }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: Ubuntu 24.04
+            nested: false
+          - distro: Arch Linux
+            nested: true
+            image_name: arch-base.qcow2
+            image_url: https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2
+          - distro: Fedora 40
+            nested: true
+            image_name: fedora-40-base.qcow2
+            image_url: https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Verify deploy.sh works non-interactively
+      - name: Install QEMU and dependencies on Host GHA Runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-kvm qemu-utils genisoimage netcat-openbsd
+
+      - name: Native Setup & Verification (Ubuntu)
+        if: ${{ !matrix.nested }}
         env:
           ASSUME_YES: "1"
         run: |
-          # Make deploy.sh executable
           chmod +x deploy.sh
-          # Run deploy.sh non-interactively
           ./deploy.sh
-
-      - name: Setup Host Traversal Permissions (GHA specific)
-        run: |
-          # Allow libvirt-qemu to traverse the runner's home directory
-          sudo chmod 755 /home/runner
-          sudo chmod 755 /home/runner/work
-          sudo chmod 755 /home/runner/work/BrokenOps
-
-      - name: Verify deploy.sh dry-run on Fedora (dnf)
-        run: |
-          docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace fedora:40 bash -c "
-            dnf install -y systemd && \
-            export DRY_RUN=1 && \
-            export ASSUME_YES=1 && \
-            ./deploy.sh
-          "
-
-      - name: Verify deploy.sh dry-run on Arch Linux (pacman)
-        run: |
-          docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace archlinux:latest bash -c "
-            pacman -Sy --noconfirm systemd && \
-            export DRY_RUN=1 && \
-            export ASSUME_YES=1 && \
-            ./deploy.sh
-          "
-
-      - name: Wait for API to be healthy
-        run: |
+          
+          # Setup traversal permissions
+          sudo chmod 755 /home/runner /home/runner/work /home/runner/work/BrokenOps
+          
+          # Wait for API to be healthy
           for i in {1..30}; do
             if curl -s http://localhost/api/labs > /dev/null; then
               echo "API is up!"
               break
             fi
-            echo "Waiting for API..."
             sleep 2
           done
 
-      - name: Install Python verification dependencies
-        run: |
+          # Install python dependencies and verify lab
           python -m pip install --upgrade pip
           pip install paramiko requests pyyaml
-
-      - name: Run verification for nginx-broken lab
-        run: |
-          # Since deploy.sh runs inside Docker container, let's fix permission on libvirt socket for host runner
           sudo chmod 666 /var/run/libvirt/libvirt-sock
-          # Verify the lab
           python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken
+
+      - name: Download Nested Host VM Base Image
+        if: ${{ matrix.nested }}
+        run: |
+          mkdir -p data/images
+          curl -L -o data/images/${{ matrix.image_name }} ${{ matrix.image_url }}
+
+      - name: Boot Nested Host VM and Copy Workspace
+        if: ${{ matrix.nested }}
+        run: |
+          chmod +x scripts/run_nested_host.sh
+          ./scripts/run_nested_host.sh ${{ matrix.distro }} data/images/${{ matrix.image_name }}
+
+      - name: Run deploy.sh and verification inside Nested VM
+        if: ${{ matrix.nested }}
+        run: |
+          # SSH commands to setup, deploy, and verify inside the nested VM
+          ssh -p 2222 -o StrictHostKeyChecking=no -i keys/id_ed25519 root@localhost "
+            set -e
+            echo '=== Installing Python dependencies in Guest ==='
+            if command -v dnf &> /dev/null; then
+              dnf install -y python3 python3-pip
+            elif command -v pacman &> /dev/null; then
+              pacman -Sy --noconfirm python python-pip
+            fi
+            pip install --upgrade pip
+            pip install paramiko requests pyyaml
+            
+            echo '=== Running deploy.sh inside Guest ==='
+            cd /workspace
+            export ASSUME_YES=1
+            chmod +x deploy.sh
+            ./deploy.sh
+            
+            echo '=== Waiting for API inside Guest ==='
+            for i in {1..30}; do
+              if curl -s http://localhost/api/labs > /dev/null; then
+                echo 'API is up!'
+                break
+              fi
+              sleep 2
+            done
+            
+            echo '=== Verifying lab inside Guest ==='
+            # Grant permission to libvirt socket in VM guest
+            sudo chmod 666 /var/run/libvirt/libvirt-sock
+            python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken
+          "
