@@ -1,0 +1,17 @@
+#cloud-config
+packages:
+  - docker.io
+
+runcmd:
+  - systemctl start docker
+  - systemctl enable docker
+  - mkdir -p /opt/app-data
+  - chown root:root /opt/app-data
+  - chmod 700 /opt/app-data
+  - |
+    docker run -d \
+      --name web-app \
+      --user 1000:1000 \
+      -v /opt/app-data:/data \
+      -p 8080:8080 \
+      python:3.11-slim sh -c "python3 -m http.server 8080 & while true; do if touch /data/heartbeat; then echo 'Write successful'; else echo 'Write failed: Permission denied'; fi; sleep 5; done"
