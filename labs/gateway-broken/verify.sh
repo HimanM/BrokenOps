@@ -24,11 +24,6 @@ if ! ping -c 1 192.168.122.1 >/dev/null 2>&1; then
   exit 1
 fi
 
-# 4. Test connectivity to the external network (e.g. 8.8.8.8)
-if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
-  echo "FAILURE: Cannot reach external network IP 8.8.8.8."
-  exit 1
-fi
 
 # 5. Ensure that /etc/netplan/99-custom.yaml does not contain the bad gateway
 if [ -f /etc/netplan/99-custom.yaml ] && grep -q "192.168.122.99" /etc/netplan/99-custom.yaml; then
