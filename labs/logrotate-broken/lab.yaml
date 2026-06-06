@@ -1,0 +1,13 @@
+id: "logrotate-broken"
+name: "Logrotate Misconfiguration"
+category: "linux"
+difficulty: "intermediate"
+description:
+  summary: "A log file grows without bound because a typo in the logrotate configuration file causes rotation to fail."
+vm:
+  name: "logrotate-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
