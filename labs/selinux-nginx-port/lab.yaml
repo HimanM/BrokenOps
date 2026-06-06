@@ -1,0 +1,28 @@
+id: selinux-nginx-port
+name: "SELinux Denies Nginx on Custom Port"
+category: web
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: selinux-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 8080
+description:
+  summary: "Nginx runs but the app is unreachable on port 8080 because the SELinux policy does not allow the HTTP service to bind to that custom port."
+  story: "A web developer changed the Nginx server configuration to listen on port 8080 instead of the default port 80. After doing so and restarting the service, Nginx fails to start due to permissions. Diagnose the issue using SELinux status and auditing logs, allow Nginx to bind to the custom port, and verify that Nginx successfully runs."
+  objectives:
+    - Investigate why Nginx is failing to start/bind to port 8080
+    - Find the SELinux audit logs or AVC denials
+    - Add port 8080 to the HTTP service allowed ports list in SELinux
+    - Restart Nginx and confirm it successfully serves requests on port 8080
+tags:
+  - selinux
+  - security
+  - nginx
+  - networking

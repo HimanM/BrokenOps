@@ -1,0 +1,134 @@
+#cloud-config
+packages:
+  - nginx
+  - curl
+
+write_files:
+  - path: /usr/sbin/sestatus
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      cat <<EOF
+      SELinux status:                 enabled
+      SELinuxfs mount:                /sys/fs/selinux
+      SELinux root directory:         /etc/selinux
+      Loaded policy name:             default
+      Current mode:                   enforcing
+      Mode from config file:          enforcing
+      Policy MLS status:              enabled
+      Policy deny_unknown status:     allowed
+      Memory protection checking:     actual (secure)
+      Max kernel policy version:      33
+      EOF
+
+  - path: /usr/sbin/getenforce
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      echo "Enforcing"
+
+  - path: /usr/sbin/semanage
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      mkdir -p /etc/selinux
+      cmd="$1"
+      subcmd="$2"
+      if [ "$cmd" = "port" ]; then
+        action=""
+        type=""
+        proto=""
+        port=""
+        shift 1
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            -a|--add) action="add"; shift ;;
+            -m|--modify) action="modify"; shift ;;
+            -d|--delete) action="delete"; shift ;;
+            -t|--type) type="$2"; shift 2 ;;
+            -p|--proto) proto="$2"; shift 2 ;;
+            -l|--list) action="list"; shift ;;
+            *)
+              if [[ "$1" =~ ^[0-9]+$ ]]; then
+                port="$1"
+              fi
+              shift
+              ;;
+          esac
+        done
+        if [ "$action" = "list" ]; then
+          echo "http_port_t                     tcp      80, 81, 443, 488, 8008, 8009, 8443"
+          if [ -f /etc/selinux/allowed_ports.txt ]; then
+            custom_ports=$(cat /etc/selinux/allowed_ports.txt | tr '\n' ',' | sed 's/,$//')
+            if [ -n "$custom_ports" ]; then
+              echo "http_port_t                     tcp      $custom_ports"
+            fi
+          fi
+          exit 0
+        fi
+        if [ "$action" = "add" ] || [ "$action" = "modify" ]; then
+          if [ "$type" != "http_port_t" ]; then
+            echo "Error: Type must be http_port_t for this operation."
+            exit 1
+          fi
+          if [ -z "$port" ]; then
+            echo "Error: Port must be specified."
+            exit 1
+          fi
+          if grep -Fxq "$port" /etc/selinux/allowed_ports.txt 2>/dev/null; then
+            if [ "$action" = "add" ]; then
+              echo "ValueError: Port tcp/$port already defined"
+              exit 1
+            fi
+          else
+            echo "$port" >> /etc/selinux/allowed_ports.txt
+          fi
+          exit 0
+        fi
+      fi
+      echo "Usage: semanage port {-a|-d|-m|-l} [-t type] [-p proto] [port]"
+      exit 1
+
+  - path: /usr/local/bin/check_nginx_selinux.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # Find the configured port in nginx configuration files
+      listen_port=$(grep -r -E '^\s*listen\s+' /etc/nginx/sites-enabled/ /etc/nginx/nginx.conf 2>/dev/null | grep -o -E '[0-9]+' | head -n1)
+      if [ -z "$listen_port" ]; then
+        listen_port=80
+      fi
+      # If the port is not allowed, simulate SELinux AVC denial and fail
+      if ! grep -Fxq "$listen_port" /etc/selinux/allowed_ports.txt 2>/dev/null; then
+        mkdir -p /var/log/audit
+        timestamp=$(date "+%s.%3N")
+        echo "type=AVC msg=audit($timestamp:123): avc:  denied  { name_bind } for  pid=1234 comm=\"nginx\" dest=$listen_port scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket permissive=0" >> /var/log/audit/audit.log
+        echo "nginx: [emerg] bind() to 0.0.0.0:$listen_port failed (13: Permission denied)" >&2
+        exit 1
+      fi
+      exit 0
+
+  - path: /etc/systemd/system/nginx.service.d/override.conf
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Service]
+      ExecStartPre=/usr/local/bin/check_nginx_selinux.sh
+
+runcmd:
+  # 1. Initialize allowed ports list with defaults
+  - mkdir -p /etc/selinux
+  - echo "80" > /etc/selinux/allowed_ports.txt
+  - echo "81" >> /etc/selinux/allowed_ports.txt
+  - echo "443" >> /etc/selinux/allowed_ports.txt
+  # 2. Configure nginx to listen on port 8080 instead of 80
+  - sed -i 's/listen 80 default_server;/listen 8080 default_server;/g' /etc/nginx/sites-available/default
+  - sed -i 's/listen \[::\]:80 default_server;/listen \[::\]:8080 default_server;/g' /etc/nginx/sites-available/default
+  # 3. Reload systemd daemon to pick up the override
+  - systemctl daemon-reload
+  # 4. Attempt to start nginx (which will fail due to the custom port not being allowed in allowed_ports.txt)
+  - systemctl restart nginx || true
