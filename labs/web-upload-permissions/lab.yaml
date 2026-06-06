@@ -1,0 +1,16 @@
+id: "web-upload-permissions"
+name: "Web Upload Directory Permissions"
+category: "web"
+difficulty: "intermediate"
+description:
+  summary: "A web application upload feature fails with permission errors because the target upload directory is not writable by the web server user."
+vm:
+  name: "upload-perm-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
+exposed_ports:
+  - 80
+port_works_initially: true
