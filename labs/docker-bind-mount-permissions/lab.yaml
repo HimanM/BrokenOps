@@ -13,3 +13,4 @@ cloud_init: "cloud-init.yaml"
 verify_script: "verify.sh"
 exposed_ports:
   - 8080
+port_works_initially: true
