@@ -486,7 +486,7 @@ async def proxy_to_vm(lab_id: str, vm_port: int, path: str, request: Request):
             )
             
     except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"Failed to connect to VM service: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"Cannot connect to VM service on port {vm_port}. The service may not be running. Error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
