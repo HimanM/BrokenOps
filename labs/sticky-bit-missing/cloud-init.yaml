@@ -1,0 +1,13 @@
+#cloud-config
+users:
+  - name: alice
+    shell: /bin/bash
+  - name: bob
+    shell: /bin/bash
+
+runcmd:
+  - mkdir -p /shared/tmp
+  - chmod 0777 /shared/tmp
+  - touch /shared/tmp/alice_secret.txt
+  - chown alice:alice /shared/tmp/alice_secret.txt
+  - chmod 0644 /shared/tmp/alice_secret.txt
