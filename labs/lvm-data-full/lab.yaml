@@ -1,0 +1,25 @@
+id: lvm-data-full
+name: "LVM Data Volume Full"
+category: linux
+difficulty: advanced
+provider: libvirt
+vm:
+  name: lvm-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "An application directory /data is full (100% disk usage), even though the underlying LVM Volume Group has plenty of free space. Extend the Logical Volume and resize the filesystem online to solve it."
+  story: "A critical database application starts reporting errors because it cannot write data. Checking disk usage shows that `/data` is 100% full. However, the system administrator states that the underlying LVM Volume Group still has plenty of free space. Investigate the LVM setup, extend the logical volume to utilize the free space, and resize the filesystem online."
+  objectives:
+    - Identify the LVM configuration and verify free VG space
+    - Extend the lv_data logical volume
+    - Resize the ext4 filesystem online to reflect the new size
+    - Ensure /data has at least 500MB of free space
+tags:
+  - storage
+  - lvm
+  - linux
