@@ -1,0 +1,64 @@
+#cloud-config
+packages:
+  - nginx
+  - php-fpm
+  - curl
+
+write_files:
+  - path: /var/www/html/index.php
+    owner: www-data:www-data
+    permissions: '0644'
+    content: |
+      <?php
+      if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+          if (isset($_FILES['file'])) {
+              $target = "/var/www/html/uploads/" . basename($_FILES['file']['name']);
+              if (move_uploaded_file($_FILES['file']['tmp_name'], $target)) {
+                  echo "UPLOAD_SUCCESS";
+              } else {
+                  echo "UPLOAD_FAILED";
+              }
+          } else {
+              echo "NO_FILE";
+          }
+          exit;
+      }
+      ?>
+      <!DOCTYPE html>
+      <html>
+      <head><title>File Upload</title></head>
+      <body>
+      <form action="" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Upload">
+      </form>
+      </body>
+      </html>
+
+runcmd:
+  - mkdir -p /var/www/html/uploads
+  - chown root:root /var/www/html/uploads
+  - chmod 755 /var/www/html/uploads
+  - |
+    cat << 'EOF' > /etc/nginx/sites-available/default
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        index index.php index.html index.htm;
+
+        server_name _;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        }
+    }
+    EOF
+  - systemctl restart php8.3-fpm || true
+  - systemctl restart nginx || true
