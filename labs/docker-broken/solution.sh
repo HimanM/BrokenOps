@@ -1,3 +1,4 @@
 #!/bin/bash
-sed -i '/"bip"/d' /etc/docker/daemon.json
-systemctl restart docker
+sed -i 's/"log-level": "warn"/"log-level": "warn",/' /etc/docker/daemon.json
+systemctl reset-failed docker
+systemctl start docker

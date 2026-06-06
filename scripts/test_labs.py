@@ -53,7 +53,7 @@ def upload_and_run(ip, username, key_filename, local_script, remote_script):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--key", required=True, help="Path to SSH private key")
-    parser.add_argument("--labs", help="Comma-separated list of lab IDs to test")
+    parser.add_argument("--labs", help="Comma-separated list of specific lab IDs to test")
     args = parser.parse_args()
 
     # Ensure key has correct permissions (600) so SSH doesn't reject it
@@ -73,7 +73,7 @@ def main():
     
     if args.labs:
         target_labs = args.labs.split(',')
-        labs = [lab for lab in labs if lab['id'] in target_labs]
+        labs = [lab for lab in labs if lab["id"] in target_labs]
         if not labs:
             print(f"None of the target labs ({args.labs}) were found in the API.")
             sys.exit(0)
@@ -111,14 +111,18 @@ def main():
             all_passed = False
             continue
 
-        # Wait for IP
+        # Wait for VM to be up
         ip = None
         for _ in range(30):
-            status_resp = requests.get(f"{API_URL}/labs/{lab_id}/status")
-            status_data = status_resp.json()
-            if status_data.get("status") == "running" and status_data.get("ip"):
-                ip = status_data["ip"]
-                break
+            try:
+                status_resp = requests.get(f"{API_URL}/labs/{lab_id}/status")
+                if status_resp.status_code == 200:
+                    status_data = status_resp.json()
+                    if status_data.get("status") == "running":
+                        ip = status_data.get("ip")
+                        break
+            except Exception as e:
+                pass # Ignore transient connection errors
             time.sleep(2)
 
         if not ip:
@@ -229,7 +233,7 @@ def main():
             all_passed = False
         finally:
             print(f"🛑 Stopping VM...")
-            requests.post(f"{API_URL}/labs/{lab_id}/stop")
+            requests.delete(f"{API_URL}/labs/{lab_id}/stop")
 
     if not all_passed:
         print("\n❌ Some labs failed verification.")

@@ -1,3 +1,4 @@
 #!/bin/bash
-sed -i 's/bind 256.256.256.256/bind 127.0.0.1 ::1/' /etc/redis/redis.conf
+sed -i 's/bind 256.256.256.256/bind 0.0.0.0/' /etc/redis/redis.conf
+systemctl reset-failed redis-server.service
 systemctl restart redis-server
