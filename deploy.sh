@@ -45,8 +45,12 @@ fi
 
 if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
     echo -e "${YELLOW}Missing required host dependencies: ${MISSING_DEPS[*]}${NC}"
-    read -p "Would you like to install them now? (requires sudo) [Y/n] " -n 1 -r
-    echo
+    if [ "$ASSUME_YES" = "1" ]; then
+        REPLY="y"
+    else
+        read -p "Would you like to install them now? (requires sudo) [Y/n] " -n 1 -r
+        echo
+    fi
     if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
         if command -v apt-get &> /dev/null; then
             $SUDO apt-get update
@@ -122,8 +126,12 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
 fi
 
 # 2. Get Port configuration
-read -p "Which port should the BrokenOps UI run on? [default: 80]: " FRONTEND_PORT
-FRONTEND_PORT=${FRONTEND_PORT:-80}
+if [ "$ASSUME_YES" = "1" ]; then
+    FRONTEND_PORT=${FRONTEND_PORT:-80}
+else
+    read -p "Which port should the BrokenOps UI run on? [default: 80]: " FRONTEND_PORT
+    FRONTEND_PORT=${FRONTEND_PORT:-80}
+fi
 
 # 3. Get Host UID/GID for strict permissions
 HOST_UID=$(id -u)

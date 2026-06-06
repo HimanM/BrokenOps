@@ -26,11 +26,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify deploy.sh works non-interactively
+        env:
+          ASSUME_YES: "1"
         run: |
           # Make deploy.sh executable
           chmod +x deploy.sh
-          # Run deploy.sh passing default configuration choices non-interactively
-          echo "80" | ./deploy.sh
+          # Run deploy.sh non-interactively
+          ./deploy.sh
 
       - name: Setup Host Traversal Permissions (GHA specific)
         run: |
@@ -66,7 +68,8 @@ jobs:
           docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace fedora:40 bash -c "
             dnf install -y systemd && \
             export DRY_RUN=1 && \
-            echo '80' | ./deploy.sh
+            export ASSUME_YES=1 && \
+            ./deploy.sh
           "
 
       - name: Verify deploy.sh dry-run on Arch Linux (pacman)
@@ -75,7 +78,8 @@ jobs:
           docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace archlinux:latest bash -c "
             pacman -Sy --noconfirm systemd && \
             export DRY_RUN=1 && \
-            echo '80' | ./deploy.sh
+            export ASSUME_YES=1 && \
+            ./deploy.sh
           "
 
       - name: Wait for API to be healthy
