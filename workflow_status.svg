@@ -11,11 +11,11 @@
 </style>
 <rect class="bg" width="880" height="285" rx="10" ry="10"/>
 <text x="25" y="35" class="text title">Workflow Execution Report</text>
-<text x="25" y="55" class="text subtitle">Commit: efeea1b • Triggered: 2026-06-05 21:05:46</text>
+<text x="25" y="55" class="text subtitle">Commit: 1c126c5 • Triggered: 2026-06-06 10:00:49</text>
 <rect x="20" y="70" width="840" height="55" class="card" />
 <circle cx="35" cy="95" r="6" fill="#238636" />
 <text x="50" y="95" class="text wf-name">Remove Solutions on Main</text>
-<text x="50" y="112" class="text timestamp">2026-06-05 21:05:30 • trigger: push</text>
+<text x="50" y="112" class="text timestamp">2026-06-06 10:00:40 • trigger: push</text>
 <clipPath id="pill-clip-0"><rect x="685" y="105" width="160" height="8" rx="4" ry="4" /></clipPath>
 <g clip-path="url(#pill-clip-0)">
 <rect x="685" y="105" width="160" height="8" fill="#ebecf0" />
@@ -29,13 +29,13 @@
 <line x1="813.0" y1="105" x2="813.0" y2="113" stroke="#ffffff" stroke-width="1.5" />
 <rect x="813.0" y="105" width="32.0" height="8" fill="#238636" />
 </g>
-<text x="845" y="95" class="text wf-meta" fill="#238636">SUCCESS (9s)</text>
+<text x="845" y="95" class="text wf-meta" fill="#238636">SUCCESS (8s)</text>
 <rect x="20" y="135" width="840" height="55" class="card" />
-<circle cx="35" cy="160" r="6" fill="#6e7681" />
+<circle cx="35" cy="160" r="6" fill="#238636" />
 <text x="50" y="160" class="text wf-name">CI Verify Labs</text>
-<text x="50" y="177" class="text timestamp">2026-06-05 21:07:05 • prev trigger: pull_request</text>
-<rect x="685" y="170" width="160" height="8" rx="4" ry="4" fill="#6e7681" />
-<text x="845" y="160" class="text wf-meta" fill="#6e7681">SKIPPED/NOT RUN (Last: 2s)</text>
+<text x="50" y="177" class="text timestamp">2026-06-06 09:14:46 • prev trigger: pull_request</text>
+<rect x="685" y="170" width="160" height="8" rx="4" ry="4" fill="#238636" />
+<text x="845" y="160" class="text wf-meta" fill="#238636">SUCCESS (Last: 137s)</text>
 <rect x="20" y="200" width="840" height="55" class="card" />
 <circle cx="35" cy="225" r="6" fill="#238636" />
 <text x="50" y="225" class="text wf-name">Manual Pre-Release</text>
