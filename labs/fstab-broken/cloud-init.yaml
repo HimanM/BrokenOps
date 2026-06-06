@@ -1,0 +1,9 @@
+#cloud-config
+runcmd:
+  - dd if=/dev/zero of=/opt/data.img bs=1M count=50
+  - mkfs.ext4 /opt/data.img
+  - mkdir -p /mnt/data
+  - mount -o loop /opt/data.img /mnt/data
+  - echo "Volume mounted successfully!" > /mnt/data/active.txt
+  - umount /mnt/data
+  - echo "UUID=12345678-abcd-ef01-2345-6789abcdef01 /mnt/data ext4 defaults,nofail 0 2" >> /etc/fstab
