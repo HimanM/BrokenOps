@@ -1,0 +1,93 @@
+name: Manual Distro Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Verify on ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: Ubuntu 24.04
+            image_name: ubuntu-24.04-base.qcow2
+            image_url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+          - distro: Debian 12
+            image_name: debian-12-base.qcow2
+            image_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2
+          - distro: Fedora 40
+            image_name: fedora-40-base.qcow2
+            image_url: https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install KVM, libvirt and QEMU utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils genisoimage xorriso qemu-utils
+          sudo systemctl enable --now libvirtd
+          sudo usermod -aG libvirt $USER
+          sudo usermod -aG kvm $USER
+
+      - name: Setup SSH Keys
+        run: |
+          mkdir -p keys
+          ssh-keygen -t ed25519 -f keys/id_ed25519 -N ""
+          chmod 600 keys/id_ed25519
+          chmod 644 keys/id_ed25519.pub
+          
+          # Allow libvirt-qemu to traverse the runner's home directory
+          sudo chmod 755 /home/runner
+          sudo chmod 755 /home/runner/work
+          sudo chmod 755 /home/runner/work/BrokenOps
+
+      - name: Download Distro Base Image
+        run: |
+          mkdir -p data/images
+          curl -L -o data/images/${{ matrix.image_name }} ${{ matrix.image_url }}
+
+      - name: Modify lab.yaml to target matrix distro
+        run: |
+          python -m pip install PyYAML
+          python -c "
+          import yaml
+          with open('labs/nginx-broken/lab.yaml', 'r') as f:
+              data = yaml.safe_load(f)
+          data['vm']['image'] = '${{ matrix.image_name }}'
+          with open('labs/nginx-broken/lab.yaml', 'w') as f:
+              yaml.dump(data, f)
+          "
+
+      - name: Verify deploy.sh works non-interactively
+        run: |
+          # Make deploy.sh executable
+          chmod +x deploy.sh
+          # Run deploy.sh passing default configuration choices non-interactively
+          echo "80" | ./deploy.sh
+
+      - name: Wait for API to be healthy
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost/api/labs > /dev/null; then
+              echo "API is up!"
+              break
+            fi
+            echo "Waiting for API..."
+            sleep 2
+          done
+
+      - name: Install Python verification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install paramiko requests pyyaml
+
+      - name: Run verification for nginx-broken lab
+        run: |
+          # Since deploy.sh runs inside Docker container, let's fix permission on libvirt socket for host runner
+          sudo chmod 666 /var/run/libvirt/libvirt-sock
+          # Verify the lab
+          python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken

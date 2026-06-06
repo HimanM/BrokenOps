@@ -91,10 +91,12 @@ def main():
         print(f"======================================")
 
         solution_path = os.path.join("labs", lab_id, "solution.sh")
+        if not os.path.exists(solution_path):
+            solution_path = os.path.join("labs", lab_id, "solution.sh.special")
         verify_path = os.path.join("labs", lab_id, "verify.sh")
 
         if not os.path.exists(solution_path):
-            print(f"❌ Missing mandatory solution.sh for lab {lab_id}")
+            print(f"❌ Missing mandatory solution.sh/solution.sh.special for lab {lab_id}")
             all_passed = False
             continue
 

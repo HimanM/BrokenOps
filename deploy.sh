@@ -36,8 +36,49 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
     read -p "Would you like to install them now? (requires sudo) [Y/n] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
-        sudo apt-get update
-        sudo apt-get install -y "${MISSING_DEPS[@]}"
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y "${MISSING_DEPS[@]}"
+        elif command -v dnf &> /dev/null; then
+            DEPS_TO_INSTALL=()
+            for dep in "${MISSING_DEPS[@]}"; do
+                if [ "$dep" = "qemu-utils" ]; then
+                    DEPS_TO_INSTALL+=("qemu-img")
+                elif [ "$dep" = "libvirt-daemon-system" ]; then
+                    DEPS_TO_INSTALL+=("libvirt")
+                else
+                    DEPS_TO_INSTALL+=("$dep")
+                fi
+            done
+            sudo dnf install -y "${DEPS_TO_INSTALL[@]}"
+        elif command -v pacman &> /dev/null; then
+            DEPS_TO_INSTALL=()
+            for dep in "${MISSING_DEPS[@]}"; do
+                if [ "$dep" = "qemu-utils" ]; then
+                    DEPS_TO_INSTALL+=("qemu-base")
+                elif [ "$dep" = "libvirt-daemon-system" ]; then
+                    DEPS_TO_INSTALL+=("libvirt")
+                else
+                    DEPS_TO_INSTALL+=("$dep")
+                fi
+            done
+            sudo pacman -Sy --noconfirm "${DEPS_TO_INSTALL[@]}"
+        elif command -v apk &> /dev/null; then
+            DEPS_TO_INSTALL=()
+            for dep in "${MISSING_DEPS[@]}"; do
+                if [ "$dep" = "qemu-utils" ]; then
+                    DEPS_TO_INSTALL+=("qemu-img")
+                elif [ "$dep" = "libvirt-daemon-system" ]; then
+                    DEPS_TO_INSTALL+=("libvirt")
+                else
+                    DEPS_TO_INSTALL+=("$dep")
+                fi
+            done
+            sudo apk add "${DEPS_TO_INSTALL[@]}"
+        else
+            echo -e "${RED}Unsupported package manager. Please install dependencies manually: ${MISSING_DEPS[*]}${NC}"
+            exit 1
+        fi
     else
         echo -e "${RED}Cannot proceed without dependencies. Exiting.${NC}"
         exit 1

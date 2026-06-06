@@ -138,7 +138,8 @@ def launch_lab(lab_id: str):
         disk_size = str(lab_config["vm"]["disk"])
         
         # Paths
-        base_image_path = os.path.join(IMAGES_DIR, "ubuntu-24.04-base.qcow2")
+        image_name = lab_config["vm"].get("image", "ubuntu-24.04-base.qcow2")
+        base_image_path = os.path.join(IMAGES_DIR, image_name)
         overlay_path = os.path.join(VMS_DIR, f"{vm_name}-overlay.qcow2")
         cloud_init_yaml_path = os.path.join(LABS_DIR, lab_id, lab_config["cloud_init"])
         
