@@ -98,7 +98,7 @@ write_files:
     content: |
       #!/bin/bash
       # Find the configured port in nginx configuration files
-      listen_port=$(grep -r -E '^\s*listen\s+' /etc/nginx/sites-enabled/ /etc/nginx/nginx.conf 2>/dev/null | grep -o -E '[0-9]+' | head -n1)
+      listen_port=$(grep -R -E '^\s*listen\s+' /etc/nginx/sites-enabled/ /etc/nginx/nginx.conf 2>/dev/null | grep -o -E '[0-9]+' | head -n1)
       if [ -z "$listen_port" ]; then
         listen_port=80
       fi

@@ -39,7 +39,9 @@ The developer created a `/etc/docker/daemon.json` file to configure Docker, but 
    ```
 
 4. **Start the Docker service**:
+   If the service hit start rate-limits from continuously failing, you may need to reset its failed status first:
    ```bash
+   systemctl reset-failed docker
    systemctl start docker
    ```
 

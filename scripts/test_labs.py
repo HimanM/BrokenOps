@@ -5,6 +5,7 @@ import requests
 import paramiko
 import argparse
 import socket
+import yaml
 
 API_URL = "http://localhost/api"
 
@@ -52,7 +53,7 @@ def upload_and_run(ip, username, key_filename, local_script, remote_script):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--key", required=True, help="Path to SSH private key")
-    parser.add_argument("--labs", help="Comma-separated list of lab IDs to test")
+    parser.add_argument("--labs", help="Comma-separated list of specific lab IDs to test")
     args = parser.parse_args()
 
     # Ensure key has correct permissions (600) so SSH doesn't reject it
@@ -72,7 +73,7 @@ def main():
     
     if args.labs:
         target_labs = args.labs.split(',')
-        labs = [lab for lab in labs if lab['id'] in target_labs]
+        labs = [lab for lab in labs if lab["id"] in target_labs]
         if not labs:
             print(f"None of the target labs ({args.labs}) were found in the API.")
             sys.exit(0)
@@ -110,26 +111,30 @@ def main():
             all_passed = False
             continue
 
-        # Wait for IP
+        # Wait for VM to be up
         ip = None
         for _ in range(30):
-            status_resp = requests.get(f"{API_URL}/labs/{lab_id}/status")
-            status_data = status_resp.json()
-            if status_data.get("status") == "running" and status_data.get("ip"):
-                ip = status_data["ip"]
-                break
+            try:
+                status_resp = requests.get(f"{API_URL}/labs/{lab_id}/status")
+                if status_resp.status_code == 200:
+                    status_data = status_resp.json()
+                    if status_data.get("status") == "running":
+                        ip = status_data.get("ip")
+                        break
+            except Exception as e:
+                pass # Ignore transient connection errors
             time.sleep(2)
 
         if not ip:
             print(f"❌ VM did not get an IP in time.")
-            requests.post(f"{API_URL}/labs/{lab_id}/stop")
+            requests.delete(f"{API_URL}/labs/{lab_id}/stop")
             all_passed = False
             continue
 
         print(f"🌐 VM is up at {ip}. Waiting for SSH...")
         if not check_ssh_ready(ip):
             print(f"❌ SSH never became ready.")
-            requests.post(f"{API_URL}/labs/{lab_id}/stop")
+            requests.delete(f"{API_URL}/labs/{lab_id}/stop")
             all_passed = False
             continue
             
@@ -139,6 +144,49 @@ def main():
             print(f"⚠️ Warning: cloud-init wait returned exit code {code}")
             
         try:
+            print("🔍 Running verify.sh (Initial check to ensure lab is broken)...")
+            code, out, err = upload_and_run(ip, "root", args.key, verify_path, "/tmp/verify.sh")
+            if code == 0:
+                print(f"❌ verify.sh unexpectedly passed before running the solution! The lab might not be properly broken.")
+                print(f"Stdout: {out}\nStderr: {err}")
+                all_passed = False
+                continue
+                
+            print("✅ Initial verify.sh failed as expected (Lab is properly broken).")
+
+            with open(os.path.join("labs", lab_id, "lab.yaml"), "r") as f:
+                lab_yaml = yaml.safe_load(f)
+                exposed_ports = lab_yaml.get("exposed_ports", [])
+                port_works_initially = lab_yaml.get("port_works_initially", False)
+
+            # For labs with exposed ports, ensure they are in the expected initial state
+            for port in exposed_ports:
+                print(f"📡 Testing exposed port {port} via backend proxy API to check initial state...")
+                try:
+                    proxy_resp = requests.get(f"{API_URL}/labs/{lab_id}/proxy/{port}", allow_redirects=False, timeout=10)
+                    is_200 = proxy_resp.status_code == 200
+                    
+                    if port_works_initially:
+                        if not is_200:
+                            print(f"❌ Proxy unexpectedly returned {proxy_resp.status_code} for port {port}! It was expected to return 200 initially.")
+                            all_passed = False
+                            continue
+                        else:
+                            print(f"✅ Initial proxy check returned 200 OK as expected.")
+                    else:
+                        if is_200:
+                            print(f"❌ Proxy unexpectedly reached port {port} and returned 200 OK before the solution! The port is not properly broken.")
+                            all_passed = False
+                            continue
+                        else:
+                            print(f"✅ Initial proxy check returned {proxy_resp.status_code} (Port is restricted/broken as expected).")
+                except Exception as e:
+                    if port_works_initially:
+                        print(f"❌ Failed to reach proxy API (Error: {e}). Expected port to work initially!")
+                        all_passed = False
+                    else:
+                        print(f"✅ Failed to reach proxy API (Error: {e}). This is expected for a broken lab.")
+
             print("🔧 Running solution.sh...")
             code, out, err = upload_and_run(ip, "root", args.key, solution_path, "/tmp/solution.sh")
             if code != 0:
@@ -159,12 +207,33 @@ def main():
                 
             print("✅ verify.sh passed successfully.")
 
+            # Check exposed ports via proxy API
+            with open(os.path.join("labs", lab_id, "lab.yaml"), "r") as f:
+                lab_yaml = yaml.safe_load(f)
+                exposed_ports = lab_yaml.get("exposed_ports", [])
+            
+            for port in exposed_ports:
+                print(f"📡 Testing exposed port {port} via backend proxy API...")
+                try:
+                    proxy_resp = requests.get(f"{API_URL}/labs/{lab_id}/proxy/{port}", allow_redirects=False, timeout=10)
+                    if proxy_resp.status_code == 502:
+                        print(f"❌ Proxy returned 502 Bad Gateway for port {port}. The service inside the VM might not be listening on this port.")
+                        all_passed = False
+                    elif proxy_resp.status_code in [302, 307] and proxy_resp.headers.get("location") == "/404":
+                        print(f"❌ Proxy redirected to /404 for port {port}. This port is either not configured correctly in lab.yaml or the VM is down.")
+                        all_passed = False
+                    else:
+                        print(f"✅ Proxy successfully reached port {port} inside the VM (Status {proxy_resp.status_code}).")
+                except Exception as e:
+                    print(f"❌ Failed to reach proxy API for port {port}: {e}")
+                    all_passed = False
+
         except Exception as e:
             print(f"❌ Error during SSH execution: {e}")
             all_passed = False
         finally:
             print(f"🛑 Stopping VM...")
-            requests.post(f"{API_URL}/labs/{lab_id}/stop")
+            requests.delete(f"{API_URL}/labs/{lab_id}/stop")
 
     if not all_passed:
         print("\n❌ Some labs failed verification.")

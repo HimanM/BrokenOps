@@ -181,7 +181,7 @@ runcmd:
   - echo "/var/www/html/index.html unconfined_u:object_r:admin_home_t:s0" > /etc/selinux/file_contexts.txt
   # 2. Configure index.html with restricted permissions (chmod 600) to simulate SELinux 403 denial
   - echo "SELinux Web Root Lab Success!" > /var/www/html/index.html
-  - chown www-data:www-data /var/www/html/index.html
+  - chown root:root /var/www/html/index.html
   - chmod 600 /var/www/html/index.html
   # 3. Write realistic AVC denial log to audit.log
   - mkdir -p /var/log/audit

@@ -7,5 +7,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Check if redis is responding to ping
+if ! redis-cli ping | grep -q PONG; then
+  echo "FAILURE: The redis-server is running but not responding to ping. Did you restore the correct bind address?"
+  exit 1
+fi
+
 echo "SUCCESS: The redis-server service is running!"
 exit 0
