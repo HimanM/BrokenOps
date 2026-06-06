@@ -61,6 +61,7 @@ jobs:
 
 
       - name: Verify deploy.sh dry-run on Fedora (dnf)
+        if: matrix.distro == 'Fedora 40'
         run: |
           docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace fedora:40 bash -c "
             dnf install -y systemd && \
@@ -69,6 +70,7 @@ jobs:
           "
 
       - name: Verify deploy.sh dry-run on Arch Linux (pacman)
+        if: matrix.distro == 'Arch Linux'
         run: |
           docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace archlinux:latest bash -c "
             pacman -Sy --noconfirm systemd && \
