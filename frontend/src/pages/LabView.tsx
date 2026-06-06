@@ -42,8 +42,6 @@ export default function LabView() {
   const [vmIp, setVmIp] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [portMappings, setPortMappings] = useState<PortMapping>({});
-  const [hostIp, setHostIp] = useState<string>('');
-  const [hostname, setHostname] = useState<string>('');
   
   // Verify state
   const [verifyResult, setVerifyResult] = useState<{score: string, output: string} | null>(null);
@@ -81,12 +79,6 @@ export default function LabView() {
           setVmIp(data.ip);
           if (data.port_mappings) {
             setPortMappings(data.port_mappings);
-          }
-          if (data.host_ip) {
-            setHostIp(data.host_ip);
-          }
-          if (data.hostname) {
-            setHostname(data.hostname);
           }
           if (data.status === 'running') {
             setProvisioningStatus('ready');
