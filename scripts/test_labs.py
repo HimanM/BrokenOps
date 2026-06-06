@@ -139,6 +139,16 @@ def main():
             print(f"⚠️ Warning: cloud-init wait returned exit code {code}")
             
         try:
+            print("🔍 Running verify.sh (Initial check to ensure lab is broken)...")
+            code, out, err = upload_and_run(ip, "root", args.key, verify_path, "/tmp/verify.sh")
+            if code == 0:
+                print(f"❌ verify.sh unexpectedly passed before running the solution! The lab might not be properly broken.")
+                print(f"Stdout: {out}\nStderr: {err}")
+                all_passed = False
+                continue
+                
+            print("✅ Initial verify.sh failed as expected (Lab is properly broken).")
+
             print("🔧 Running solution.sh...")
             code, out, err = upload_and_run(ip, "root", args.key, solution_path, "/tmp/solution.sh")
             if code != 0:
