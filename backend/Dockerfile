@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     gosu \
     xorriso \
     genisoimage \
+    iptables \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

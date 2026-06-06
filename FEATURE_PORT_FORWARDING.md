@@ -101,6 +101,8 @@ The `/labs/{lab_id}/status` endpoint now returns:
 
 ### Host Machine
 - Backend must run with `network_mode: "host"` (already configured)
+- Container requires `NET_ADMIN` and `NET_RAW` capabilities for iptables (configured in docker-compose.yml)
+- `iptables` must be installed in the backend container (added to Dockerfile)
 - Host must allow iptables modifications (requires elevated permissions)
 - Firewall must allow incoming connections on mapped ports (10000-65535 range)
 
