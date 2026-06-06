@@ -122,6 +122,12 @@ class LabEngine:
             return None
         try:
             dom = self.conn.lookupByName(name)
+            
+            # Check if VM is actually running
+            if not dom.isActive():
+                print(f"VM {name} is not active")
+                return None
+            
             # Fetch DHCP leases from the default network interface
             ifaces = dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE, 0)
             if ifaces:
@@ -152,13 +158,18 @@ class LabEngine:
             if name in self.port_forwards:
                 del self.port_forwards[name]
             
-            dom = self.conn.lookupByName(name)
-            if dom.isActive():
-                dom.destroy() # Forcefully shutdown
-            dom.undefine() # Remove definition
+            try:
+                dom = self.conn.lookupByName(name)
+                if dom.isActive():
+                    dom.destroy() # Forcefully shutdown
+                dom.undefine() # Remove definition
+            except libvirt.libvirtError as e:
+                # VM might already be gone, that's ok
+                print(f"VM {name} might already be stopped: {e}")
+            
             return True
-        except libvirt.libvirtError as e:
-            print(f"Failed to stop VM {name}: {e}")
+        except Exception as e:
+            print(f"Error during VM stop: {e}")
             return False
 
     def close(self):

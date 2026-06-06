@@ -262,6 +262,14 @@ async def lab_status(lab_id: str):
         
         vm_ip = engine.get_vm_ip(vm_name)
         if not vm_ip:
+            # Clean up ready file if VM stopped unexpectedly
+            ready_file = os.path.join(PROJECT_ROOT, "data", "vms", f"{lab_id}.ready")
+            if os.path.exists(ready_file):
+                try:
+                    os.remove(ready_file)
+                    print(f"Cleaned up ready file for stopped VM: {lab_id}")
+                except Exception:
+                    pass
             return {"status": "stopped", "ip": None, "port_mappings": {}}
             
         # We have an IP, check if cloud-init is done
@@ -306,8 +314,9 @@ async def lab_status(lab_id: str):
                         "host_ip": host_ip,
                         "hostname": hostname
                     }
-        except Exception:
-            # SSH not ready yet
+        except Exception as e:
+            # SSH not ready yet (or connection failed)
+            print(f"SSH connection to {vm_ip} failed: {e}")
             return {"status": "provisioning", "ip": vm_ip, "port_mappings": {}}
             
     except Exception as e:
