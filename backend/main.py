@@ -275,6 +275,7 @@ async def lab_status(lab_id: str):
         # We have an IP, check if cloud-init is done
         ssh_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
         try:
+            print(f"Attempting SSH connection to {vm_ip}...")
             async with asyncssh.connect(vm_ip, username="root", client_keys=[ssh_key_path], known_hosts=None, connect_timeout=1) as conn:
                 result = await conn.run("cloud-init status", check=False)
                 if "status: running" in str(result.stdout):
@@ -301,18 +302,11 @@ async def lab_status(lab_id: str):
                         stop_lab(lab_id)
                         return {"status": "stopped", "ip": None, "port_mappings": {}}
                     
-                    # Get server hostname/IP
-                    import socket
-                    hostname = socket.gethostname()
-                    host_ip = socket.gethostbyname(hostname)
-                    
                     return {
                         "status": "running", 
                         "ip": vm_ip, 
                         "remaining_seconds": remaining,
-                        "port_mappings": port_mappings,
-                        "host_ip": host_ip,
-                        "hostname": hostname
+                        "port_mappings": port_mappings
                     }
         except Exception as e:
             # SSH not ready yet (or connection failed)
