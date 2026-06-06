@@ -90,7 +90,7 @@ sleep 5
 
 # 6. Copy workspace to the nested VM
 echo "📦 Packaging workspace and copying to nested VM..."
-tar -czf workspace.tar.gz --exclude=.git --exclude=data/images --exclude=workspace.tar.gz .
+tar -czf workspace.tar.gz --exclude=.git --exclude=data/images --exclude=workspace.tar.gz --exclude=qemu.log --exclude=cidata.iso . || [ $? -eq 1 ]
 scp -P 2222 -o StrictHostKeyChecking=no -i keys/id_ed25519 workspace.tar.gz root@localhost:/tmp/
 ssh -p 2222 -o StrictHostKeyChecking=no -i keys/id_ed25519 root@localhost "mkdir -p /workspace && tar -xzf /tmp/workspace.tar.gz -C /workspace && rm /tmp/workspace.tar.gz"
 rm workspace.tar.gz

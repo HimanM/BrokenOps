@@ -20,7 +20,7 @@ jobs:
           - distro: Fedora 40
             nested: true
             image_name: fedora-40-base.qcow2
-            image_url: https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
+            image_url: https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
 
     steps:
       - name: Checkout Code
