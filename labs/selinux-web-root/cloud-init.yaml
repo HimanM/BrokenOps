@@ -138,7 +138,7 @@ write_files:
         abs_path=$(readlink -f "$file")
         sed -i "\|$abs_path |d" /etc/selinux/file_contexts.txt 2>/dev/null
         echo "$abs_path unconfined_u:object_r:$type:s0" >> /etc/selinux/file_contexts.txt
-        if [ "$type" = "httpd_sys_content_t" ]; then
+        if [ "$type" = "httpd_sys_content_t" ] && [ -f "$abs_path" ]; then
           chmod 644 "$abs_path" 2>/dev/null
         fi
       done
@@ -161,7 +161,9 @@ write_files:
         abs_path=$(readlink -f "$file")
         sed -i "\|$abs_path |d" /etc/selinux/file_contexts.txt 2>/dev/null
         echo "$abs_path unconfined_u:object_r:httpd_sys_content_t:s0" >> /etc/selinux/file_contexts.txt
-        chmod 644 "$abs_path" 2>/dev/null
+        if [ -f "$abs_path" ]; then
+          chmod 644 "$abs_path" 2>/dev/null
+        fi
         if [ "$recursive" = true ] && [ -d "$abs_path" ]; then
           find "$abs_path" -type f | while read -r f; do
             abs_f=$(readlink -f "$f")
