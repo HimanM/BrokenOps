@@ -95,10 +95,13 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
             echo -e "${RED}Unsupported package manager. Please install dependencies manually: ${MISSING_DEPS[*]}${NC}"
             exit 1
         fi
-        # Ensure libvirtd service is enabled and started on systemd/openrc hosts
+        # Ensure docker and libvirtd services are enabled and started on systemd/openrc hosts
         if command -v systemctl &> /dev/null; then
+            $SUDO systemctl enable --now docker || true
             $SUDO systemctl enable --now libvirtd || true
         elif command -v rc-service &> /dev/null; then
+            $SUDO rc-update add docker default || true
+            $SUDO rc-service docker start || true
             $SUDO rc-update add libvirtd default || true
             $SUDO rc-service libvirtd start || true
         fi
