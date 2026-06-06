@@ -1,0 +1,22 @@
+#cloud-config
+write_files:
+  - path: /etc/netplan/99-custom.yaml
+    owner: root:root
+    permissions: '0644'
+    content: |
+      network:
+        version: 2
+        ethernets:
+          ethernets_match:
+            match:
+              name: "e*"
+            dhcp4: yes
+            dhcp4-overrides:
+              use-routes: false
+            routes:
+              - to: default
+                via: 192.168.122.99
+
+runcmd:
+  - sed -i 's/\r//g' /etc/netplan/99-custom.yaml
+  - netplan apply || true

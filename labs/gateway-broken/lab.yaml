@@ -1,0 +1,25 @@
+id: gateway-broken
+name: Wrong Default Gateway
+category: networking
+difficulty: beginner
+provider: libvirt
+vm:
+  name: gateway-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "The VM has local network connectivity but cannot reach the internet due to an incorrect default gateway."
+  story: "After applying a custom network configuration file `/etc/netplan/99-custom.yaml`, the VM lost external network access. It can communicate with the local subnet and respond to SSH commands, but internet routing is broken. Find the incorrect gateway configuration, fix it, and verify that routing to the external network is restored."
+  objectives:
+    - Inspect the current default gateway configuration
+    - Locate and correct the Netplan configuration specifying the wrong gateway
+    - Apply the Netplan configuration and verify external network connectivity
+tags:
+  - linux
+  - networking
+  - routing
+  - netplan
