@@ -28,6 +28,7 @@ exposed_ports:
 
 - **`verify_script`**: Name of the verification script inside the lab folder.
 - **`exposed_ports`**: (Optional) List of ports that the web UI should provide "Open" buttons for.
+- **`port_works_initially`**: (Optional, default `false`) If `true`, the CI test will ensure that the exposed ports successfully return an HTTP 200 response upon initial lab provision (useful for labs where the web server is working, but the application is broken elsewhere).
 
 ## 2. `cloud-init.yaml` (Required)
 

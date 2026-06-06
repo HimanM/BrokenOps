@@ -153,25 +153,35 @@ def main():
             with open(os.path.join("labs", lab_id, "lab.yaml"), "r") as f:
                 lab_yaml = yaml.safe_load(f)
                 exposed_ports = lab_yaml.get("exposed_ports", [])
+                port_works_initially = lab_yaml.get("port_works_initially", False)
 
-            # For labs with exposed ports, ensure they are broken initially
+            # For labs with exposed ports, ensure they are in the expected initial state
             for port in exposed_ports:
-                print(f"📡 Testing exposed port {port} via backend proxy API to ensure it's broken initially...")
+                print(f"📡 Testing exposed port {port} via backend proxy API to check initial state...")
                 try:
                     proxy_resp = requests.get(f"{API_URL}/labs/{lab_id}/proxy/{port}", allow_redirects=False, timeout=10)
-                    if proxy_resp.status_code not in [502, 500] and not (proxy_resp.status_code in [302, 307] and proxy_resp.headers.get("location") == "/404"):
-                        # In selinux-web-root, Nginx returns 403 Forbidden which proves the port is open but access is denied. 
-                        # We might not want to fail CI here if it's 403, but let's assume "broken" means it shouldn't return 200 OK.
-                        if proxy_resp.status_code == 200:
+                    is_200 = proxy_resp.status_code == 200
+                    
+                    if port_works_initially:
+                        if not is_200:
+                            print(f"❌ Proxy unexpectedly returned {proxy_resp.status_code} for port {port}! It was expected to return 200 initially.")
+                            all_passed = False
+                            continue
+                        else:
+                            print(f"✅ Initial proxy check returned 200 OK as expected.")
+                    else:
+                        if is_200:
                             print(f"❌ Proxy unexpectedly reached port {port} and returned 200 OK before the solution! The port is not properly broken.")
                             all_passed = False
                             continue
                         else:
-                            print(f"✅ Initial proxy check returned {proxy_resp.status_code} (Port is restricted/broken).")
-                    else:
-                        print(f"✅ Initial proxy check failed as expected (Status {proxy_resp.status_code}).")
+                            print(f"✅ Initial proxy check returned {proxy_resp.status_code} (Port is restricted/broken as expected).")
                 except Exception as e:
-                    print(f"⚠️ Failed to reach proxy API (Error: {e}). This is expected for a broken lab.")
+                    if port_works_initially:
+                        print(f"❌ Failed to reach proxy API (Error: {e}). Expected port to work initially!")
+                        all_passed = False
+                    else:
+                        print(f"✅ Failed to reach proxy API (Error: {e}). This is expected for a broken lab.")
 
             print("🔧 Running solution.sh...")
             code, out, err = upload_and_run(ip, "root", args.key, solution_path, "/tmp/solution.sh")
