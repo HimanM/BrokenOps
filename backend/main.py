@@ -1,20 +1,23 @@
-import yaml
 import os
+import time
+import glob
 import subprocess
 import asyncio
-import asyncssh
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from contextlib import asynccontextmanager
 from typing import List, Optional
-from lab_parser import LabParser
-import subprocess
+
+import yaml
+import httpx
+import asyncssh
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import StreamingResponse, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.background import BackgroundTask
+from pydantic import BaseModel
+
 from lab_parser import LabParser
 from cloud_init import CloudInitBuilder
 from engine import LabEngine
-import time
-import glob
-from contextlib import asynccontextmanager
 
 LAB_TIMEOUT_SECONDS = 3600
 
@@ -406,6 +409,71 @@ async def verify_lab(lab_id: str):
             
             return {"score": score, "output": output}
             
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.api_route("/labs/{lab_id}/proxy/{port_number}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+@app.api_route("/labs/{lab_id}/proxy/{port_number}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def proxy_lab_port(lab_id: str, port_number: int, request: Request, path: str = ""):
+    try:
+        try:
+            lab_config = parser.parse_lab(lab_id)
+        except FileNotFoundError:
+            return RedirectResponse(url="/404")
+        
+        # Check if port is exposed
+        exposed_ports = lab_config.get("exposed_ports", [])
+        if port_number not in exposed_ports:
+            return RedirectResponse(url="/404")
+
+        vm_name = lab_config["vm"]["name"]
+        vm_ip = engine.get_vm_ip(vm_name)
+        
+        if not vm_ip:
+            return RedirectResponse(url="/404")
+            
+        target_url = f"http://{vm_ip}:{port_number}"
+        if path:
+            target_url += f"/{path}"
+        
+        query_params = request.url.query
+        if query_params:
+            target_url += f"?{query_params}"
+
+        client = httpx.AsyncClient()
+        
+        # Filter headers (e.g., remove Host header to avoid confusing the target VM)
+        headers = {}
+        for k, v in request.headers.items():
+            if k.lower() not in ("host", "content-length"):
+                headers[k] = v
+
+        req = client.build_request(
+            request.method,
+            target_url,
+            headers=headers,
+            content=request.stream()
+        )
+        
+        resp = await client.send(req, stream=True)
+        
+        async def close_client_and_resp():
+            await resp.aclose()
+            await client.aclose()
+        
+        return StreamingResponse(
+            resp.aiter_raw(),
+            status_code=resp.status_code,
+            headers={k: v for k, v in resp.headers.items() if k.lower() != "transfer-encoding"},
+            background=BackgroundTask(close_client_and_resp)
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Lab not found")
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail=f"Error connecting to VM: {exc}")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

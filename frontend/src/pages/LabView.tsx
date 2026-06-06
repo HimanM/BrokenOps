@@ -263,7 +263,7 @@ export default function LabView() {
                 {lab.exposed_ports.map(port => (
                   <a 
                     key={port}
-                    href={`http://${vmIp}:${port}`} 
+                    href={`/labs/${lab.id}/port${port}/`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white no-underline rounded-md text-sm font-semibold transition-colors"

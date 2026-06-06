@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 # Since we didn't have a requirements.txt before, we'll just pip install directly
-RUN pip install --no-cache-dir fastapi uvicorn pydantic pyyaml libvirt-python asyncssh websockets
+RUN pip install --no-cache-dir fastapi uvicorn pydantic pyyaml libvirt-python asyncssh websockets httpx
 
 COPY . .
 

@@ -7,8 +7,8 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Check if it's actually listening on port 80
-ss -tuln | grep ":80 " > /dev/null
+# Check if it's actually listening on port 80 for IPv4
+ss -tuln -4 | grep ":80 " > /dev/null
 if [ $? -ne 0 ]; then
   echo "FAILURE: Nginx is running, but it's not listening on port 80!"
   exit 1
