@@ -1,0 +1,13 @@
+id: "redis-persistence-permissions"
+name: "Redis Persistence Failure"
+category: "databases"
+difficulty: "intermediate"
+description:
+  summary: "Redis successfully processes client commands but cannot persist data to disk due to a permissions issue on the dump directory."
+vm:
+  name: "redis-perm-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"

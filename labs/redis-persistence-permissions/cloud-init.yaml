@@ -1,0 +1,9 @@
+#cloud-config
+packages:
+  - redis-server
+
+runcmd:
+  - systemctl stop redis-server || true
+  - chown -R root:root /var/lib/redis
+  - chmod 755 /var/lib/redis
+  - systemctl start redis-server || true
