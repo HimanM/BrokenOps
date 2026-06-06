@@ -5,6 +5,7 @@ import requests
 import paramiko
 import argparse
 import socket
+import yaml
 
 API_URL = "http://localhost/api"
 
@@ -168,6 +169,27 @@ def main():
                 continue
                 
             print("✅ verify.sh passed successfully.")
+
+            # Check exposed ports via proxy API
+            with open(os.path.join("labs", lab_id, "lab.yaml"), "r") as f:
+                lab_yaml = yaml.safe_load(f)
+                exposed_ports = lab_yaml.get("exposed_ports", [])
+            
+            for port in exposed_ports:
+                print(f"📡 Testing exposed port {port} via backend proxy API...")
+                try:
+                    proxy_resp = requests.get(f"{API_URL}/labs/{lab_id}/proxy/{port}", allow_redirects=False, timeout=10)
+                    if proxy_resp.status_code == 502:
+                        print(f"❌ Proxy returned 502 Bad Gateway for port {port}. The service inside the VM might not be listening on this port.")
+                        all_passed = False
+                    elif proxy_resp.status_code in [302, 307] and proxy_resp.headers.get("location") == "/404":
+                        print(f"❌ Proxy redirected to /404 for port {port}. This port is either not configured correctly in lab.yaml or the VM is down.")
+                        all_passed = False
+                    else:
+                        print(f"✅ Proxy successfully reached port {port} inside the VM (Status {proxy_resp.status_code}).")
+                except Exception as e:
+                    print(f"❌ Failed to reach proxy API for port {port}: {e}")
+                    all_passed = False
 
         except Exception as e:
             print(f"❌ Error during SSH execution: {e}")
