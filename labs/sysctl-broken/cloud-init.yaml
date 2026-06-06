@@ -1,0 +1,13 @@
+#cloud-config
+write_files:
+  - path: /etc/sysctl.d/99-hardening.conf
+    owner: root:root
+    permissions: '0644'
+    content: |
+      # Custom network hardening settings
+      net.ipv4.icmp_echo_ignore_all = 1
+      net.ipv4.tcp_tw_recycle = 1
+
+runcmd:
+  - sed -i 's/\r//g' /etc/sysctl.d/99-hardening.conf
+  - sysctl --system || true
