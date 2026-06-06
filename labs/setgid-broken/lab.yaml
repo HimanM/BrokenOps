@@ -1,0 +1,24 @@
+id: setgid-broken
+name: "Missing setgid on Shared Team Directory"
+category: linux
+difficulty: beginner
+provider: libvirt
+vm:
+  name: setgid-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "New files in a shared directory get the wrong group ownership because of a missing setgid bit."
+  story: "A shared directory /var/shared/project was set up for developers, but when users create files inside it, others cannot collaborate because the files inherit the user's primary group instead of the shared group. Correct this issue so all new files automatically belong to the devs group."
+  objectives:
+    - Identify the missing directory permission feature
+    - Ensure all existing files in /var/shared/project belong to the devs group
+    - Fix permissions so all future files inherit the devs group automatically
+tags:
+  - permissions
+  - linux
+  - storage

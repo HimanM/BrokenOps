@@ -1,0 +1,27 @@
+#cloud-config
+groups:
+  - devs
+users:
+  - name: alice
+    groups: devs, sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+  - name: bob
+    groups: devs, sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+runcmd:
+  # 1. Create the shared directory
+  - mkdir -p /var/shared/project
+  # 2. Set group ownership to devs
+  - chown root:devs /var/shared/project
+  # 3. Set standard 0770 permissions (without setgid)
+  - chmod 770 /var/shared/project
+  # 4. Create files representing existing work
+  - sudo -u alice touch /var/shared/project/alice_notes.txt
+  - chown alice:alice /var/shared/project/alice_notes.txt
+  - chmod 660 /var/shared/project/alice_notes.txt
+  - sudo -u bob touch /var/shared/project/bob_config.json
+  - chown bob:bob /var/shared/project/bob_config.json
+  - chmod 660 /var/shared/project/bob_config.json
