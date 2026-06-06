@@ -183,7 +183,6 @@ runcmd:
   - chmod 600 /var/www/html/index.html
   # 3. Write realistic AVC denial log to audit.log
   - mkdir -p /var/log/audit
-  - timestamp=$(date "+%s.%3N")
-  - echo "type=AVC msg=audit($timestamp:123): avc:  denied  { read } for  pid=1234 comm=\"nginx\" name=\"index.html\" dev=\"sda1\" ino=9876 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:admin_home_t:s0 tclass=file permissive=0" > /var/log/audit/audit.log
+  - ['bash', '-c', 'ts=$(date "+%s.%3N"); echo "type=AVC msg=audit(${ts}:123): avc:  denied  { read } for  pid=1234 comm=\"nginx\" name=\"index.html\" dev=\"sda1\" ino=9876 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:admin_home_t:s0 tclass=file permissive=0" > /var/log/audit/audit.log']
   # 4. Start nginx
   - systemctl restart nginx
