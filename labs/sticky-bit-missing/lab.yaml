@@ -1,0 +1,24 @@
+id: sticky-bit-missing
+name: Sticky Bit Missing on Shared Directory
+category: linux
+difficulty: beginner
+provider: libvirt
+vm:
+  name: sticky-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A shared directory allows users to delete each other's files because the sticky bit is missing."
+  story: "A shared directory /shared/tmp was created for users to share files. However, users are reporting that their files are being deleted by others. You must investigate the permissions of the shared directory, secure it, and verify that users can no longer delete files they do not own."
+  objectives:
+    - Inspect the permissions of the shared directory /shared/tmp
+    - Apply the sticky bit permission to /shared/tmp to prevent unauthorized file deletion
+    - Verify that file deletion is restricted only to the file owner or root
+tags:
+  - linux
+  - permissions
+  - security
