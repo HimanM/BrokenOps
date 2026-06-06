@@ -20,7 +20,7 @@ jobs:
           - distro: Fedora 40
             nested: true
             image_name: fedora-40-base.qcow2
-            image_url: https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
+            image_url: https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
 
     steps:
       - name: Checkout Code
@@ -81,8 +81,8 @@ jobs:
             elif command -v pacman &> /dev/null; then
               pacman -Sy --noconfirm python python-pip
             fi
-            pip install --upgrade pip
-            pip install paramiko requests pyyaml
+            pip install --upgrade pip --break-system-packages || pip install --upgrade pip
+            pip install --break-system-packages paramiko requests pyyaml || pip install paramiko requests pyyaml
             
             echo '=== Running deploy.sh inside Guest ==='
             cd /workspace
