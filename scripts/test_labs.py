@@ -123,14 +123,14 @@ def main():
 
         if not ip:
             print(f"❌ VM did not get an IP in time.")
-            requests.post(f"{API_URL}/labs/{lab_id}/stop")
+            requests.delete(f"{API_URL}/labs/{lab_id}/stop")
             all_passed = False
             continue
 
         print(f"🌐 VM is up at {ip}. Waiting for SSH...")
         if not check_ssh_ready(ip):
             print(f"❌ SSH never became ready.")
-            requests.post(f"{API_URL}/labs/{lab_id}/stop")
+            requests.delete(f"{API_URL}/labs/{lab_id}/stop")
             all_passed = False
             continue
             

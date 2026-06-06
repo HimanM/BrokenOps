@@ -1,3 +1,2 @@
 #!/bin/bash
-visudo -c -f /etc/sudoers.d/ops || true
-sed -i 's/ops ALL=(ALL:ALL)/ops ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers.d/ops
+sed -i 's/ops ALL=(ALL:ALL) NOPASSWD: ALL_BROKEN_SYNTAX/ops ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers.d/ops
