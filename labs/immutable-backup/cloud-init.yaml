@@ -1,0 +1,20 @@
+#cloud-config
+write_files:
+  - path: /usr/local/bin/backup.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      echo "Starting backup execution..."
+      if ! echo "backup data $(date)" > /var/backups/app/latest.tar.gz; then
+        echo "ERROR: Failed to write backup data to /var/backups/app/latest.tar.gz" >&2
+        exit 1
+      fi
+      echo "Backup completed successfully!"
+      exit 0
+
+runcmd:
+  - mkdir -p /var/backups/app
+  - touch /var/backups/app/latest.tar.gz
+  - chattr +i /var/backups/app/latest.tar.gz
+  - sed -i 's/\r//g' /usr/local/bin/backup.sh
