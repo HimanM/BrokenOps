@@ -69,6 +69,22 @@ jobs:
           # Run deploy.sh passing default configuration choices non-interactively
           echo "80" | ./deploy.sh
 
+      - name: Verify deploy.sh dry-run on Fedora (dnf)
+        run: |
+          docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace fedora:40 bash -c "
+            dnf install -y systemd && \
+            export DRY_RUN=1 && \
+            echo '80' | ./deploy.sh
+          "
+
+      - name: Verify deploy.sh dry-run on Arch Linux (pacman)
+        run: |
+          docker run --rm --device /dev/kvm -v ${{ github.workspace }}:/workspace -w /workspace archlinux:latest bash -c "
+            pacman -Sy --noconfirm systemd && \
+            export DRY_RUN=1 && \
+            echo '80' | ./deploy.sh
+          "
+
       - name: Wait for API to be healthy
         run: |
           for i in {1..30}; do

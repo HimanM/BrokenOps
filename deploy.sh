@@ -7,6 +7,11 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+SUDO=""
+if [ "$(id -u)" -ne 0 ] && command -v sudo &> /dev/null; then
+    SUDO="sudo"
+fi
+
 echo -e "${BLUE}====================================================${NC}"
 echo -e "${BLUE}      🚀 BrokenOps Production Deploy Script         ${NC}"
 echo -e "${BLUE}====================================================${NC}"
@@ -22,9 +27,16 @@ if ! command -v qemu-img &> /dev/null; then
     MISSING_DEPS+=("qemu-utils")
 fi
 
-if ! lsmod | grep -iq kvm; then
-    echo -e "${RED}Error: KVM is not enabled on this host! Nested virtualization or hardware acceleration is required.${NC}"
-    exit 1
+if command -v lsmod &> /dev/null; then
+    if ! lsmod | grep -iq kvm; then
+        echo -e "${RED}Error: KVM is not enabled on this host! Nested virtualization or hardware acceleration is required.${NC}"
+        exit 1
+    fi
+else
+    if [ ! -e /dev/kvm ]; then
+        echo -e "${RED}Error: KVM is not enabled on this host! Nested virtualization or hardware acceleration is required.${NC}"
+        exit 1
+    fi
 fi
 
 if ! getent group libvirt > /dev/null; then
@@ -37,8 +49,8 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
     echo
     if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
         if command -v apt-get &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y "${MISSING_DEPS[@]}"
+            $SUDO apt-get update
+            $SUDO apt-get install -y "${MISSING_DEPS[@]}"
         elif command -v dnf &> /dev/null; then
             DEPS_TO_INSTALL=()
             for dep in "${MISSING_DEPS[@]}"; do
@@ -50,7 +62,7 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
                     DEPS_TO_INSTALL+=("$dep")
                 fi
             done
-            sudo dnf install -y "${DEPS_TO_INSTALL[@]}"
+            $SUDO dnf install -y "${DEPS_TO_INSTALL[@]}"
         elif command -v pacman &> /dev/null; then
             DEPS_TO_INSTALL=()
             for dep in "${MISSING_DEPS[@]}"; do
@@ -62,7 +74,7 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
                     DEPS_TO_INSTALL+=("$dep")
                 fi
             done
-            sudo pacman -Sy --noconfirm "${DEPS_TO_INSTALL[@]}"
+            $SUDO pacman -Sy --noconfirm "${DEPS_TO_INSTALL[@]}"
         elif command -v apk &> /dev/null; then
             DEPS_TO_INSTALL=()
             for dep in "${MISSING_DEPS[@]}"; do
@@ -74,7 +86,7 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
                     DEPS_TO_INSTALL+=("$dep")
                 fi
             done
-            sudo apk add "${DEPS_TO_INSTALL[@]}"
+            $SUDO apk add "${DEPS_TO_INSTALL[@]}"
         else
             echo -e "${RED}Unsupported package manager. Please install dependencies manually: ${MISSING_DEPS[*]}${NC}"
             exit 1
@@ -120,8 +132,12 @@ if [ ! -f "keys/id_ed25519" ]; then
 fi
 
 # 6. Build and Start via Docker Compose
-echo -e "${BLUE}Building and starting Docker containers...${NC}"
-docker compose up -d --build
+if [ "$DRY_RUN" != "1" ]; then
+    echo -e "${BLUE}Building and starting Docker containers...${NC}"
+    docker compose up -d --build
+else
+    echo -e "${YELLOW}Dry-run mode active. Skipping Docker Compose startup.${NC}"
+fi
 
 echo -e "${GREEN}====================================================${NC}"
 echo -e "${GREEN}✨ BrokenOps successfully deployed via Docker! ✨   ${NC}"
