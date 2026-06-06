@@ -1,0 +1,24 @@
+id: password-aging-broken
+name: "User Locked by Password Aging"
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: password-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A user is unable to log in via SSH despite using the correct password due to account expiration and aging policies."
+  story: "The developer 'ops-user' needs to log in to the server to perform maintenance. However, their SSH login attempts are rejected even though they are entering the correct password. Inspect the account's password aging and expiration configuration, and resolve the lockout."
+  objectives:
+    - Identify why ops-user's login attempts are rejected
+    - Correct the password aging configuration to allow logins
+    - Ensure the account does not expire immediately and the password is not considered expired
+tags:
+  - security
+  - linux
+  - user-management

@@ -1,0 +1,18 @@
+#cloud-config
+users:
+  - name: ops-user
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+runcmd:
+  # 1. Set password for ops-user
+  - echo "ops-user:Password123!" | chpasswd
+  # 2. Configure password aging (expire account and password)
+  - chage -E 2026-06-01 ops-user
+  - chage -d 0 ops-user
+  # 3. Allow SSH password authentication so ops-user can attempt login
+  - sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+  - sed -i 's/KbdInteractiveAuthentication no/KbdInteractiveAuthentication yes/g' /etc/ssh/sshd_config
+  - echo "PasswordAuthentication yes" > /etc/ssh/sshd_config.d/50-cloud-init.conf
+  - systemctl restart ssh
