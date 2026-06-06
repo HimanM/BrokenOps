@@ -1,0 +1,21 @@
+#cloud-config
+packages:
+  - logrotate
+
+write_files:
+  - path: /etc/logrotate.d/noisy-app
+    owner: root:root
+    permissions: '0644'
+    content: |
+      /var/log/noisy-app.log {
+          su root syslog
+          rotate 5
+          size 10k
+          missing_ok
+          compress
+          create 0640 root root
+      }
+
+runcmd:
+  - echo "Initial log line 1" > /var/log/noisy-app.log
+  - echo "Initial log line 2" >> /var/log/noisy-app.log
