@@ -1,0 +1,26 @@
+id: sysctl-broken
+name: Sysctl Hardening Breaks Network Stack
+category: linux
+difficulty: advanced
+provider: libvirt
+vm:
+  name: sysctl-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A custom sysctl hardening file contains obsolete and breaking kernel parameters."
+  story: "A custom network hardening file `/etc/sysctl.d/99-hardening.conf` was applied to secure the network stack. However, after rebooting, the system no longer responds to pings, and reloading the sysctl settings produces errors. Diagnose the custom configuration file, fix any broken or obsolete parameters, restore ping responses, and verify that the configuration applies cleanly."
+  objectives:
+    - Identify the custom hardening configuration in /etc/sysctl.d/
+    - Locate and fix obsolete or invalid sysctl parameters causing runtime errors
+    - Restore ping functionality by re-enabling ICMP echo responses
+    - Verify that all sysctl settings apply successfully without error output
+tags:
+  - linux
+  - kernel
+  - networking
+  - security
