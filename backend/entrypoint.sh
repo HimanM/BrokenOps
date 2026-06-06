@@ -10,17 +10,17 @@ echo "Starting backend container with PUID: $PUID, PGID: $PGID, LIBVIRT_GID: $LI
 
 # Create brokenops group if it doesn't exist
 if ! getent group brokenops >/dev/null; then
-    groupadd -g "$PGID" brokenops
+    groupadd -o -g "$PGID" brokenops
 fi
 
 # Create libvirt group if it doesn't exist to match host
 if ! getent group libvirt >/dev/null; then
-    groupadd -g "$LIBVIRT_GID" libvirt
+    groupadd -o -g "$LIBVIRT_GID" libvirt
 fi
 
 # Create brokenops user if it doesn't exist
 if ! getent passwd brokenops >/dev/null; then
-    useradd -u "$PUID" -g "$PGID" -m brokenops
+    useradd -o -u "$PUID" -g "$PGID" -m brokenops
 fi
 
 # Ensure user is in libvirt group

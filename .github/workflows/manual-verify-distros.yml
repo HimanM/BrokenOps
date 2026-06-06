@@ -20,7 +20,7 @@ jobs:
           - distro: Fedora 40
             nested: true
             image_name: fedora-40-base.qcow2
-            image_url: https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
+            image_url: https://mirror.math.princeton.edu/pub/fedora-archive/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
 
     steps:
       - name: Checkout Code
@@ -101,6 +101,6 @@ jobs:
             
             echo '=== Verifying lab inside Guest ==='
             # Grant permission to libvirt socket in VM guest
-            sudo chmod 666 /var/run/libvirt/libvirt-sock
+            chmod 666 /var/run/libvirt/libvirt-sock
             python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken
           "
