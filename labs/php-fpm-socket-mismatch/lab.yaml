@@ -1,0 +1,15 @@
+id: "php-fpm-socket-mismatch"
+name: "PHP-FPM Socket Mismatch"
+category: "web"
+difficulty: "intermediate"
+description:
+  summary: "The web application returns a 502 Bad Gateway error on PHP requests due to a socket path mismatch."
+vm:
+  name: "php-fpm-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
+exposed_ports:
+  - 80

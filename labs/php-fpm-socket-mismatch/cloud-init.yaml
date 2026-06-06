@@ -1,0 +1,39 @@
+#cloud-config
+packages:
+  - nginx
+  - php-fpm
+  - curl
+
+write_files:
+  - path: /var/www/html/index.php
+    owner: www-data:www-data
+    permissions: '0644'
+    content: |
+      <?php
+      echo "PHP is working!";
+      ?>
+
+runcmd:
+  - |
+    cat << 'EOF' > /etc/nginx/sites-available/default
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+        index index.php index.html index.htm;
+
+        server_name _;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        location ~ \.php$ {
+            include snippets/fastcgi-php.conf;
+            fastcgi_pass unix:/run/php/php-fpm-wrong.sock;
+        }
+    }
+    EOF
+  - systemctl restart php8.3-fpm || true
+  - systemctl restart nginx || true
