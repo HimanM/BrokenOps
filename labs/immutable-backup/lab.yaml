@@ -1,0 +1,25 @@
+id: immutable-backup
+name: Backup Fails Due to Immutable File
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: backup-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A scheduled backup script fails because the destination file has the immutable attribute (+i) set."
+  story: "The automated backup script /usr/local/bin/backup.sh is failing to write its output to /var/backups/app/latest.tar.gz. Even when run as root, the write fails with a permission/operation error. Investigate the file attributes, fix the issue, and ensure the backup script can run successfully."
+  objectives:
+    - Investigate why the backup script is failing to write to /var/backups/app/latest.tar.gz
+    - Remove the attribute preventing write/modify operations on the backup target file
+    - Successfully execute /usr/local/bin/backup.sh and ensure it exits without errors
+tags:
+  - linux
+  - filesystem
+  - attributes
+  - troubleshooting
