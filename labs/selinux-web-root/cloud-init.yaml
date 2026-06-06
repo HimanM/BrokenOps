@@ -1,0 +1,189 @@
+#cloud-config
+packages:
+  - nginx
+  - curl
+  - python3
+
+write_files:
+  - path: /usr/sbin/sestatus
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      cat <<EOF
+      SELinux status:                 enabled
+      SELinuxfs mount:                /sys/fs/selinux
+      SELinux root directory:         /etc/selinux
+      Loaded policy name:             default
+      Current mode:                   enforcing
+      Mode from config file:          enforcing
+      Policy MLS status:              enabled
+      Policy deny_unknown status:     allowed
+      Memory protection checking:     actual (secure)
+      Max kernel policy version:      33
+      EOF
+
+  - path: /usr/sbin/getenforce
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      echo "Enforcing"
+
+  - path: /usr/local/bin/ls
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      has_Z=false
+      for arg in "$@"; do
+        if [[ "$arg" =~ -[a-zA-Z]*Z[a-zA-Z]* ]] || [ "$arg" = "--context" ]; then
+          has_Z=true
+          break
+        fi
+      done
+      if [ "$has_Z" = true ]; then
+        python3 /usr/local/bin/ls_selinux.py "$@"
+      else
+        exec /bin/ls "$@"
+      fi
+
+  - path: /usr/local/bin/ls_selinux.py
+    owner: root:root
+    permissions: '0644'
+    content: |
+      import sys
+      import subprocess
+      import os
+      args = sys.argv[1:]
+      clean_args = []
+      for arg in args:
+          if arg == '--context':
+              continue
+          if arg.startswith('-') and not arg.startswith('--'):
+              cleaned = arg.replace('Z', '')
+              if cleaned != '-':
+                  clean_args.append(cleaned)
+          else:
+              clean_args.append(arg)
+      cmd = ['/bin/ls'] + clean_args
+      res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+      if res.returncode != 0:
+          sys.stderr.write(res.stderr)
+          sys.exit(res.returncode)
+      lines = res.stdout.splitlines()
+      contexts = {}
+      if os.path.exists('/etc/selinux/file_contexts.txt'):
+          with open('/etc/selinux/file_contexts.txt', 'r') as f:
+              for line in f:
+                  parts = line.strip().split(None, 1)
+                  if len(parts) == 2:
+                      contexts[parts[0]] = parts[1]
+      def get_context(filepath):
+          abs_path = os.path.abspath(filepath)
+          if abs_path in contexts:
+              return contexts[abs_path]
+          if '/var/www/html' in abs_path:
+              return 'unconfined_u:object_r:httpd_sys_content_t:s0'
+          return 'unconfined_u:object_r:usr_t:s0'
+      has_l = any('l' in arg for arg in args if arg.startswith('-') and not arg.startswith('--'))
+      for line in lines:
+          if not line or line.startswith('total'):
+              print(line)
+              continue
+          parts = line.split()
+          if has_l and len(parts) >= 9:
+              filename = parts[-1]
+              target_path = filename
+              for arg in args:
+                  if not arg.startswith('-') and os.path.exists(os.path.join(arg, filename)):
+                      target_path = os.path.join(arg, filename)
+                      break
+              context = get_context(target_path)
+              perm = parts[0]
+              if not perm.endswith('.'):
+                  perm += '.'
+              formatted_line = f"{perm} {parts[1]} {parts[2]} {parts[3]} {context} {' '.join(parts[4:])}"
+              print(formatted_line)
+          else:
+              filename = line.strip()
+              target_path = filename
+              for arg in args:
+                  if not arg.startswith('-') and os.path.exists(os.path.join(arg, filename)):
+                      target_path = os.path.join(arg, filename)
+                      break
+              context = get_context(target_path)
+              print(f"{context} {filename}")
+
+  - path: /usr/bin/chcon
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      type=""
+      recursive=false
+      files=()
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          -t) type="$2"; shift 2 ;;
+          -R) recursive=true; shift ;;
+          *) files+=("$1"); shift ;;
+        esac
+      done
+      if [ -z "$type" ]; then
+        echo "Error: Type (-t) must be specified."
+        exit 1
+      fi
+      for file in "${files[@]}"; do
+        abs_path=$(readlink -f "$file")
+        sed -i "\|$abs_path |d" /etc/selinux/file_contexts.txt 2>/dev/null
+        echo "$abs_path unconfined_u:object_r:$type:s0" >> /etc/selinux/file_contexts.txt
+        if [ "$type" = "httpd_sys_content_t" ]; then
+          chmod 644 "$abs_path" 2>/dev/null
+        fi
+      done
+      exit 0
+
+  - path: /usr/sbin/restorecon
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      recursive=false
+      files=()
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          -R|-r) recursive=true; shift ;;
+          *) files+=("$1"); shift ;;
+        esac
+      done
+      for file in "${files[@]}"; do
+        abs_path=$(readlink -f "$file")
+        sed -i "\|$abs_path |d" /etc/selinux/file_contexts.txt 2>/dev/null
+        echo "$abs_path unconfined_u:object_r:httpd_sys_content_t:s0" >> /etc/selinux/file_contexts.txt
+        chmod 644 "$abs_path" 2>/dev/null
+        if [ "$recursive" = true ] && [ -d "$abs_path" ]; then
+          find "$abs_path" -type f | while read -r f; do
+            abs_f=$(readlink -f "$f")
+            sed -i "\|$abs_f |d" /etc/selinux/file_contexts.txt 2>/dev/null
+            echo "$abs_f unconfined_u:object_r:httpd_sys_content_t:s0" >> /etc/selinux/file_contexts.txt
+            chmod 644 "$abs_f" 2>/dev/null
+          done
+        fi
+      done
+      exit 0
+
+runcmd:
+  # 1. Initialize allowed contexts list
+  - mkdir -p /etc/selinux
+  - echo "/var/www/html/index.html unconfined_u:object_r:admin_home_t:s0" > /etc/selinux/file_contexts.txt
+  # 2. Configure index.html with restricted permissions (chmod 600) to simulate SELinux 403 denial
+  - echo "SELinux Web Root Lab Success!" > /var/www/html/index.html
+  - chown www-data:www-data /var/www/html/index.html
+  - chmod 600 /var/www/html/index.html
+  # 3. Write realistic AVC denial log to audit.log
+  - mkdir -p /var/log/audit
+  - timestamp=$(date "+%s.%3N")
+  - echo "type=AVC msg=audit($timestamp:123): avc:  denied  { read } for  pid=1234 comm=\"nginx\" name=\"index.html\" dev=\"sda1\" ino=9876 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:admin_home_t:s0 tclass=file permissive=0" > /var/log/audit/audit.log
+  # 4. Start nginx
+  - systemctl restart nginx

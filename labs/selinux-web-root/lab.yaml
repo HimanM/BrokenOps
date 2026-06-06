@@ -1,0 +1,28 @@
+id: selinux-web-root
+name: "Broken SELinux Context on Web Root"
+category: web
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: selinux-web
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+description:
+  summary: "A website returns a 403 Forbidden error although files exist in the web root because of an incorrect SELinux file context."
+  story: "A website is deployed at `/var/www/html/index.html` on a server running SELinux in Enforcing mode. However, visitors receive a `403 Forbidden` error when trying to access it. Nginx's logs reveal a permission denied error, even though the file exists and is owned by `www-data`. Investigate the SELinux file security context on `/var/www/html/index.html` and restore the correct type context."
+  objectives:
+    - Investigate why Nginx cannot access index.html
+    - Find the SELinux AVC denials in the audit log
+    - Correct the file security context on `/var/www/html/index.html` so it can be served
+    - Verify that Nginx successfully returns the webpage
+tags:
+  - selinux
+  - security
+  - nginx
+  - web
