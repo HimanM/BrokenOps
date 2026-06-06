@@ -1,0 +1,41 @@
+#cloud-config
+packages:
+  - lvm2
+
+runcmd:
+  # 1. Create mountpoint and disk image
+  - mkdir -p /data
+  - truncate -s 2G /opt/lvm-disk.img
+  # 2. Map loopback file to a free loop device
+  - loop_dev=$(losetup -f)
+  - losetup $loop_dev /opt/lvm-disk.img
+  # 3. Create LVM PV, VG, and LV (500M)
+  - pvcreate $loop_dev
+  - vgcreate vg_data $loop_dev
+  - lvcreate -L 500M -n lv_data vg_data
+  # 4. Format and mount logical volume
+  - mkfs.ext4 /dev/vg_data/lv_data
+  - mount /dev/vg_data/lv_data /data
+  # 5. Populate /data to fill it up (leaving 0 bytes of usable space)
+  - dd if=/dev/zero of=/data/large_database.db bs=1M count=470 || true
+  # 6. Set up the systemd boot service to preserve the loop LVM on reboots
+  - |
+    cat <<'EOF' > /etc/systemd/system/lvm-loop-init.service
+    [Unit]
+    Description=Setup loop device for LVM
+    DefaultDependencies=no
+    After=systemd-udev-trigger.service
+    Before=local-fs-pre.target lvm2-monitor.service
+
+    [Service]
+    Type=oneshot
+    ExecStart=/bin/bash -c "losetup -f /opt/lvm-disk.img && vgchange -ay"
+    RemainAfterExit=yes
+
+    [Install]
+    WantedBy=local-fs-pre.target
+    EOF
+  - systemctl daemon-reload
+  - systemctl enable lvm-loop-init.service
+  # 7. Add mount entry to fstab
+  - echo "/dev/vg_data/lv_data /data ext4 defaults 0 2" >> /etc/fstab
