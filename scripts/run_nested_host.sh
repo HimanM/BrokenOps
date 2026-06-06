@@ -14,6 +14,13 @@ echo "===================================================="
 echo "🚀 Booting Nested Host VM: $DISTRO"
 echo "===================================================="
 
+# Slugify distro name to avoid space issues in filenames
+DISTRO_SLUG=$(echo "$DISTRO" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+
+# Convert paths to absolute to prevent QEMU backing file resolution errors
+ABS_IMAGE_PATH=$(readlink -f "$IMAGE_PATH")
+ABS_OVERLAY_IMAGE=$(readlink -f "data/images/nested-${DISTRO_SLUG}-overlay.qcow2" 2>/dev/null || echo "$PWD/data/images/nested-${DISTRO_SLUG}-overlay.qcow2")
+
 # 1. Create temporary cloud-init configuration
 mkdir -p keys
 if [ ! -f "keys/id_ed25519" ]; then
@@ -36,38 +43,47 @@ runcmd:
   - systemctl restart ssh || systemctl restart sshd || true
 EOF
 
-echo "instance-id: nested-host-$DISTRO" > meta-data
+echo "instance-id: nested-host-${DISTRO_SLUG}" > meta-data
 
 # 2. Build cloud-init ISO
 genisoimage -output cidata.iso -volid cidata -joliet -rock user-data meta-data
 rm user-data meta-data
 
 # 3. Create overlay QCOW2 image
-OVERLAY_IMAGE="data/images/nested-$DISTRO-overlay.qcow2"
-qemu-img create -f qcow2 -F qcow2 -b "$IMAGE_PATH" "$OVERLAY_IMAGE" 20G
+mkdir -p data/images
+qemu-img create -f qcow2 -F qcow2 -b "$ABS_IMAGE_PATH" "$ABS_OVERLAY_IMAGE" 20G
 
 # 4. Launch QEMU with CPU host passthrough (Nested virtualization enabled)
+echo "👾 Starting QEMU process..."
 sudo qemu-system-x86_64 \
   -enable-kvm \
   -cpu host \
   -smp 2 \
   -m 4096 \
-  -drive file="$OVERLAY_IMAGE",if=virtio,format=qcow2 \
+  -drive file="$ABS_OVERLAY_IMAGE",if=virtio,format=qcow2 \
   -drive file=cidata.iso,media=cdrom \
   -net nic,model=virtio \
   -net user,hostfwd=tcp::2222-:22 \
   -nographic \
-  -daemonize
+  -daemonize > qemu.log 2>&1 || { cat qemu.log; exit 1; }
 
 # 5. Wait for SSH to be up
 echo "⏳ Waiting for SSH (port 2222) on nested $DISTRO VM..."
-for i in {1..30}; do
+SSH_SUCCESS=0
+for i in {1..45}; do
     if nc -z localhost 2222; then
         echo "✅ SSH is up!"
+        SSH_SUCCESS=1
         break
     fi
     sleep 2
 done
+
+if [ "$SSH_SUCCESS" -ne 1 ]; then
+    echo "❌ SSH failed to become ready! QEMU output log:"
+    cat qemu.log || true
+    exit 1
+fi
 
 # Wait a few more seconds for cloud-init runcmd to complete SSH configuration
 sleep 5
