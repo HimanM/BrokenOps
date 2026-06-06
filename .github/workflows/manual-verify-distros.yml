@@ -67,7 +67,7 @@ jobs:
         if: ${{ matrix.nested }}
         run: |
           chmod +x scripts/run_nested_host.sh
-          ./scripts/run_nested_host.sh ${{ matrix.distro }} data/images/${{ matrix.image_name }}
+          ./scripts/run_nested_host.sh "${{ matrix.distro }}" data/images/${{ matrix.image_name }}
 
       - name: Run deploy.sh and verification inside Nested VM
         if: ${{ matrix.nested }}
