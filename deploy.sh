@@ -167,7 +167,7 @@ fi
 mkdir -p data/images
 if [ ! -f "data/images/ubuntu-24.04-base.qcow2" ]; then
     echo -e "${YELLOW}Downloading Ubuntu 24.04 base image...${NC}"
-    curl -L -o data/images/ubuntu-24.04-base.qcow2 https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    curl -f -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -o data/images/ubuntu-24.04-base.qcow2 https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 fi
 
 # 6. Build and Start via Docker Compose

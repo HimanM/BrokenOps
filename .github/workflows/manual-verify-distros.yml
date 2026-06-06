@@ -61,7 +61,7 @@ jobs:
         if: ${{ matrix.nested }}
         run: |
           mkdir -p data/images
-          curl -L -o data/images/${{ matrix.image_name }} ${{ matrix.image_url }}
+          curl -f -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -o data/images/${{ matrix.image_name }} ${{ matrix.image_url }}
 
       - name: Boot Nested Host VM and Copy Workspace
         if: ${{ matrix.nested }}
