@@ -97,8 +97,6 @@ export default function LabView() {
             }
           } else if (data.status === 'provisioning') {
             setProvisioningStatus('provisioning');
-          } else if (data.status === 'running' && provisioningStatus !== 'launching') {
-            setProvisioningStatus('waiting_ip');
           }
         }
       } catch (e) {}
