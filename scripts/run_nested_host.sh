@@ -64,7 +64,7 @@ sudo qemu-system-x86_64 \
   -drive file=cidata.iso,media=cdrom \
   -net nic,model=virtio \
   -net user,hostfwd=tcp::2222-:22 \
-  -nographic \
+  -display none \
   -daemonize > qemu.log 2>&1 || { cat qemu.log; exit 1; }
 
 # 5. Wait for SSH to be up
