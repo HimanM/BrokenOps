@@ -133,6 +133,7 @@ def launch_lab(lab_id: str):
         memory_mb = lab_config["vm"]["memory"]
         vcpus = lab_config["vm"]["cpu"]
         disk_size = str(lab_config["vm"]["disk"])
+        exposed_ports = lab_config.get("exposed_ports", [])
         
         # Paths
         base_image_path = os.path.join(IMAGES_DIR, "ubuntu-24.04-base.qcow2")
@@ -210,13 +211,14 @@ def launch_lab(lab_id: str):
             disk_path=overlay_path,
             cloud_iso_path=iso_path,
             memory_mb=memory_mb,
-            vcpus=vcpus
+            vcpus=vcpus,
+            exposed_ports=exposed_ports
         )
         
         if not success:
             raise HTTPException(status_code=500, detail="Failed to launch Libvirt VM")
             
-        return {"status": "launched", "lab_id": lab_id, "vm_name": vm_name}
+        return {"status": "launched", "lab_id": lab_id, "vm_name": vm_name, "exposed_ports": exposed_ports}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -254,10 +256,11 @@ async def lab_status(lab_id: str):
     try:
         lab_config = parser.parse_lab(lab_id)
         vm_name = lab_config["vm"]["name"]
+        exposed_ports = lab_config.get("exposed_ports", [])
         
         vm_ip = engine.get_vm_ip(vm_name)
         if not vm_ip:
-            return {"status": "stopped", "ip": None}
+            return {"status": "stopped", "ip": None, "port_mappings": {}}
             
         # We have an IP, check if cloud-init is done
         ssh_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
@@ -265,25 +268,45 @@ async def lab_status(lab_id: str):
             async with asyncssh.connect(vm_ip, username="root", client_keys=[ssh_key_path], known_hosts=None, connect_timeout=1) as conn:
                 result = await conn.run("cloud-init status", check=False)
                 if "status: running" in str(result.stdout):
-                    return {"status": "provisioning", "ip": vm_ip}
+                    return {"status": "provisioning", "ip": vm_ip, "port_mappings": {}}
                 else:
                     ready_file = os.path.join(PROJECT_ROOT, "data", "vms", f"{lab_id}.ready")
                     if not os.path.exists(ready_file):
                         with open(ready_file, "w") as f:
                             f.write("ready")
-                            
+                        
+                        # Setup port forwarding when VM becomes ready
+                        if exposed_ports:
+                            port_mappings = engine.setup_port_forwards(vm_name, exposed_ports)
+                            print(f"Port mappings for {vm_name}: {port_mappings}")
+                    
+                    # Get current port mappings
+                    port_mappings = engine.get_port_mappings(vm_name)
+                    
                     mtime = os.path.getmtime(ready_file)
                     elapsed = time.time() - mtime
                     remaining = int(max(0, LAB_TIMEOUT_SECONDS - elapsed))
                     
                     if remaining <= 0:
                         stop_lab(lab_id)
-                        return {"status": "stopped", "ip": None}
-                        
-                    return {"status": "running", "ip": vm_ip, "remaining_seconds": remaining}
+                        return {"status": "stopped", "ip": None, "port_mappings": {}}
+                    
+                    # Get server hostname/IP
+                    import socket
+                    hostname = socket.gethostname()
+                    host_ip = socket.gethostbyname(hostname)
+                    
+                    return {
+                        "status": "running", 
+                        "ip": vm_ip, 
+                        "remaining_seconds": remaining,
+                        "port_mappings": port_mappings,
+                        "host_ip": host_ip,
+                        "hostname": hostname
+                    }
         except Exception:
             # SSH not ready yet
-            return {"status": "provisioning", "ip": vm_ip}
+            return {"status": "provisioning", "ip": vm_ip, "port_mappings": {}}
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

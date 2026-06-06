@@ -14,6 +14,19 @@ interface LabDetails {
   verify_script?: string;
 }
 
+interface PortMapping {
+  [vmPort: number]: number; // vm_port: host_port
+}
+
+interface LabStatus {
+  status: string;
+  ip: string | null;
+  port_mappings?: PortMapping;
+  host_ip?: string;
+  hostname?: string;
+  remaining_seconds?: number;
+}
+
 export default function LabView() {
   const { labId } = useParams();
   const navigate = useNavigate();
@@ -28,6 +41,9 @@ export default function LabView() {
   const [provisioningStatus, setProvisioningStatus] = useState<'idle'|'launching'|'waiting_ip'|'provisioning'|'ready'>('idle');
   const [vmIp, setVmIp] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [portMappings, setPortMappings] = useState<PortMapping>({});
+  const [hostIp, setHostIp] = useState<string>('');
+  const [hostname, setHostname] = useState<string>('');
   
   // Verify state
   const [verifyResult, setVerifyResult] = useState<{score: string, output: string} | null>(null);
@@ -61,8 +77,17 @@ export default function LabView() {
       try {
         const res = await fetch(`/api/labs/${labId}/status`);
         if (res.ok) {
-          const data = await res.json();
+          const data: LabStatus = await res.json();
           setVmIp(data.ip);
+          if (data.port_mappings) {
+            setPortMappings(data.port_mappings);
+          }
+          if (data.host_ip) {
+            setHostIp(data.host_ip);
+          }
+          if (data.hostname) {
+            setHostname(data.hostname);
+          }
           if (data.status === 'running') {
             setProvisioningStatus('ready');
             if (data.remaining_seconds !== undefined) {
@@ -72,6 +97,7 @@ export default function LabView() {
             setProvisioningStatus('idle');
             setVmIp(null);
             setRemainingSeconds(null);
+            setPortMappings({});
             // If the lab expired and stopped behind our back, send them to dashboard
             if (provisioningStatus === 'ready') {
               alert('Lab time has expired! The environment was automatically destroyed.');
@@ -131,6 +157,7 @@ export default function LabView() {
       if (action === 'stop' || action === 'reset') {
         setVerifyResult(null);
         setVmIp(null);
+        setPortMappings({});
       }
     }
   };
@@ -258,19 +285,39 @@ export default function LabView() {
             )}
 
             {lab.exposed_ports && lab.exposed_ports.length > 0 && vmIp && provisioningStatus === 'ready' && (
-              <div className="mt-8 flex flex-wrap gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                <p className="w-full text-sm font-semibold text-blue-800 m-0">Exposed Services:</p>
-                {lab.exposed_ports.map(port => (
-                  <a 
-                    key={port}
-                    href={`http://${vmIp}:${port}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white no-underline rounded-md text-sm font-semibold transition-colors"
-                  >
-                    Open Port {port}
-                  </a>
-                ))}
+              <div className="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-sm font-semibold text-blue-800 m-0 mb-3">🌐 Exposed Services (Remotely Accessible)</p>
+                <div className="flex flex-wrap gap-3">
+                  {lab.exposed_ports.map(vmPort => {
+                    const hostPort = portMappings[vmPort];
+                    const accessUrl = hostPort 
+                      ? `http://${window.location.hostname}:${hostPort}`
+                      : `http://${vmIp}:${vmPort}`;
+                    
+                    return (
+                      <div key={vmPort} className="flex flex-col gap-2">
+                        <a 
+                          href={accessUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white no-underline rounded-md text-sm font-semibold transition-colors"
+                        >
+                          Open Port {vmPort}
+                        </a>
+                        {hostPort && (
+                          <span className="text-xs text-slate-600 text-center">
+                            VM:{vmPort} → Host:{hostPort}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {Object.keys(portMappings).length > 0 && (
+                  <p className="text-xs text-slate-600 mt-3 mb-0">
+                    ✓ These services are accessible from any device on your network at <strong>{window.location.hostname}</strong>
+                  </p>
+                )}
               </div>
             )}
 
