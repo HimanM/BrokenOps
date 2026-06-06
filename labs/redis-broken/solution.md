@@ -25,7 +25,9 @@ The developer changed the `bind` directive in `/etc/redis/redis.conf` to `256.25
    Scroll down to the `bind` section and change the invalid IP `256.256.256.256` to a valid IP, like `0.0.0.0` (to listen on all interfaces) or back to `::1`.
 
 4. **Restart the service**:
+   If the service has hit the systemd start limit rate, reset the failed status first:
    ```bash
+   systemctl reset-failed redis-server
    systemctl restart redis-server
    ```
 
