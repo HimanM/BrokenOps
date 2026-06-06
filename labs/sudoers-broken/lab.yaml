@@ -1,0 +1,24 @@
+id: sudoers-broken
+name: Broken Sudoers Drop-In
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: sudoers-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "An admin user loses sudo privileges due to a syntax error in a sudoers drop-in file."
+  story: "A junior administrator tried to grant the 'ops' user sudo permissions by creating a drop-in file in /etc/sudoers.d/. However, they made a syntax error, causing the sudo command to fail for all users. You must find the error, fix it, and verify that sudo works correctly."
+  objectives:
+    - Identify the syntax error in the sudoers drop-in configuration
+    - Fix the drop-in file so that the 'ops' user has valid passwordless sudo privileges
+    - Verify that sudo operates normally without errors
+tags:
+  - linux
+  - security
+  - privilege-escalation

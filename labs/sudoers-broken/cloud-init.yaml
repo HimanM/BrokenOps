@@ -1,0 +1,21 @@
+#cloud-config
+users:
+  - name: ops
+    gecos: Ops User
+    primary-group: ops
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+write_files:
+  - path: /etc/sudoers.d/ops
+    owner: root:root
+    permissions: '0440'
+    content: |
+      ops ALL=(ALL:ALL) NOPASSWD: ALL_BROKEN_SYNTAX
+
+runcmd:
+  # Clean up any potential carriage returns
+  - sed -i 's/\r//g' /etc/sudoers.d/ops
+  # Make sure file permissions are correct
+  - chmod 0440 /etc/sudoers.d/ops
