@@ -98,6 +98,23 @@ if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
             $SUDO rc-update add libvirtd default || true
             $SUDO rc-service libvirtd start || true
         fi
+
+        # Ensure user is in libvirt and kvm groups
+        if [ "$(id -u)" -ne 0 ]; then
+            if ! groups "$USER" | grep -q "\blibvirt\b"; then
+                echo -e "${YELLOW}Adding $USER to libvirt group...${NC}"
+                $SUDO usermod -aG libvirt "$USER" || true
+            fi
+            if ! groups "$USER" | grep -q "\bkvm\b"; then
+                echo -e "${YELLOW}Adding $USER to kvm group...${NC}"
+                $SUDO usermod -aG kvm "$USER" || true
+            fi
+        fi
+
+        # Make libvirt socket accessible
+        if [ -S /var/run/libvirt/libvirt-sock ]; then
+            $SUDO chmod 666 /var/run/libvirt/libvirt-sock
+        fi
     else
         echo -e "${RED}Cannot proceed without dependencies. Exiting.${NC}"
         exit 1
@@ -136,6 +153,13 @@ if [ ! -f "keys/id_ed25519" ]; then
     echo -e "${YELLOW}Generating SSH keys for VM access...${NC}"
     mkdir -p keys
     ssh-keygen -t ed25519 -f keys/id_ed25519 -N ""
+fi
+
+# 5.5 Download default base image if missing
+mkdir -p data/images
+if [ ! -f "data/images/ubuntu-24.04-base.qcow2" ]; then
+    echo -e "${YELLOW}Downloading Ubuntu 24.04 base image...${NC}"
+    curl -L -o data/images/ubuntu-24.04-base.qcow2 https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
 fi
 
 # 6. Build and Start via Docker Compose
