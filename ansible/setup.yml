@@ -68,7 +68,6 @@
       ansible.builtin.pacman:
         name:
           - docker
-          - docker-buildx
           - qemu-base
           - libvirt
           - dnsmasq
