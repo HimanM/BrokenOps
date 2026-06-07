@@ -129,6 +129,18 @@
       failed_when: false
       changed_when: false
 
+    - name: Configure Libvirt to skip security driver (permissive)
+      ansible.builtin.lineinfile:
+        path: /etc/libvirt/qemu.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'security_driver = "none"'
+        - 'user = "root"'
+        - 'group = "root"'
+      when: ansible_os_family != "Windows"
+      notify: Restart libvirtd
+
     - name: Disable firewalld (Fedora/RedHat)
       ansible.builtin.systemd:
         name: firewalld
@@ -198,3 +210,10 @@
         virsh net-start default || true
         virsh net-autostart default || true
       changed_when: false
+
+  handlers:
+    - name: Restart libvirtd
+      ansible.builtin.systemd:
+        name: libvirtd
+        state: restarted
+      when: ansible_service_mgr == "systemd"

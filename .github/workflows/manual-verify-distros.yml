@@ -36,6 +36,12 @@ jobs:
         env:
           ASSUME_YES: "1"
         run: |
+          # Patch for host networking in CI
+          sed -i 's/ports:/network_mode: \"host\"\n    #ports:/' docker-compose.yml
+          sed -i '/extra_hosts:/d' docker-compose.yml
+          sed -i '/- \"host.docker.internal:host-gateway\"/d' docker-compose.yml
+          sed -i 's/host.docker.internal/127.0.0.1/g' frontend/nginx.conf
+          
           chmod +x deploy.sh
           ./deploy.sh
           
@@ -44,10 +50,11 @@ jobs:
           
           # Wait for API to be healthy
           for i in {1..30}; do
-            if curl -s http://localhost/api/labs > /dev/null; then
+            if curl -s -I http://localhost/api/labs | grep -q \"200 OK\"; then
               echo "API is up!"
               break
             fi
+            echo "Waiting for API (200 OK)..."
             sleep 2
           done
 
@@ -86,16 +93,25 @@ jobs:
             
             echo '=== Running deploy.sh inside Guest ==='
             cd /workspace
+            
+            # Patch for host networking in CI
+            sed -i 's/ports:/network_mode: \"host\"\n    #ports:/' docker-compose.yml
+            sed -i '/extra_hosts:/d' docker-compose.yml
+            sed -i '/- \"host.docker.internal:host-gateway\"/d' docker-compose.yml
+            sed -i 's/host.docker.internal/127.0.0.1/g' frontend/nginx.conf
+            
             export ASSUME_YES=1
             chmod +x deploy.sh
             ./deploy.sh
             
             echo '=== Waiting for API inside Guest ==='
             for i in {1..30}; do
-              if curl -s http://localhost/api/labs > /dev/null; then
+              # Check for 200 OK specifically
+              if curl -s -I http://localhost/api/labs | grep -q \"200 OK\"; then
                 echo 'API is up!'
                 break
               fi
+              echo 'Waiting for API (200 OK)...'
               sleep 2
             done
             
