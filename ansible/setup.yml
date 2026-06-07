@@ -56,6 +56,7 @@
           - qemu-img
           - libvirt
           - libvirt-client
+          - dnsmasq
           - bridge-utils
           - genisoimage
           - xorriso
@@ -71,6 +72,7 @@
           - docker-buildx
           - qemu-base
           - libvirt
+          - dnsmasq
           - iproute2
           - cdrtools
           - curl
@@ -188,14 +190,14 @@
       when: ansible_facts['os_family'] != "Windows"
       failed_when: false
 
-    - name: Ensure libvirt default network is defined
+    - name: Ensure BrokenOps libvirt network is defined
       ansible.builtin.shell: |
-        if ! virsh net-info default >/dev/null 2>&1; then
-          cat <<EOF > /tmp/default-net.xml
+        if ! virsh net-info brokenops >/dev/null 2>&1; then
+          cat <<EOF > /tmp/brokenops-net.xml
           <network>
-            <name>default</name>
+            <name>brokenops</name>
             <forward mode='nat'/>
-            <bridge name='virbr0' stp='on' delay='0'/>
+            <bridge name='brokenops0' stp='on' delay='0'/>
             <ip address='192.168.122.1' netmask='255.255.255.0'>
               <dhcp>
                 <range start='192.168.122.2' end='192.168.122.254'/>
@@ -203,28 +205,28 @@
             </ip>
           </network>
         EOF
-          virsh net-define /tmp/default-net.xml
+          virsh net-define /tmp/brokenops-net.xml
         fi
       changed_when: false
 
-    - name: Force activate libvirt default network
+    - name: Force activate BrokenOps libvirt network
       ansible.builtin.shell: |
         # Check if active
-        if ! virsh net-info default | grep -q "Active:.*yes"; then
+        if ! virsh net-info brokenops | grep -q "Active:.*yes"; then
           # Stop conflicting dnsmasq if any
           systemctl stop dnsmasq >/dev/null 2>&1 || true
           # Ensure bridge is clear
-          ip link set virbr0 down >/dev/null 2>&1 || true
-          brctl delbr virbr0 >/dev/null 2>&1 || true
+          ip link set brokenops0 down >/dev/null 2>&1 || true
+          brctl delbr brokenops0 >/dev/null 2>&1 || true
           # Start network
-          virsh net-start default
+          virsh net-start brokenops
         fi
-        virsh net-autostart default || true
+        virsh net-autostart brokenops || true
       changed_when: false
       failed_when: false
 
-    - name: Final check for libvirt network status
-      ansible.builtin.shell: virsh net-info default
+    - name: Final check for BrokenOps libvirt network status
+      ansible.builtin.shell: virsh net-info brokenops
       register: net_info
       changed_when: false
 

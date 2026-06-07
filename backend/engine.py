@@ -1,12 +1,13 @@
 import libvirt
-import xml.etree.ElementTree as ET
 import os
 
-DEFAULT_NETWORK_XML = """
+LAB_NETWORK_NAME = "brokenops"
+LAB_NETWORK_BRIDGE = "brokenops0"
+LAB_NETWORK_XML = f"""
 <network>
-  <name>default</name>
+  <name>{LAB_NETWORK_NAME}</name>
   <forward mode='nat'/>
-  <bridge name='virbr0' stp='on' delay='0'/>
+  <bridge name='{LAB_NETWORK_BRIDGE}' stp='on' delay='0'/>
   <ip address='192.168.122.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.168.122.2' end='192.168.122.254'/>
@@ -29,7 +30,7 @@ class LabEngine:
             return path.replace("/app", host_root, 1)
         return path
 
-    def _generate_domain_xml(self, name, memory_mb, vcpus, disk_path, cloud_iso_path):
+    def _generate_domain_xml(self, name, memory_mb, vcpus, disk_path, cloud_iso_path, network_name):
         disk_path_host = self._map_to_host_path(disk_path)
         cloud_iso_path_host = self._map_to_host_path(cloud_iso_path)
         
@@ -70,7 +71,7 @@ class LabEngine:
               <target type='serial' port='0'/>
             </console>
             <interface type='network'>
-              <source network='default'/>
+              <source network='{network_name}'/>
               <model type='virtio'/>
             </interface>
             <graphics type='vnc' port='-1'/>
@@ -79,27 +80,34 @@ class LabEngine:
         """
         return xml
 
-    def ensure_default_network(self):
+    def ensure_lab_network(self):
         if not self.conn:
-            return False, "Not connected to libvirt"
+            return False, None, "Not connected to libvirt"
 
         try:
-            network = self.conn.networkLookupByName("default")
+            default_network = self.conn.networkLookupByName("default")
+            if default_network.isActive():
+                return True, "default", ""
+        except libvirt.libvirtError:
+            pass
+
+        try:
+            network = self.conn.networkLookupByName(LAB_NETWORK_NAME)
         except libvirt.libvirtError:
             try:
-                network = self.conn.networkDefineXML(DEFAULT_NETWORK_XML)
+                network = self.conn.networkDefineXML(LAB_NETWORK_XML)
             except libvirt.libvirtError as e:
-                return False, f"libvirt default network is missing and could not be defined: {e}"
+                return False, None, f"libvirt {LAB_NETWORK_NAME!r} network is missing and could not be defined: {e}"
 
         try:
             if not network.isActive():
                 network.create()
             network.setAutostart(1)
-            return True, ""
+            return True, LAB_NETWORK_NAME, ""
         except libvirt.libvirtError as e:
-            return False, (
-                "libvirt default network is not active and could not be started. "
-                "On the host, run: sudo virsh net-start default && sudo virsh net-autostart default. "
+            return False, None, (
+                f"libvirt {LAB_NETWORK_NAME!r} network is not active and could not be started. "
+                "Ensure dnsmasq is installed and libvirtd is running on the host. "
                 f"Original error: {e}"
             )
 
@@ -107,11 +115,11 @@ class LabEngine:
         if not self.conn:
             return False, "Not connected to libvirt"
 
-        network_ok, network_error = self.ensure_default_network()
+        network_ok, network_name, network_error = self.ensure_lab_network()
         if not network_ok:
             return False, network_error
         
-        xml = self._generate_domain_xml(name, memory_mb, vcpus, disk_path, cloud_iso_path)
+        xml = self._generate_domain_xml(name, memory_mb, vcpus, disk_path, cloud_iso_path, network_name)
         
         # Check if domain exists
         try:
@@ -147,6 +155,16 @@ class LabEngine:
             return None
         except libvirt.libvirtError:
             return None
+
+    def get_vm_state(self, name: str) -> str:
+        if not self.conn:
+            return "libvirt connection unavailable"
+        try:
+            dom = self.conn.lookupByName(name)
+            state, reason = dom.state()
+            return f"state={state} reason={reason}"
+        except libvirt.libvirtError as e:
+            return str(e)
 
     def stop_vm(self, name: str) -> bool:
         if not self.conn:

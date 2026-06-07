@@ -2,6 +2,7 @@ FROM python:3.12-slim-bookworm
 
 RUN apt-get update && apt-get install -y \
     qemu-utils \
+    dnsmasq-base \
     libvirt-dev \
     pkg-config \
     gcc \

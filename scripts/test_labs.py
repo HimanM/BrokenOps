@@ -115,11 +115,13 @@ def main():
 
         # Wait for VM to be up
         ip = None
-        for _ in range(30):
+        last_status = None
+        for _ in range(90):
             try:
                 status_resp = requests.get(f"{API_URL}/labs/{lab_id}/status")
                 if status_resp.status_code == 200:
                     status_data = status_resp.json()
+                    last_status = status_data
                     if status_data.get("status") == "running":
                         ip = status_data.get("ip")
                         break
@@ -129,6 +131,8 @@ def main():
 
         if not ip:
             print(f"❌ VM did not get an IP in time.")
+            if last_status:
+                print(f"Last status response: {last_status}")
             requests.delete(f"{API_URL}/labs/{lab_id}/stop")
             all_passed = False
             continue

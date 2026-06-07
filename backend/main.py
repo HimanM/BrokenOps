@@ -261,7 +261,10 @@ async def lab_status(lab_id: str):
         
         vm_ip = engine.get_vm_ip(vm_name)
         if not vm_ip:
-            return {"status": "stopped", "ip": None}
+            vm_state = engine.get_vm_state(vm_name)
+            if "Domain not found" in vm_state or "matching name" in vm_state:
+                return {"status": "stopped", "ip": None, "vm_state": vm_state}
+            return {"status": "provisioning", "ip": None, "vm_state": vm_state}
             
         # We have an IP, check if cloud-init is done
         ssh_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
