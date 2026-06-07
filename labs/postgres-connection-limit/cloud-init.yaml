@@ -15,13 +15,14 @@ runcmd:
 
     connections = []
     # Open enough connections to fill max_connections (10)
-    for i in range(15):
+    for i in range(20):
         try:
             conn = psycopg2.connect("dbname=postgres user=postgres")
             connections.append(conn)
             # Keep transaction open to ensure it stays in pg_stat_activity
             cur = conn.cursor()
             cur.execute("SELECT 1")
+            time.sleep(0.1)
         except Exception as e:
             print(f"Connection {i} failed: {e}")
     
