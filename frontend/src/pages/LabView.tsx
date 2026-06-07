@@ -11,8 +11,9 @@ import {
   Square,
   Terminal,
 } from 'lucide-react';
-import { FaLinux, FaNetworkWired } from 'react-icons/fa';
+import { FaGithub, FaLinux, FaNetworkWired } from 'react-icons/fa';
 import { SiDocker, SiGnubash, SiHackthebox, SiKubernetes } from 'react-icons/si';
+import { TbDatabase, TbWorldWww } from 'react-icons/tb';
 import ReactMarkdown from 'react-markdown';
 import TerminalWindow from '../TerminalWindow';
 
@@ -42,8 +43,13 @@ const categoryIcons: Record<string, ComponentType<{ className?: string }>> = {
   security: SiHackthebox,
   networking: FaNetworkWired,
   docker: SiDocker,
+  containers: SiDocker,
+  databases: TbDatabase,
+  web: TbWorldWww,
   kubernetes: SiKubernetes,
 };
+
+const repoUrl = 'https://github.com/HimanM/BrokenOps';
 
 const statusCopy: Record<ProvisioningStatus, { title: string; body: string }> = {
   idle: {
@@ -389,6 +395,15 @@ export default function LabView() {
         </div>
 
         <div className="flex items-center gap-2">
+          <a
+            href={repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden h-10 items-center gap-2 rounded-lg border border-[#3b3d45] bg-[#15181e] px-3 text-sm font-semibold text-[#b2b6bd] transition-colors hover:text-white md:inline-flex"
+          >
+            <FaGithub className="h-4 w-4" />
+            Repo
+          </a>
           {remainingSeconds !== null && ready && (
             <div
               className={`hidden h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold md:flex ${

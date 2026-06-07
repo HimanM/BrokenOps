@@ -1,7 +1,8 @@
-import { useState, useEffect, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { CheckCircle2, Play, RefreshCw, Search } from 'lucide-react';
-import { FaLinux, FaNetworkWired } from 'react-icons/fa';
-import { SiHackthebox, SiKubernetes, SiDocker, SiGnubash } from 'react-icons/si';
+import { FaGithub, FaLinux, FaNetworkWired } from 'react-icons/fa';
+import { SiDocker, SiHackthebox } from 'react-icons/si';
+import { TbDatabase, TbWorldWww } from 'react-icons/tb';
 import { useNavigate } from 'react-router-dom';
 
 interface Lab {
@@ -20,6 +21,8 @@ type CategoryMeta = {
   rail: string;
   Icon: ComponentType<{ className?: string }>;
 };
+
+const repoUrl = 'https://github.com/HimanM/BrokenOps';
 
 const categoryMeta: Record<string, CategoryMeta> = {
   linux: {
@@ -46,11 +49,23 @@ const categoryMeta: Record<string, CategoryMeta> = {
     rail: 'bg-[#2b89ff]',
     Icon: SiDocker,
   },
-  kubernetes: {
-    label: 'Kubernetes',
-    accent: 'text-[#8aa6ff] bg-[#8aa6ff]/10 border-[#8aa6ff]/25',
-    rail: 'bg-[#8aa6ff]',
-    Icon: SiKubernetes,
+  containers: {
+    label: 'Containers',
+    accent: 'text-[#2b89ff] bg-[#2b89ff]/10 border-[#2b89ff]/25',
+    rail: 'bg-[#2b89ff]',
+    Icon: SiDocker,
+  },
+  databases: {
+    label: 'Databases',
+    accent: 'text-[#c084fc] bg-[#c084fc]/10 border-[#c084fc]/25',
+    rail: 'bg-[#c084fc]',
+    Icon: TbDatabase,
+  },
+  web: {
+    label: 'Web',
+    accent: 'text-[#fb7185] bg-[#fb7185]/10 border-[#fb7185]/25',
+    rail: 'bg-[#fb7185]',
+    Icon: TbWorldWww,
   },
 };
 
@@ -58,7 +73,7 @@ const fallbackMeta: CategoryMeta = {
   label: 'Operations',
   accent: 'text-[#d6d8dc] bg-[#1f232b] border-[#3b3d45]',
   rail: 'bg-[#656a76]',
-  Icon: SiGnubash,
+  Icon: FaNetworkWired,
 };
 
 const difficultyOrder: Record<string, number> = {
@@ -163,192 +178,381 @@ export default function Dashboard() {
     }))
     .filter((group) => group.labs.length > 0);
 
+  const totalSolved = completedLabs.length;
+  const activeLabel = activeCategory === 'all' ? 'All categories' : getCategoryMeta(activeCategory).label;
+  const categoryCounts = new Map<string, number>();
+  for (const lab of labs) {
+    categoryCounts.set(lab.category, (categoryCounts.get(lab.category) ?? 0) + 1);
+  }
+
   return (
-    <div className="min-h-screen bg-[#000000] text-white selection:bg-[#2b89ff]/30">
-      <nav className="sticky top-0 z-40 border-b border-[#252830] bg-black/95">
-        <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-5 lg:px-8">
+    <div className="min-h-screen bg-[#050608] text-white selection:bg-[#2b89ff]/30">
+      <nav className="sticky top-0 z-40 border-b border-[#252830] bg-black/90 backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-[1900px] items-center justify-between px-6 xl:px-10">
           <button
             type="button"
             onClick={() => navigate('/')}
             className="flex items-center gap-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2b89ff]"
           >
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-[#3b3d45] bg-[#15181e]">
-              <span className="absolute h-2.5 w-2.5 rounded-full bg-[#14c6cb] left-2 top-2" />
-              <span className="absolute h-2.5 w-2.5 rounded-full bg-[#ffcf25] right-2 top-3" />
-              <span className="absolute bottom-2 h-2.5 w-2.5 rounded-full bg-[#e62b1e]" />
-              <span className="h-px w-5 rotate-45 bg-[#656a76]" />
-            </span>
+            <img src="/brokenops-mark.png" alt="BrokenOps" className="h-8 w-8" />
             <span>
               <span className="block text-sm font-semibold leading-none text-white">BrokenOps</span>
-              <span className="mt-1 block text-xs font-medium leading-none text-[#656a76]">Lab control plane</span>
+              <span className="mt-1 block text-xs font-medium leading-none text-[#656a76]">
+                Hands-on lab control plane
+                <span className="mx-1 text-[#3b3d45]">/</span>
+                by <span className="text-[#b2b6bd]">HimanM</span>
+              </span>
             </span>
           </button>
 
-          <div className="hidden items-center gap-6 text-sm font-medium text-[#b2b6bd] md:flex">
-            <span>{labs.length} labs indexed</span>
-            <span>{completedLabs.length} completed</span>
+          <div className="hidden items-center gap-4 md:flex">
+            <span className="text-sm font-medium text-[#656a76]">{labs.length} labs indexed</span>
+            <span className="text-sm font-medium text-[#656a76]">{totalSolved} completed</span>
           </div>
         </div>
       </nav>
 
-      <main className="mx-auto max-w-[1280px] px-5 py-8 lg:px-8 lg:py-10">
-        <section className="border-b border-[#252830] pb-8">
-          <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#14c6cb]">Operations lab inventory</div>
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
-            <div>
-              <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-[1.18] tracking-normal text-white md:text-5xl">
-                Practice incident response inside disposable Linux systems.
-              </h1>
-              <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-[#b2b6bd] md:text-lg">
-                Pick a broken service, launch an isolated VM, diagnose from the shell, and verify the repair against the lab checks.
-              </p>
-            </div>
+      <main className="mx-auto w-full max-w-[1900px] px-6 py-6 xl:px-10 xl:py-8">
+        <div className="grid gap-6 xl:grid-cols-[minmax(240px,1fr)_minmax(920px,1040px)_minmax(240px,1fr)]">
+          <aside className="hidden xl:block">
+            <div className="sticky top-24 space-y-4">
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#14c6cb]">Browse</div>
+                <div className="mt-4 space-y-2">
+                  <FilterButton
+                    active={activeCategory === 'all'}
+                    label="All categories"
+                    count={labs.length}
+                    onClick={() => setActiveCategory('all')}
+                  />
+                  {categories.map((category) => {
+                    const meta = getCategoryMeta(category);
+                    return (
+                      <FilterButton
+                        key={category}
+                        active={activeCategory === category}
+                        label={meta.label}
+                        count={categoryCounts.get(category) ?? 0}
+                        icon={<meta.Icon className="h-4 w-4" />}
+                        onClick={() => setActiveCategory(category)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
 
-            <div className="rounded-xl border border-[#252830] bg-[#15181e] p-4">
-              <div className="grid grid-cols-3 gap-3">
-                <Metric value={labs.length} label="Labs" />
-                <Metric value={categories.length} label="Domains" />
-                <Metric value={completedLabs.length} label="Solved" />
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Current filter</div>
+                <p className="mt-3 text-sm font-semibold text-white">{activeLabel}</p>
+                <p className="mt-2 text-sm leading-6 text-[#8d93a1]">
+                  {filteredLabs.length} matching labs ordered by difficulty so you can move from quick wins into sharper failure modes.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Difficulty ladder</div>
+                <div className="mt-4 space-y-3">
+                  <DifficultyRow tone="easy" label="Beginner" body="Fast repair loops and first-pass service failures." />
+                  <DifficultyRow tone="mid" label="Intermediate" body="Root-cause hunting across config, permissions, and state." />
+                  <DifficultyRow tone="hard" label="Advanced" body="Multi-step breakage where the first symptom is not the real issue." />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </aside>
 
-        <section className="py-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#656a76]" />
-              <input
-                type="text"
-                placeholder="Search labs, categories, difficulty, or IDs"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-11 w-full rounded-lg border border-[#3b3d45] bg-[#15181e] pl-10 pr-4 text-sm font-medium text-white outline-none transition-colors placeholder:text-[#656a76] focus:border-[#2b89ff]"
-              />
+          <section className="min-w-0">
+            <div className="rounded-[28px] border border-[#252830] bg-[linear-gradient(180deg,#12151b_0%,#0b0d11_100%)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:p-6">
+              <div className="max-w-3xl">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#14c6cb]">Operations lab inventory</div>
+                <h1 className="mt-3 text-3xl font-bold leading-[1.08] tracking-normal text-white md:text-5xl">
+                  Practice incident response inside disposable Linux systems.
+                </h1>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-[#b2b6bd]">
+                  Launch intentionally broken environments, debug from the shell, and verify repairs against the lab checks without polluting your host.
+                </p>
+              </div>
+
+              <div className="mt-6 grid gap-4 border-t border-[#252830] pt-5 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
+                <div className="min-w-0">
+                  <div className="relative w-full">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#656a76]" />
+                    <input
+                      type="text"
+                      placeholder="Search labs, categories, difficulty, or IDs"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-12 w-full rounded-xl border border-[#3b3d45] bg-[#15181e] pl-10 pr-4 text-sm font-medium text-white outline-none transition-colors placeholder:text-[#656a76] focus:border-[#2b89ff]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <Metric value={labs.length} label="Labs" compact />
+                  <Metric value={categories.length} label="Domains" compact />
+                  <Metric value={totalSolved} label="Solved" compact />
+                </div>
+              </div>
+
+              {!loading && labs.length > 0 && (
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#252830] pt-4 text-sm">
+                  <div className="text-[#8d93a1]">Showing {filteredLabs.length} of {labs.length} labs</div>
+                  <div className="text-[#8d93a1]">{activeLabel}</div>
+                </div>
+              )}
+
+              {!loading && labs.length > 0 && (
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1 xl:hidden">
+                  <MobileChip active={activeCategory === 'all'} label="All" onClick={() => setActiveCategory('all')} />
+                  {categories.map((category) => {
+                    const meta = getCategoryMeta(category);
+                    return (
+                      <MobileChip
+                        key={category}
+                        active={activeCategory === category}
+                        label={meta.label}
+                        icon={<meta.Icon className="h-4 w-4" />}
+                        onClick={() => setActiveCategory(category)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {!loading && labs.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {['all', ...categories].map((category) => {
-                  const active = activeCategory === category;
-                  const meta = category === 'all' ? null : getCategoryMeta(category);
-                  const Icon = meta?.Icon;
+            {loading ? (
+              <div className="mt-6 flex items-center justify-center rounded-2xl border border-[#252830] bg-[#12151b] py-28">
+                <RefreshCw className="h-7 w-7 animate-spin text-[#14c6cb]" />
+              </div>
+            ) : groupedLabs.length > 0 ? (
+              <div className={`mt-6 grid gap-5 ${activeCategory === 'all' ? '2xl:grid-cols-2' : ''}`}>
+                {groupedLabs.map(({ category, labs: labsInCategory }) => {
+                  const meta = getCategoryMeta(category);
+                  const Icon = meta.Icon;
+
                   return (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => setActiveCategory(category)}
-                      className={`inline-flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold capitalize transition-colors ${
-                        active
-                          ? 'border-white bg-white text-black'
-                          : 'border-[#3b3d45] bg-[#15181e] text-[#b2b6bd] hover:border-[#656a76] hover:text-white'
-                      }`}
-                    >
-                      {Icon && <Icon className="h-4 w-4" />}
-                      {category}
-                    </button>
+                    <div key={category} className="overflow-hidden rounded-2xl border border-[#252830] bg-[#12151b]">
+                      <div className="flex items-center justify-between gap-3 border-b border-[#252830] px-4 py-4 lg:px-5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${meta.accent}`}>
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <div className="min-w-0">
+                            <h2 className="text-lg font-semibold leading-tight text-white">{meta.label}</h2>
+                            <p className="mt-1 text-xs font-medium text-[#656a76]">
+                              {labsInCategory.length} {labsInCategory.length === 1 ? 'lab' : 'labs'} sorted easy to hard
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="divide-y divide-[#252830]">
+                        {labsInCategory.map((lab) => {
+                          const completed = completedLabs.includes(lab.id);
+                          return (
+                            <article
+                              key={lab.id}
+                              className="group grid gap-4 px-4 py-4 transition-colors hover:bg-[#181b21] md:grid-cols-[minmax(0,1fr)_auto] md:items-center lg:px-5"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/labs/${lab.id}?autoLaunch=true`)}
+                                className="flex min-w-0 items-start gap-4 text-left"
+                              >
+                                <div className={`mt-1 h-12 w-1.5 shrink-0 rounded-full ${meta.rail}`} />
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="text-base font-semibold leading-6 text-white">{lab.name}</h3>
+                                    {completed && (
+                                      <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#00ca8e]/25 bg-[#00ca8e]/10 px-2 text-xs font-semibold text-[#00ca8e]">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        Done
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="mt-1 text-sm leading-6 text-[#b2b6bd]">{lab.description.summary}</p>
+                                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold capitalize ${getDifficultyClass(lab.difficulty)}`}>
+                                      {lab.difficulty}
+                                    </span>
+                                    <span className="rounded-md border border-[#3b3d45] bg-black px-2.5 py-1 text-xs font-semibold text-[#656a76]">
+                                      {lab.id}
+                                    </span>
+                                  </div>
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-black transition-colors hover:bg-[#e7e9ee]"
+                                onClick={() => navigate(`/labs/${lab.id}?autoLaunch=true`)}
+                              >
+                                <Play className="h-4 w-4" />
+                                Launch
+                              </button>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
+            ) : (
+              <div className="mt-6 rounded-2xl border border-[#252830] bg-[#12151b] p-10 text-center">
+                <p className="text-sm font-medium text-[#b2b6bd]">No labs match the current filters.</p>
+              </div>
             )}
-          </div>
-        </section>
 
-        {loading ? (
-          <div className="flex items-center justify-center rounded-xl border border-[#252830] bg-[#15181e] py-28">
-            <RefreshCw className="h-7 w-7 animate-spin text-[#14c6cb]" />
-          </div>
-        ) : (
-          <section className="space-y-5">
-            {groupedLabs.map(({ category, labs: labsInCategory }) => {
-              const meta = getCategoryMeta(category);
-              const Icon = meta.Icon;
-
-              return (
-                <div key={category} className="overflow-hidden rounded-xl border border-[#252830] bg-[#15181e]">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#252830] px-4 py-4 md:px-5">
-                    <div className="flex items-center gap-3">
-                      <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${meta.accent}`}>
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <h2 className="text-lg font-semibold capitalize leading-tight text-white">{meta.label}</h2>
-                        <p className="mt-1 text-xs font-medium text-[#656a76]">
-                          {labsInCategory.length} {labsInCategory.length === 1 ? 'lab' : 'labs'} sorted easy to hard
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="divide-y divide-[#252830]">
-                    {labsInCategory.map((lab) => {
-                      const completed = completedLabs.includes(lab.id);
-                      return (
-                        <article
-                          key={lab.id}
-                          className="group grid cursor-pointer gap-4 px-4 py-4 transition-colors hover:bg-[#1b1f26] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5"
-                          onClick={() => navigate(`/labs/${lab.id}?autoLaunch=true`)}
-                        >
-                          <div className="flex min-w-0 gap-4">
-                            <div className={`mt-1 h-12 w-1.5 shrink-0 rounded-full ${meta.rail}`} />
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-base font-semibold leading-6 text-white">{lab.name}</h3>
-                                {completed && (
-                                  <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#00ca8e]/25 bg-[#00ca8e]/10 px-2 text-xs font-semibold text-[#00ca8e]">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Done
-                                  </span>
-                                )}
-                              </div>
-                              <p className="mt-1 text-sm font-medium leading-6 text-[#b2b6bd]">{lab.description.summary}</p>
-                              <div className="mt-3 flex flex-wrap items-center gap-2">
-                                <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold capitalize ${getDifficultyClass(lab.difficulty)}`}>
-                                  {lab.difficulty}
-                                </span>
-                                <span className="rounded-md border border-[#3b3d45] bg-black px-2.5 py-1 text-xs font-semibold text-[#656a76]">
-                                  {lab.id}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-black transition-colors hover:bg-[#e7e9ee] md:w-auto"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              navigate(`/labs/${lab.id}?autoLaunch=true`);
-                            }}
-                          >
-                            <Play className="h-4 w-4" />
-                            Launch
-                          </button>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+            <footer className="mt-8 border-t border-[#252830] pt-5 text-sm text-[#656a76] xl:hidden">
+              <p>BrokenOps is built for realistic Linux, network, platform, and service troubleshooting practice.</p>
+            </footer>
           </section>
-        )}
 
-        {!loading && filteredLabs.length === 0 && (
-          <div className="rounded-xl border border-[#252830] bg-[#15181e] p-10 text-center">
-            <p className="text-sm font-medium text-[#b2b6bd]">No labs match the current filters.</p>
-          </div>
-        )}
+          <aside className="hidden xl:block">
+            <div className="sticky top-24 space-y-4">
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Inventory</div>
+                <div className="mt-4 grid gap-3">
+                  <Metric value={labs.length} label="Labs" />
+                  <Metric value={categories.length} label="Domains" />
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Progress</div>
+                <p className="mt-3 text-3xl font-semibold text-white">{totalSolved}</p>
+                <p className="mt-1 text-sm leading-6 text-[#8d93a1]">Completed labs tracked locally in this browser profile.</p>
+              </div>
+
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Project</div>
+                <a
+                  href={repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg border border-[#3b3d45] bg-[#15181e] px-3 text-sm font-semibold text-[#b2b6bd] transition-colors hover:border-[#656a76] hover:text-white"
+                >
+                  <FaGithub className="h-4 w-4" />
+                  HimanM/BrokenOps
+                </a>
+                <p className="mt-3 text-sm leading-6 text-[#8d93a1]">
+                  Open the repository for setup docs, lab sources, and the host-side tooling behind the platform.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4 text-sm text-[#656a76]">
+                <p>BrokenOps is built for realistic Linux, network, platform, and service troubleshooting practice.</p>
+              </div>
+            </div>
+          </aside>
+        </div>
       </main>
     </div>
   );
 }
 
-function Metric({ value, label }: { value: number; label: string }) {
+function FilterButton({
+  active,
+  label,
+  count,
+  icon,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  count: number;
+  icon?: ReactNode;
+  onClick: () => void;
+}) {
   return (
-    <div className="rounded-lg border border-[#252830] bg-black p-3">
-      <div className="text-2xl font-semibold text-white">{value}</div>
-      <div className="mt-1 text-xs font-medium text-[#656a76]">{label}</div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-sm font-semibold transition-colors ${
+        active
+          ? 'border-white bg-white text-black'
+          : 'border-[#252830] bg-[#0b0d11] text-[#b2b6bd] hover:border-[#3b3d45] hover:text-white'
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        {icon}
+        {label}
+      </span>
+      <span className={`${active ? 'text-black/70' : 'text-[#656a76]'}`}>{count}</span>
+    </button>
+  );
+}
+
+function MobileChip({
+  active,
+  label,
+  icon,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  icon?: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors ${
+        active
+          ? 'border-white bg-white text-black'
+          : 'border-[#3b3d45] bg-[#15181e] text-[#b2b6bd] hover:border-[#656a76] hover:text-white'
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function DifficultyRow({
+  tone,
+  label,
+  body,
+}: {
+  tone: 'easy' | 'mid' | 'hard';
+  label: string;
+  body: string;
+}) {
+  const tones = {
+    easy: 'bg-[#00ca8e]',
+    mid: 'bg-[#ffcf25]',
+    hard: 'bg-[#e62b1e]',
+  };
+
+  return (
+    <div className="rounded-xl border border-[#252830] bg-[#0b0d11] p-3">
+      <div className="flex items-center gap-2 text-sm font-semibold text-white">
+        <span className={`h-2.5 w-2.5 rounded-full ${tones[tone]}`} />
+        {label}
+      </div>
+      <p className="mt-2 text-sm leading-6 text-[#8d93a1]">{body}</p>
+    </div>
+  );
+}
+
+function Metric({
+  value,
+  label,
+  compact = false,
+}: {
+  value: number;
+  label: string;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border border-[#252830] bg-black ${
+        compact ? 'flex h-[74px] flex-col justify-between px-3 py-3' : 'p-4'
+      }`}
+    >
+      <div className={`${compact ? 'text-[17px] leading-none' : 'text-2xl'} font-semibold tracking-normal text-white`}>{value}</div>
+      <div className={`${compact ? 'text-[11px] leading-none' : 'text-xs'} font-medium text-[#6e7480]`}>{label}</div>
     </div>
   );
 }

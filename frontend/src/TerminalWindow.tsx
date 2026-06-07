@@ -133,7 +133,9 @@ export default function TerminalWindow({ labId, embedded = false }: TerminalWind
           </button>
         </div>
       )}
-      <div className="min-h-0 min-w-0 flex-1 overflow-hidden px-4 pb-5 pt-3" ref={terminalRef}></div>
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden px-4 pb-8 pt-3">
+        <div className="h-full w-full min-h-0 min-w-0" ref={terminalRef}></div>
+      </div>
     </div>
   );
 }
