@@ -144,4 +144,4 @@ Use [LAB_FORMAT.md](./LAB_FORMAT.md) for the lab authoring format and expectatio
 
 ## License
 
-See the repository license information if present in this project.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for the full text.

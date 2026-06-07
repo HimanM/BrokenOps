@@ -19,6 +19,12 @@ function previewMarkdown(text: string): string {
     .trim();
 }
 
+function limitText(text: string, maxLength: number): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLength) return clean;
+  return `${clean.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
 export default function Home() {
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [latestRelease, setLatestRelease] = useState<ReleaseInfo | null>(null);
@@ -119,11 +125,11 @@ export default function Home() {
               LATEST RELEASE
             </p>
             <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-              {latestRelease ? (latestRelease.name || latestRelease.tag_name) : 'No release loaded yet'}
+              {latestRelease ? limitText(latestRelease.name || latestRelease.tag_name, 72) : 'No release loaded yet'}
             </h2>
-            <p style={{ color: 'var(--dimmed)', fontSize: '1rem', lineHeight: 1.8, maxWidth: '72ch', whiteSpace: 'pre-line' }}>
+            <p style={{ color: 'var(--dimmed)', fontSize: '1rem', lineHeight: 1.8, maxWidth: '72ch' }}>
               {latestRelease
-                ? previewMarkdown(latestRelease.body) || 'A recent BrokenOps release from GitHub.'
+                ? limitText(previewMarkdown(latestRelease.body), 260) || 'A recent BrokenOps release from GitHub.'
                 : 'The homepage reads the GitHub Releases API and shows the newest published prerelease or normal release.'}
             </p>
           </div>

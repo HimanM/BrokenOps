@@ -22,21 +22,21 @@ export const metadata: Metadata = {
   applicationName: "BrokenOps",
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico" },
+      { url: "favicon.svg", type: "image/svg+xml" },
+      { url: "icon.svg", type: "image/svg+xml" },
     ],
-    apple: "/apple-icon.svg",
+    apple: "apple-icon.svg",
   },
   openGraph: {
     type: "website",
     title: "BrokenOps | Community Linux Lab Platform",
     description:
       "Community-driven labs for Linux users, setup guidance, recently merged labs, and contributor profiles.",
-    url: "/",
+    url: ".",
     siteName: "BrokenOps",
     images: [
       {
-        url: "/opengraph-image.svg",
+        url: "opengraph-image.svg",
         width: 1200,
         height: 630,
         alt: "BrokenOps",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     title: "BrokenOps | Community Linux Lab Platform",
     description:
       "Community-driven labs for Linux users, setup guidance, recently merged labs, and contributor profiles.",
-    images: ["/opengraph-image.svg"],
+    images: ["opengraph-image.svg"],
   },
 };
 
