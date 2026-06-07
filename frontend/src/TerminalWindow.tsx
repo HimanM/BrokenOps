@@ -6,9 +6,10 @@ import { ExternalLink } from 'lucide-react';
 
 interface TerminalWindowProps {
   labId: string;
+  embedded?: boolean;
 }
 
-export default function TerminalWindow({ labId }: TerminalWindowProps) {
+export default function TerminalWindow({ labId, embedded = false }: TerminalWindowProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -20,12 +21,19 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
     const term = new Terminal({
       cursorBlink: true,
       theme: {
-        background: '#0f172a',
-        foreground: '#f8fafc',
-        cursor: '#3b82f6',
+        background: '#000000',
+        foreground: '#f4f4f5',
+        cursor: '#14c6cb',
+        black: '#000000',
+        blue: '#2b89ff',
+        cyan: '#14c6cb',
+        green: '#00ca8e',
+        red: '#e62b1e',
+        yellow: '#ffcf25',
       },
-      fontFamily: '"FiraCode Nerd Font", "Hack Nerd Font", "MesloLGS NF", Menlo, Monaco, "Courier New", monospace',
+      fontFamily: '"JetBrains Mono", "FiraCode Nerd Font", "Hack Nerd Font", "MesloLGS NF", Menlo, Monaco, "Courier New", monospace',
       fontSize: 14,
+      lineHeight: 1.2,
     });
     
     const fitAddon = new FitAddon();
@@ -91,7 +99,9 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
             rows: termRef.current.rows 
           }));
         }
-      } catch (e) {}
+      } catch {
+        return;
+      }
     };
 
     const resizeObserver = new ResizeObserver(handleResize);
@@ -109,18 +119,23 @@ export default function TerminalWindow({ labId }: TerminalWindowProps) {
   }, [labId]);
 
   return (
-    <div className="w-full h-full bg-slate-900 flex flex-col min-h-0 min-w-0">
-      <div className="h-8 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 select-none shrink-0">
-        <span className="text-xs font-medium text-slate-400">root@{labId}:~</span>
-        <button 
-          onClick={() => window.open(`/labs/${labId}/terminal`, '_blank')}
-          className="text-slate-400 hover:text-white transition-colors"
-          title="Open in new tab"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-        </button>
+    <div className="flex h-full min-h-0 min-w-0 flex-col bg-black">
+      {!embedded && (
+        <div className="flex h-11 shrink-0 select-none items-center justify-between border-b border-[#252830] bg-[#15181e] px-4">
+          <span className="text-xs font-semibold text-[#b2b6bd]">root@{labId}:~</span>
+          <button
+            type="button"
+            onClick={() => window.open(`/labs/${labId}/terminal`, '_blank')}
+            className="rounded-md p-1.5 text-[#656a76] transition-colors hover:bg-[#1f232b] hover:text-white"
+            title="Open in new tab"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden px-3 pb-3 pt-2">
+        <div className="h-full w-full min-h-0 min-w-0" ref={terminalRef}></div>
       </div>
-      <div className="flex-1 min-h-0 min-w-0 pl-4 pr-6 pb-6 pt-2 overflow-hidden" ref={terminalRef}></div>
     </div>
   );
 }

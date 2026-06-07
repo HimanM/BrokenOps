@@ -1,6 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type ComponentType, type ReactNode } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Square, RotateCcw, CheckCircle, Loader2, Timer } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock3,
+  ExternalLink,
+  Loader2,
+  PanelLeft,
+  RotateCcw,
+  Square,
+  Terminal,
+} from 'lucide-react';
+import { FaGithub, FaLinux, FaNetworkWired } from 'react-icons/fa';
+import { SiDocker, SiGnubash, SiHackthebox, SiKubernetes } from 'react-icons/si';
+import { TbDatabase, TbWorldWww } from 'react-icons/tb';
 import ReactMarkdown from 'react-markdown';
 import TerminalWindow from '../TerminalWindow';
 
@@ -14,6 +27,53 @@ interface LabDetails {
   verify_script?: string;
 }
 
+type ProvisioningStatus = 'idle' | 'launching' | 'waiting_ip' | 'provisioning' | 'ready';
+type DialogVariant = 'info' | 'success' | 'error';
+
+interface AppDialog {
+  title: string;
+  message: string;
+  variant: DialogVariant;
+  confirmLabel?: string;
+  onConfirm?: () => void;
+}
+
+const categoryIcons: Record<string, ComponentType<{ className?: string }>> = {
+  linux: FaLinux,
+  security: SiHackthebox,
+  networking: FaNetworkWired,
+  docker: SiDocker,
+  containers: SiDocker,
+  databases: TbDatabase,
+  web: TbWorldWww,
+  kubernetes: SiKubernetes,
+};
+
+const repoUrl = 'https://github.com/HimanM/BrokenOps';
+
+const statusCopy: Record<ProvisioningStatus, { title: string; body: string }> = {
+  idle: {
+    title: 'Environment idle',
+    body: 'Launch the lab to create a disposable VM.',
+  },
+  launching: {
+    title: 'Provisioning environment',
+    body: 'Creating the overlay disk, cloud-init ISO, and libvirt domain.',
+  },
+  waiting_ip: {
+    title: 'Waiting for network',
+    body: 'The VM is booting and waiting for a DHCP lease.',
+  },
+  provisioning: {
+    title: 'Configuring system',
+    body: 'Cloud-init is installing packages and applying the broken state.',
+  },
+  ready: {
+    title: 'Terminal ready',
+    body: 'Connected to the lab VM.',
+  },
+};
+
 export default function LabView() {
   const { labId } = useParams();
   const navigate = useNavigate();
@@ -23,22 +83,24 @@ export default function LabView() {
   const [showSolution, setShowSolution] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [dialog, setDialog] = useState<AppDialog | null>(null);
   const manualStopInProgress = useRef(false);
-  
-  // Provisioning state
+
   const hasAutoLaunched = useRef(false);
-  const [provisioningStatus, setProvisioningStatus] = useState<'idle'|'launching'|'waiting_ip'|'provisioning'|'ready'>('idle');
+  const [provisioningStatus, setProvisioningStatus] = useState<ProvisioningStatus>('idle');
   const [vmIp, setVmIp] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
-  
-  // Verify state
-  const [verifyResult, setVerifyResult] = useState<{score: string, output: string} | null>(null);
+
+  const [verifyResult, setVerifyResult] = useState<{ score: string; output: string } | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Split pane state
-  const [leftWidth, setLeftWidth] = useState(50); // percentage
+  const [leftWidth, setLeftWidth] = useState(46);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
+
+  const showDialog = useCallback((nextDialog: AppDialog) => {
+    setDialog(nextDialog);
+  }, []);
 
   useEffect(() => {
     const fetchLab = async () => {
@@ -57,7 +119,6 @@ export default function LabView() {
     fetchLab();
   }, [labId]);
 
-  // Poll for status and IP
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -74,12 +135,14 @@ export default function LabView() {
             setProvisioningStatus('idle');
             setVmIp(null);
             setRemainingSeconds(null);
-            // If the lab expired and stopped behind our back, send them to dashboard.
-            // Manual stops navigate after the DELETE request succeeds, so do not
-            // reuse the expiration message while that user action is in flight.
             if (provisioningStatus === 'ready' && !manualStopInProgress.current) {
-              alert('Lab time has expired! The environment was automatically destroyed.');
-              navigate('/');
+              showDialog({
+                title: 'Lab time expired',
+                message: 'The environment was automatically destroyed.',
+                variant: 'info',
+                confirmLabel: 'Back to inventory',
+                onConfirm: () => navigate('/'),
+              });
             }
           } else if (data.status === 'provisioning') {
             setProvisioningStatus('provisioning');
@@ -92,70 +155,75 @@ export default function LabView() {
       }
     }, 2000);
     return () => clearInterval(interval);
-  }, [labId, provisioningStatus, navigate]);
+  }, [labId, provisioningStatus, navigate, showDialog]);
 
-  // Local timer for smooth countdown
   const hasCountdown = remainingSeconds !== null && remainingSeconds > 0;
 
   useEffect(() => {
     if (!hasCountdown) return;
     const interval = setInterval(() => {
-      setRemainingSeconds(prev => prev !== null && prev > 0 ? prev - 1 : 0);
+      setRemainingSeconds((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
   }, [hasCountdown]);
 
-  // Format time
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
 
-  const handleAction = useCallback(async (action: 'launch' | 'stop' | 'reset') => {
-    setActionLoading(action);
-    if (action === 'launch' || action === 'reset') setProvisioningStatus('launching');
-    
-    try {
-      const method = action === 'stop' ? 'DELETE' : 'POST';
-      const res = await fetch(`/api/labs/${labId}/${action}`, { method });
-      
-      if (res.ok) {
-        if (action === 'stop') {
-          alert('Lab stopped. The environment was manually destroyed.');
-          navigate('/');
-        } else if (action === 'launch' || action === 'reset') {
-          setProvisioningStatus('waiting_ip');
+  const handleAction = useCallback(
+    async (action: 'launch' | 'stop' | 'reset') => {
+      setActionLoading(action);
+      if (action === 'launch' || action === 'reset') setProvisioningStatus('launching');
+
+      try {
+        const method = action === 'stop' ? 'DELETE' : 'POST';
+        const res = await fetch(`/api/labs/${labId}/${action}`, { method });
+
+        if (res.ok) {
+          if (action === 'stop') {
+            showDialog({
+              title: 'Lab stopped',
+              message: 'The environment was manually destroyed.',
+              variant: 'success',
+              confirmLabel: 'Back to inventory',
+              onConfirm: () => navigate('/'),
+            });
+          } else if (action === 'launch' || action === 'reset') {
+            setProvisioningStatus('waiting_ip');
+          }
+        } else {
+          const error = await res.json();
+          showDialog({
+            title: `Failed to ${action} lab`,
+            message: String(error.detail ?? 'The backend returned an unexpected error.'),
+            variant: 'error',
+          });
+          setProvisioningStatus('idle');
         }
-      } else {
-        const error = await res.json();
-        alert(`Failed to ${action} lab: ${error.detail}`);
+      } catch (err) {
+        console.error(`Network error during ${action}`, err);
+        showDialog({
+          title: `Network error during ${action}`,
+          message: 'The request could not reach the backend. Check the stack and try again.',
+          variant: 'error',
+        });
         setProvisioningStatus('idle');
+      } finally {
+        setActionLoading(null);
+        if (action === 'stop') {
+          manualStopInProgress.current = false;
+        }
+        if (action === 'stop' || action === 'reset') {
+          setVerifyResult(null);
+          setVmIp(null);
+        }
       }
-    } catch (err) {
-      console.error(`Network error during ${action}`, err);
-      alert(`Network error during ${action}.`);
-      setProvisioningStatus('idle');
-    } finally {
-      setActionLoading(null);
-      if (action === 'stop') {
-        manualStopInProgress.current = false;
-      }
-      if (action === 'stop' || action === 'reset') {
-        setVerifyResult(null);
-        setVmIp(null);
-      }
-    }
-  }, [labId, navigate]);
-
-
-  const requestStopLab = () => {
-    setShowStopConfirm(true);
-  };
-
-  const cancelStopLab = () => {
-    setShowStopConfirm(false);
-  };
+    },
+    [labId, navigate, showDialog],
+  );
 
   const confirmStopLab = () => {
     manualStopInProgress.current = true;
@@ -170,8 +238,7 @@ export default function LabView() {
       if (res.ok) {
         const data = await res.json();
         setVerifyResult(data);
-        
-        // Save completion status to localStorage
+
         if (data.score === '100') {
           const stored = JSON.parse(localStorage.getItem('completedLabs') || '[]');
           if (!stored.includes(labId)) {
@@ -181,11 +248,19 @@ export default function LabView() {
         }
       } else {
         const error = await res.json();
-        alert(`Failed to verify: ${error.detail}`);
+        showDialog({
+          title: 'Verification failed',
+          message: String(error.detail ?? 'The backend returned an unexpected verification error.'),
+          variant: 'error',
+        });
       }
     } catch (err) {
       console.error('Network error during verification', err);
-      alert('Network error during verification.');
+      showDialog({
+        title: 'Network error during verification',
+        message: 'The request could not reach the backend. Check the stack and try again.',
+        variant: 'error',
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -210,8 +285,8 @@ export default function LabView() {
     if (!isDragging.current || !containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-    
-    if (newLeftWidth > 20 && newLeftWidth < 80) {
+
+    if (newLeftWidth > 28 && newLeftWidth < 68) {
       setLeftWidth(newLeftWidth);
     }
   }, []);
@@ -230,184 +305,319 @@ export default function LabView() {
     };
   }, [onDrag, stopDragging]);
 
-  if (loading) return <div className="p-12 text-center">Loading lab...</div>;
-  if (!lab) return <div className="p-12 text-center text-red-500">Lab not found.</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <RefreshState label="Loading lab" />
+      </div>
+    );
+  }
+
+  if (!lab) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black px-6 text-center text-white">
+        <div className="max-w-md rounded-xl border border-[#252830] bg-[#15181e] p-8">
+          <h1 className="text-xl font-semibold">Lab not found</h1>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mt-6 h-10 rounded-lg bg-white px-4 text-sm font-semibold text-black"
+          >
+            Back to inventory
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const status = statusCopy[provisioningStatus];
+  const ready = provisioningStatus === 'ready';
+  const verifyPassed = verifyResult?.score === '100';
+  const CategoryIcon = categoryIcons[lab.category.toLowerCase()] ?? SiGnubash;
 
   return (
-    <div className="h-screen bg-slate-50 text-slate-900 flex flex-col overflow-hidden">
-
+    <div className="flex h-screen flex-col overflow-hidden bg-black text-white">
       {showStopConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="stop-lab-confirm-title"
-        >
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl border border-slate-200">
-            <h2 id="stop-lab-confirm-title" className="text-lg font-bold text-slate-900 mb-2">
-              Stop this lab?
-            </h2>
-            <p className="text-sm text-slate-600 mb-6">
-              Are you sure you want to stop this lab? The VM will be destroyed and any unsaved work in the environment will be lost.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-xl border border-[#3b3d45] bg-[#15181e] p-6">
+            <h2 className="text-xl font-semibold leading-tight text-white">Stop this lab?</h2>
+            <p className="mt-3 text-sm font-medium leading-6 text-[#b2b6bd]">
+              The VM will be destroyed and any unsaved work inside the environment will be lost.
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={cancelStopLab}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-md text-sm font-semibold transition-colors"
+                onClick={() => setShowStopConfirm(false)}
+                className="h-10 rounded-lg border border-[#3b3d45] bg-[#1f232b] px-4 text-sm font-semibold text-white"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmStopLab}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition-colors"
+                className="h-10 rounded-lg bg-[#e62b1e] px-4 text-sm font-semibold text-white"
               >
-                Yes, stop lab
+                Stop lab
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Navbar */}
-      <nav className="border-b border-slate-200 bg-white px-6 h-16 flex items-center justify-between shadow-sm shrink-0 z-10">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+      {dialog && (
+        <AppModal
+          dialog={dialog}
+          onClose={() => {
+            const onConfirm = dialog.onConfirm;
+            setDialog(null);
+            onConfirm?.();
+          }}
+        />
+      )}
+
+      <nav className="z-20 flex h-16 shrink-0 items-center justify-between border-b border-[#252830] bg-black px-4 lg:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#3b3d45] bg-[#15181e] text-[#b2b6bd] transition-colors hover:text-white"
+            title="Back to inventory"
+          >
+            <ArrowLeft className="h-4 w-4" />
           </button>
-          <h1 className="text-xl font-bold text-slate-800">{lab.name}</h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.06em] text-[#14c6cb]">
+              <CategoryIcon className="h-3.5 w-3.5" />
+              {lab.category}
+            </div>
+            <h1 className="truncate text-base font-semibold leading-6 text-white md:text-lg">{lab.name}</h1>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {remainingSeconds !== null && provisioningStatus === 'ready' && (
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold border ${remainingSeconds < 300 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
-              <Timer className="w-4 h-4" /> {formatTime(remainingSeconds)}
+
+        <div className="flex items-center gap-2">
+          <a
+            href={repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden h-10 items-center gap-2 rounded-lg border border-[#3b3d45] bg-[#15181e] px-3 text-sm font-semibold text-[#b2b6bd] transition-colors hover:text-white md:inline-flex"
+          >
+            <FaGithub className="h-4 w-4" />
+            Repo
+          </a>
+          {remainingSeconds !== null && ready && (
+            <div
+              className={`hidden h-10 items-center gap-2 rounded-lg border px-3 text-sm font-semibold md:flex ${
+                remainingSeconds < 300
+                  ? 'border-[#e62b1e]/30 bg-[#e62b1e]/10 text-[#ff8a82]'
+                  : 'border-[#3b3d45] bg-[#15181e] text-[#b2b6bd]'
+              }`}
+            >
+              <Clock3 className="h-4 w-4" />
+              {formatTime(remainingSeconds)}
             </div>
           )}
-          <button 
-            onClick={handleVerify} disabled={isVerifying || provisioningStatus !== 'ready'}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
-          >
-            <CheckCircle className="w-4 h-4" /> {isVerifying ? 'Verifying...' : 'Verify'}
-          </button>
-          <button 
-            onClick={requestStopLab} disabled={!!actionLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
-          >
-            <Square className="w-4 h-4" /> {actionLoading === 'stop' ? 'Stopping...' : 'Stop'}
-          </button>
-          <button 
-            onClick={() => handleAction('reset')} disabled={!!actionLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
-          >
-            <RotateCcw className="w-4 h-4" /> {actionLoading === 'reset' ? 'Resetting...' : 'Reset'}
-          </button>
+          <CommandButton
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            label={isVerifying ? 'Verifying' : 'Verify'}
+            disabled={isVerifying || !ready}
+            onClick={handleVerify}
+            variant="primary"
+          />
+          <CommandButton
+            icon={<Square className="h-4 w-4" />}
+            label={actionLoading === 'stop' ? 'Stopping' : 'Stop'}
+            disabled={!!actionLoading}
+            onClick={() => setShowStopConfirm(true)}
+            variant="danger"
+          />
+          <CommandButton
+            icon={<RotateCcw className="h-4 w-4" />}
+            label={actionLoading === 'reset' ? 'Resetting' : 'Reset'}
+            disabled={!!actionLoading}
+            onClick={() => handleAction('reset')}
+            variant="secondary"
+          />
         </div>
       </nav>
 
-      {/* Split Pane Container */}
-      <div className="flex-1 flex overflow-hidden min-h-0 min-w-0" ref={containerRef}>
-        
-        {/* Left Pane (Documentation) */}
-        <div 
-          className="h-full overflow-y-auto bg-slate-50 p-8 min-h-0"
-          style={{ width: `${leftWidth}%` }}
+      <div ref={containerRef} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row">
+        <section
+          className="min-h-0 w-full overflow-y-auto border-b border-[#252830] bg-black lg:h-full lg:border-b-0"
+          style={{ flexBasis: `${leftWidth}%` }}
         >
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 prose prose-slate max-w-none">
-            <h2>Task Description</h2>
-            {lab.question ? (
-              <ReactMarkdown>{lab.question}</ReactMarkdown>
-            ) : (
-              <p>No specific markdown question provided for this lab.</p>
-            )}
+          <div className="space-y-5 p-4 lg:p-6">
+            <div className="rounded-xl border border-[#252830] bg-[#15181e]">
+              <div className="flex items-center justify-between border-b border-[#252830] px-5 py-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#656a76]">Brief</div>
+                  <h2 className="mt-1 text-xl font-semibold leading-tight text-white">Task description</h2>
+                </div>
+                <PanelLeft className="h-5 w-5 text-[#656a76]" />
+              </div>
+              <div className="prose prose-invert max-w-none p-5 prose-headings:tracking-normal prose-p:text-[#d6d8dc] prose-li:text-[#d6d8dc] prose-strong:text-white prose-code:text-[#14c6cb] prose-pre:border prose-pre:border-[#252830] prose-pre:bg-black">
+                {lab.question ? <ReactMarkdown>{lab.question}</ReactMarkdown> : <p>No task brief was provided for this lab.</p>}
+              </div>
+            </div>
 
-            {lab.exposed_ports && lab.exposed_ports.length > 0 && vmIp && provisioningStatus === 'ready' && (
-              <div className="mt-8 flex flex-wrap gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                <p className="w-full text-sm font-semibold text-blue-800 m-0">Exposed Services:</p>
-                {lab.exposed_ports.map(port => (
-                  <a 
-                    key={port}
-                    href={`/labs/${lab.id}/port${port}/`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white no-underline rounded-md text-sm font-semibold transition-colors"
-                  >
-                    Open Port {port}
-                  </a>
-                ))}
+            {lab.exposed_ports && lab.exposed_ports.length > 0 && vmIp && ready && (
+              <div className="rounded-xl border border-[#14c6cb]/20 bg-[#14c6cb]/10 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#14c6cb]">Exposed services</div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {lab.exposed_ports.map((port) => (
+                    <a
+                      key={port}
+                      href={`/labs/${lab.id}/port${port}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-black no-underline"
+                    >
+                      Port {port}
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 
-            <div className="mt-12 border-t border-slate-200 pt-8">
-              {verifyResult && (
-                <div className={`mb-6 p-6 border rounded-lg ${verifyResult.score === '100' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-                  <h3 className="mt-0">Verification Result: {verifyResult.score}/100</h3>
-                  <pre className="mt-2 text-sm whitespace-pre-wrap font-mono bg-white p-4 rounded border border-slate-200 text-slate-900 font-bold shadow-sm">{verifyResult.output}</pre>
+            <div className="rounded-xl border border-[#252830] bg-[#15181e] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#656a76]">Verification</div>
+                  <h2 className="mt-1 text-xl font-semibold leading-tight text-white">
+                    {verifyResult ? `Score ${verifyResult.score}/100` : 'Solution locked'}
+                  </h2>
                 </div>
-              )}
-              
-              {verifyResult ? (
-                <>
-                  <button 
-                    onClick={() => setShowSolution(!showSolution)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-md text-sm font-semibold transition-colors"
+                {verifyResult && (
+                  <span
+                    className={`rounded-lg border px-3 py-1 text-xs font-semibold ${
+                      verifyPassed ? 'border-[#00ca8e]/25 bg-[#00ca8e]/10 text-[#00ca8e]' : 'border-[#e62b1e]/25 bg-[#e62b1e]/10 text-[#ff8a82]'
+                    }`}
                   >
-                    {showSolution ? 'Hide Solution' : 'Reveal Solution'}
-                  </button>
+                    {verifyPassed ? 'Passed' : 'Needs work'}
+                  </span>
+                )}
+              </div>
 
-                  {showSolution && (
-                    <div className="mt-6 p-6 bg-amber-50 border border-amber-200 rounded-lg">
-                      <h3 className="text-amber-800 mt-0">Solution Guide</h3>
-                      {lab.solution ? (
-                        <ReactMarkdown>{lab.solution}</ReactMarkdown>
-                      ) : (
-                        <p className="text-amber-700">No solution provided for this lab.</p>
-                      )}
-                    </div>
-                  )}
-                </>
+              {verifyResult ? (
+                <div className="mt-5">
+                  <pre className="max-h-56 overflow-auto rounded-lg border border-[#252830] bg-black p-4 text-sm font-medium leading-6 text-[#d6d8dc]">
+                    {verifyResult.output}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={() => setShowSolution(!showSolution)}
+                    className="mt-4 h-10 rounded-lg border border-[#3b3d45] bg-[#1f232b] px-4 text-sm font-semibold text-white"
+                  >
+                    {showSolution ? 'Hide solution' : 'Reveal solution'}
+                  </button>
+                </div>
               ) : (
-                <div className="p-6 bg-slate-100 rounded-lg text-slate-600 text-sm text-center font-medium">
-                  Submit verification to unlock the solution.
+                <p className="mt-4 text-sm font-medium leading-6 text-[#b2b6bd]">
+                  Run verification after you repair the system. The solution guide becomes available after a verification attempt.
+                </p>
+              )}
+
+              {verifyResult && showSolution && (
+                <div className="prose prose-invert mt-5 max-w-none rounded-lg border border-[#ffcf25]/20 bg-[#ffcf25]/10 p-5 prose-headings:text-white prose-p:text-[#fbeabf] prose-li:text-[#fbeabf] prose-code:text-[#ffcf25]">
+                  {lab.solution ? <ReactMarkdown>{lab.solution}</ReactMarkdown> : <p>No solution guide was provided for this lab.</p>}
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Resizer Handle */}
-        <div 
-          className="w-1.5 bg-slate-200 hover:bg-blue-400 cursor-col-resize transition-colors shrink-0 z-10"
+        <div
+          className="hidden w-1.5 shrink-0 cursor-col-resize bg-[#252830] transition-colors hover:bg-[#2b89ff] lg:block"
           onMouseDown={startDragging}
         />
 
-        {/* Right Pane (Terminal / Loading) */}
-        <div 
-          className="h-full bg-slate-900 overflow-hidden relative min-h-0 min-w-0"
-          style={{ width: `${100 - leftWidth}%` }}
-        >
-          {provisioningStatus !== 'ready' ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white z-20">
-              <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-6" />
-              <h3 className="text-xl font-bold text-slate-100 mb-2">
-                {provisioningStatus === 'launching' ? 'Provisioning Environment' 
-                 : provisioningStatus === 'provisioning' ? 'Configuring System' 
-                 : 'Acquiring IP Address'}
-              </h3>
-              <p className="text-slate-400 text-sm">
-                {provisioningStatus === 'launching' 
-                  ? 'Allocating compute resources and attaching overlays...' 
-                  : provisioningStatus === 'provisioning'
-                  ? 'Waiting for cloud-init to install packages and configure the lab...'
-                  : 'Waiting for network connectivity...'}
-              </p>
+        <section className="min-h-[45vh] min-w-0 flex-1 bg-black px-0 pb-4 lg:h-full lg:px-0 lg:pb-5" style={{ flexBasis: `${100 - leftWidth}%` }}>
+          <div className="flex h-full flex-col overflow-hidden rounded-t-none rounded-b-none border-l border-[#252830] bg-black">
+            <div className="flex h-12 shrink-0 items-center justify-between border-b border-[#252830] bg-[#15181e] px-4">
+            <div className="flex items-center gap-2">
+              <Terminal className="h-4 w-4 text-[#14c6cb]" />
+              <span className="text-sm font-semibold text-white">root@{lab.id}</span>
             </div>
-          ) : (
-            <TerminalWindow labId={labId!} />
-          )}
-        </div>
+            <span className="hidden text-xs font-medium text-[#656a76] md:inline">{vmIp || 'No IP lease'}</span>
+            </div>
 
+            <div className="relative min-h-0 flex-1 overflow-hidden bg-black">
+              {!ready ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black px-6 text-center">
+                  <RefreshState label={status.title} />
+                  <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#b2b6bd]">{status.body}</p>
+                </div>
+              ) : (
+                <TerminalWindow labId={labId!} embedded />
+              )}
+            </div>
+          </div>
+        </section>
       </div>
+    </div>
+  );
+}
+
+function CommandButton({
+  icon,
+  label,
+  disabled,
+  onClick,
+  variant,
+}: {
+  icon: ReactNode;
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+  variant: 'primary' | 'secondary' | 'danger';
+}) {
+  const variants = {
+    primary: 'bg-white text-black hover:bg-[#e7e9ee]',
+    secondary: 'border border-[#3b3d45] bg-[#1f232b] text-white hover:border-[#656a76]',
+    danger: 'bg-[#e62b1e] text-white hover:bg-[#c92419]',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variants[variant]}`}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+}
+
+function AppModal({ dialog, onClose }: { dialog: AppDialog; onClose: () => void }) {
+  const variantClasses: Record<DialogVariant, string> = {
+    info: 'border-[#14c6cb]/25 bg-[#14c6cb]/10 text-[#14c6cb]',
+    success: 'border-[#00ca8e]/25 bg-[#00ca8e]/10 text-[#00ca8e]',
+    error: 'border-[#e62b1e]/25 bg-[#e62b1e]/10 text-[#ff8a82]',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-xl border border-[#3b3d45] bg-[#15181e] p-6 shadow-2xl shadow-black/50">
+        <div className={`mb-4 h-1.5 w-16 rounded-full ${variantClasses[dialog.variant]}`} />
+        <h2 className="text-xl font-semibold leading-tight text-white">{dialog.title}</h2>
+        <p className="mt-3 text-sm font-medium leading-6 text-[#b2b6bd]">{dialog.message}</p>
+        <div className="mt-6 flex justify-end">
+          <button type="button" onClick={onClose} className="h-10 rounded-lg bg-white px-4 text-sm font-semibold text-black">
+            {dialog.confirmLabel ?? 'Close'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RefreshState({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <Loader2 className="h-5 w-5 animate-spin text-[#14c6cb]" />
+      <span className="text-sm font-semibold text-white">{label}</span>
     </div>
   );
 }

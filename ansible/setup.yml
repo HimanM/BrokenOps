@@ -68,8 +68,6 @@
       ansible.builtin.pacman:
         name:
           - docker
-          - docker-compose
-          - docker-buildx
           - qemu-base
           - libvirt
           - dnsmasq
@@ -175,7 +173,9 @@
         - /workspace/data/images
         - /workspace/data/vms
         - /workspace/keys
-      when: ansible_facts['os_family'] != "Windows" and (lookup('env', 'PWD') == '/workspace' or ansible_env.PWD == '/workspace')
+      when:
+        - ansible_facts['os_family'] != "Windows"
+        - lookup('env', 'PWD') == '/workspace' or (ansible_facts['env']['PWD'] | default('')) == '/workspace'
 
     - name: Set permissions on libvirt socket
       ansible.builtin.file:

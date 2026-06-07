@@ -2,7 +2,75 @@
 @plugin "@tailwindcss/typography";
 
 @layer base {
+  :root {
+    color: #ffffff;
+    background: #000000;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   html {
-    font-family: 'Google Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #000000;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    background: #000000;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  .scrollbar-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #3b3d45 #0b0d11;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar-track {
+    background: #0b0d11;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar-thumb {
+    background: #3b3d45;
+    border-radius: 9999px;
+    border: 2px solid #0b0d11;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar-thumb:hover {
+    background: #656a76;
+  }
+
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #3b3d45 #050608;
+  }
+
+  html::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: #050608;
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: #3b3d45;
+    border-radius: 9999px;
+    border: 2px solid #050608;
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: #656a76;
   }
 }
