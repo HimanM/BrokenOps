@@ -91,10 +91,12 @@ def main():
         print(f"======================================")
 
         solution_path = os.path.join("labs", lab_id, "solution.sh")
+        if not os.path.exists(solution_path):
+            solution_path = os.path.join("labs", lab_id, "solution.sh.special")
         verify_path = os.path.join("labs", lab_id, "verify.sh")
 
         if not os.path.exists(solution_path):
-            print(f"❌ Missing mandatory solution.sh for lab {lab_id}")
+            print(f"❌ Missing mandatory solution.sh/solution.sh.special for lab {lab_id}")
             all_passed = False
             continue
 
@@ -113,11 +115,13 @@ def main():
 
         # Wait for VM to be up
         ip = None
-        for _ in range(30):
+        last_status = None
+        for _ in range(90):
             try:
                 status_resp = requests.get(f"{API_URL}/labs/{lab_id}/status")
                 if status_resp.status_code == 200:
                     status_data = status_resp.json()
+                    last_status = status_data
                     if status_data.get("status") == "running":
                         ip = status_data.get("ip")
                         break
@@ -127,6 +131,8 @@ def main():
 
         if not ip:
             print(f"❌ VM did not get an IP in time.")
+            if last_status:
+                print(f"Last status response: {last_status}")
             requests.delete(f"{API_URL}/labs/{lab_id}/stop")
             all_passed = False
             continue

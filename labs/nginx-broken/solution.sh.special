@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Restores the Nginx port to 80 and restarts Nginx
+
+if [ -f /etc/nginx/sites-available/default ]; then
+  sed -i 's/listen 80808 default_server;/listen 80 default_server;/' /etc/nginx/sites-available/default
+  sed -i 's/listen \[::\]:80808 default_server;/listen \[::\]:80 default_server;/' /etc/nginx/sites-available/default
+elif [ -f /etc/nginx/nginx.conf ]; then
+  sed -i 's/listen       80808/listen       80/' /etc/nginx/nginx.conf
+  sed -i 's/listen       \[::\]:80808/listen       \[::\]:80/' /etc/nginx/nginx.conf
+fi
+
+systemctl restart nginx || true

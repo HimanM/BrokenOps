@@ -138,7 +138,8 @@ def launch_lab(lab_id: str):
         disk_size = str(lab_config["vm"]["disk"])
         
         # Paths
-        base_image_path = os.path.join(IMAGES_DIR, "ubuntu-24.04-base.qcow2")
+        image_name = lab_config["vm"].get("image", "ubuntu-24.04-base.qcow2")
+        base_image_path = os.path.join(IMAGES_DIR, image_name)
         overlay_path = os.path.join(VMS_DIR, f"{vm_name}-overlay.qcow2")
         cloud_init_yaml_path = os.path.join(LABS_DIR, lab_id, lab_config["cloud_init"])
         
@@ -208,16 +209,17 @@ def launch_lab(lab_id: str):
         iso_path = cloud_builder.build_iso(vm_name, user_data_content)
         
         # Launch VM
-        success = engine.launch_vm(
+        success, error_msg = engine.launch_vm(
             name=vm_name,
             disk_path=overlay_path,
             cloud_iso_path=iso_path,
             memory_mb=memory_mb,
-            vcpus=vcpus
+            vcpus=vcpus,
+            prefer_classic_network=lab_config.get("requires_classic_libvirt_network", False)
         )
         
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to launch Libvirt VM")
+            raise HTTPException(status_code=500, detail=f"Failed to launch Libvirt VM: {error_msg}")
             
         return {"status": "launched", "lab_id": lab_id, "vm_name": vm_name}
     except Exception as e:
@@ -260,7 +262,10 @@ async def lab_status(lab_id: str):
         
         vm_ip = engine.get_vm_ip(vm_name)
         if not vm_ip:
-            return {"status": "stopped", "ip": None}
+            vm_state = engine.get_vm_state(vm_name)
+            if "Domain not found" in vm_state or "matching name" in vm_state:
+                return {"status": "stopped", "ip": None, "vm_state": vm_state}
+            return {"status": "provisioning", "ip": None, "vm_state": vm_state}
             
         # We have an IP, check if cloud-init is done
         ssh_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")

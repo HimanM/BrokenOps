@@ -41,10 +41,14 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils genisoimage xorriso
+          sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils dnsmasq-base genisoimage xorriso
           sudo systemctl enable --now libvirtd
           sudo usermod -aG libvirt $USER
           sudo usermod -aG kvm $USER
+          
+          # Ensure default network is active
+          sudo virsh net-start default || true
+          sudo virsh net-autostart default || true
 
       - name: Setup Environment and Keys
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -79,7 +83,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           for i in {1..30}; do
-            if curl -s http://localhost/api/labs > /dev/null; then
+            if curl -fsS http://localhost/api/labs > /dev/null; then
               echo "API is up!"
               break
             fi
@@ -96,4 +100,8 @@ jobs:
       - name: Run Verification Script
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          python scripts/test_labs.py --key keys/id_ed25519 --labs ${{ steps.extract-labs.outputs.changed_labs }}
+          if ! python scripts/test_labs.py --key keys/id_ed25519 --labs ${{ steps.extract-labs.outputs.changed_labs }}; then
+            echo "❌ Verification failed! Capture backend logs:"
+            docker logs brokenops-be
+            exit 1
+          fi

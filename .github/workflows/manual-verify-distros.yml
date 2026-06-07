@@ -1,0 +1,47 @@
+name: Manual Distro Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-ubuntu:
+    name: Verify on Ubuntu 24.04
+    runs-on: ubuntu-latest
+    env:
+      ASSUME_YES: "1"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Native Setup & Verification
+        run: |
+          chmod +x deploy.sh
+          ./deploy.sh
+
+          sudo chmod 755 /home/runner /home/runner/work /home/runner/work/BrokenOps
+
+          for i in {1..30}; do
+            if curl -fsS http://localhost/api/labs > /dev/null; then
+              echo "API is up!"
+              break
+            fi
+            sleep 2
+          done
+
+          python -m pip install --upgrade pip
+          pip install paramiko requests pyyaml
+          sudo chmod 666 /var/run/libvirt/libvirt-sock
+
+          if ! python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken; then
+            echo "Verification failed. Backend logs:"
+            docker logs brokenops-be
+            echo "=== Libvirt diagnostics ==="
+            sudo virsh list --all || true
+            sudo virsh net-list --all || true
+            sudo virsh net-info brokenops || true
+            sudo virsh net-dhcp-leases brokenops || true
+            sudo virsh dumpxml nginx-lab || true
+            sudo tail -200 /var/log/libvirt/qemu/nginx-lab-serial.log || true
+            exit 1
+          fi

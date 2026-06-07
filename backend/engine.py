@@ -1,6 +1,40 @@
 import libvirt
-import xml.etree.ElementTree as ET
 import os
+
+LAB_NETWORKS = {
+    "standard": {
+        "name": "brokenops",
+        "bridge": "brokenops0",
+        "subnets": [123, 124, 125, 126, 127, 128],
+    },
+    "classic": {
+        "name": "brokenops122",
+        "bridge": "brokenops122",
+        "subnets": [122],
+    },
+}
+
+def network_with_subnet(network, subnet):
+    configured = dict(network)
+    configured["address"] = f"192.168.{subnet}.1"
+    configured["range_start"] = f"192.168.{subnet}.2"
+    configured["range_end"] = f"192.168.{subnet}.254"
+    return configured
+
+def build_network_xml(network, subnet):
+    network = network_with_subnet(network, subnet)
+    return f"""
+<network>
+  <name>{network['name']}</name>
+  <forward mode='nat'/>
+  <bridge name='{network['bridge']}' stp='on' delay='0'/>
+  <ip address='{network['address']}' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='{network['range_start']}' end='{network['range_end']}'/>
+    </dhcp>
+  </ip>
+</network>
+"""
 
 class LabEngine:
     def __init__(self, qemu_uri: str = "qemu:///system"):
@@ -16,12 +50,19 @@ class LabEngine:
             return path.replace("/app", host_root, 1)
         return path
 
-    def _generate_domain_xml(self, name, memory_mb, vcpus, disk_path, cloud_iso_path):
+    def _generate_domain_xml(self, name, memory_mb, vcpus, disk_path, cloud_iso_path, network_name):
         disk_path_host = self._map_to_host_path(disk_path)
         cloud_iso_path_host = self._map_to_host_path(cloud_iso_path)
+        
+        # Check if KVM is available, otherwise fallback to QEMU TCG
+        domain_type = "kvm"
+        if not os.path.exists("/dev/kvm"):
+            print("WARNING: /dev/kvm not found. Falling back to 'qemu' (TCG) emulation.", flush=True)
+            domain_type = "qemu"
+
         # A simple QEMU/KVM domain XML
         xml = f"""
-        <domain type='kvm'>
+        <domain type='{domain_type}'>
           <name>{name}</name>
           <memory unit='MiB'>{memory_mb}</memory>
           <vcpu placement='static'>{vcpus}</vcpu>
@@ -50,7 +91,7 @@ class LabEngine:
               <target type='serial' port='0'/>
             </console>
             <interface type='network'>
-              <source network='default'/>
+              <source network='{network_name}'/>
               <model type='virtio'/>
             </interface>
             <graphics type='vnc' port='-1'/>
@@ -59,11 +100,63 @@ class LabEngine:
         """
         return xml
 
-    def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1):
+    def ensure_lab_network(self, prefer_classic_network=False):
         if not self.conn:
-            raise Exception("Not connected to libvirt")
+            return False, None, "Not connected to libvirt"
+
+        network_key = "classic" if prefer_classic_network else "standard"
+        network_config = LAB_NETWORKS[network_key]
+
+        last_error = None
+        for subnet in network_config["subnets"]:
+            configured_network = network_with_subnet(network_config, subnet)
+            try:
+                network = self.conn.networkLookupByName(configured_network["name"])
+                xml = network.XMLDesc(0)
+                expected = f"address='{configured_network['address']}'"
+                if expected not in xml:
+                    if network.isActive():
+                        network.destroy()
+                    network.undefine()
+                    network = self.conn.networkDefineXML(build_network_xml(network_config, subnet))
+            except libvirt.libvirtError as e:
+                try:
+                    network = self.conn.networkDefineXML(build_network_xml(network_config, subnet))
+                except libvirt.libvirtError as define_error:
+                    last_error = define_error
+                    continue
+
+            try:
+                if not network.isActive():
+                    network.create()
+                network.setAutostart(1)
+                return True, configured_network["name"], ""
+            except libvirt.libvirtError as e:
+                last_error = e
+                if "Network is already in use" not in str(e):
+                    break
+                try:
+                    if network.isActive():
+                        network.destroy()
+                    network.undefine()
+                except libvirt.libvirtError:
+                    pass
+
+        return False, None, (
+            f"libvirt {network_config['name']!r} network is not active and could not be started. "
+            "Ensure dnsmasq is installed and libvirtd is running on the host. "
+            f"Original error: {last_error}"
+        )
+
+    def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1, prefer_classic_network: bool = False):
+        if not self.conn:
+            return False, "Not connected to libvirt"
+
+        network_ok, network_name, network_error = self.ensure_lab_network(prefer_classic_network)
+        if not network_ok:
+            return False, network_error
         
-        xml = self._generate_domain_xml(name, memory_mb, vcpus, disk_path, cloud_iso_path)
+        xml = self._generate_domain_xml(name, memory_mb, vcpus, disk_path, cloud_iso_path, network_name)
         
         # Check if domain exists
         try:
@@ -76,10 +169,12 @@ class LabEngine:
 
         try:
             dom = self.conn.createXML(xml, 0)
-            return True
+            return True, ""
         except libvirt.libvirtError as e:
-            print(f"Failed to create VM {name}: {e}")
-            return False
+            print(f"ERROR: Failed to create VM {name}: {e}", flush=True)
+            # Log the XML for debugging
+            print(f"DEBUG: XML used for {name}:\n{xml}", flush=True)
+            return False, str(e)
 
     def get_vm_ip(self, name: str) -> str:
         if not self.conn:
@@ -97,6 +192,16 @@ class LabEngine:
             return None
         except libvirt.libvirtError:
             return None
+
+    def get_vm_state(self, name: str) -> str:
+        if not self.conn:
+            return "libvirt connection unavailable"
+        try:
+            dom = self.conn.lookupByName(name)
+            state, reason = dom.state()
+            return f"state={state} reason={reason}"
+        except libvirt.libvirtError as e:
+            return str(e)
 
     def stop_vm(self, name: str) -> bool:
         if not self.conn:

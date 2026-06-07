@@ -8,13 +8,17 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - LIBVIRT_GID=${LIBVIRT_GID:-104}
+      - KVM_GID=${KVM_GID:-0}
       - HOST_PROJECT_ROOT=${HOST_PROJECT_ROOT}
     volumes:
       - ./data:/app/data
       - ./labs:/app/labs
       - ./keys:/app/keys
       - /var/run/libvirt:/var/run/libvirt
+    devices:
+      - /dev/kvm:/dev/kvm
     network_mode: "host"
+    privileged: true
     restart: unless-stopped
 
   brokenops-fe:
