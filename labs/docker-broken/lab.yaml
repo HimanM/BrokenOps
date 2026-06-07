@@ -4,7 +4,7 @@ category: containers
 difficulty: advanced
 provider: libvirt
 vm:
-  name: docker-lab
+  name: docker-daemon-lab
   image: ubuntu-24.04-base.qcow2
   cpu: 1
   memory: 1024
