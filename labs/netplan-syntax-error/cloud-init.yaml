@@ -1,0 +1,13 @@
+#cloud-config
+runcmd:
+  - |
+    cat <<EOF > /etc/netplan/99-broken.yaml
+    network:
+      version: 2
+      ethernets:
+        extra0:
+          dhcp4: true
+      # Intentional indentation error
+       nameservers:
+          addresses: [1.1.1.1]
+    EOF

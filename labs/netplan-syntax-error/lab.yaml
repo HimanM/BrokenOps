@@ -1,0 +1,13 @@
+id: "netplan-syntax-error"
+name: "Netplan Syntax Error"
+category: "networking"
+difficulty: "beginner"
+description:
+  summary: "A network configuration change failed to apply due to a syntax error in the Netplan YAML file."
+vm:
+  name: "netplan-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
