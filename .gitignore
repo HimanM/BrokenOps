@@ -44,3 +44,6 @@ create_rich_issues.py
 keys/
 keys/
 DESIGN.md
+/~/.codex/skills/frontend-design
+/sample_webs
+/promp_web
