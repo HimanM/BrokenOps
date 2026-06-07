@@ -45,6 +45,10 @@ jobs:
           sudo systemctl enable --now libvirtd
           sudo usermod -aG libvirt $USER
           sudo usermod -aG kvm $USER
+          
+          # Ensure default network is active
+          sudo virsh net-start default || true
+          sudo virsh net-autostart default || true
 
       - name: Setup Environment and Keys
         if: steps.changed-files.outputs.any_changed == 'true'

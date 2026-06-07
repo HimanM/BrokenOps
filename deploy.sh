@@ -16,115 +16,31 @@ echo -e "${BLUE}====================================================${NC}"
 echo -e "${BLUE}      🚀 BrokenOps Production Deploy Script         ${NC}"
 echo -e "${BLUE}====================================================${NC}"
 
-# 1. Check for required host dependencies
-MISSING_DEPS=()
-
-if ! command -v docker &> /dev/null; then
-    MISSING_DEPS+=("docker")
+# 1. Check for and install Ansible if missing
+if ! command -v ansible-playbook &> /dev/null; then
+    echo -e "${YELLOW}Ansible not found. Installing Ansible...${NC}"
+    if command -v apt-get &> /dev/null; then
+        $SUDO apt-get update && $SUDO apt-get install -y ansible
+    elif command -v dnf &> /dev/null; then
+        $SUDO dnf install -y ansible
+    elif command -v pacman &> /dev/null; then
+        $SUDO pacman -S --noconfirm ansible
+    elif command -v apk &> /dev/null; then
+        $SUDO apk add ansible
+    else
+        echo -e "${RED}Unsupported package manager. Please install Ansible manually.${NC}"
+        exit 1
+    fi
 fi
 
-if ! command -v qemu-img &> /dev/null; then
-    MISSING_DEPS+=("qemu-utils")
-fi
+# 2. Run Ansible playbook to setup host
+echo -e "${BLUE}Running Ansible playbook for host setup...${NC}"
+$SUDO ansible-playbook ansible/setup.yml
 
+# 3. Check for KVM (still good to have a quick check here)
 if command -v lsmod &> /dev/null; then
     if ! lsmod | grep -iq kvm; then
-        echo -e "${RED}Error: KVM is not enabled on this host! Nested virtualization or hardware acceleration is required.${NC}"
-        exit 1
-    fi
-else
-    if [ ! -e /dev/kvm ]; then
-        echo -e "${RED}Error: KVM is not enabled on this host! Nested virtualization or hardware acceleration is required.${NC}"
-        exit 1
-    fi
-fi
-
-if ! getent group libvirt > /dev/null; then
-    MISSING_DEPS+=("libvirt-daemon-system")
-fi
-
-if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
-    echo -e "${YELLOW}Missing required host dependencies: ${MISSING_DEPS[*]}${NC}"
-    if [ "$ASSUME_YES" = "1" ]; then
-        REPLY="y"
-    else
-        read -p "Would you like to install them now? (requires sudo) [Y/n] " -n 1 -r
-        echo
-    fi
-    if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
-        if command -v apt-get &> /dev/null; then
-            $SUDO apt-get update
-            $SUDO apt-get install -y "${MISSING_DEPS[@]}"
-        elif command -v dnf &> /dev/null; then
-            DEPS_TO_INSTALL=()
-            for dep in "${MISSING_DEPS[@]}"; do
-                if [ "$dep" = "qemu-utils" ]; then
-                    DEPS_TO_INSTALL+=("qemu-img")
-                elif [ "$dep" = "libvirt-daemon-system" ]; then
-                    DEPS_TO_INSTALL+=("libvirt")
-                else
-                    DEPS_TO_INSTALL+=("$dep")
-                fi
-            done
-            $SUDO dnf install -y "${DEPS_TO_INSTALL[@]}"
-        elif command -v pacman &> /dev/null; then
-            DEPS_TO_INSTALL=()
-            for dep in "${MISSING_DEPS[@]}"; do
-                if [ "$dep" = "qemu-utils" ]; then
-                    DEPS_TO_INSTALL+=("qemu-base")
-                elif [ "$dep" = "libvirt-daemon-system" ]; then
-                    DEPS_TO_INSTALL+=("libvirt")
-                else
-                    DEPS_TO_INSTALL+=("$dep")
-                fi
-            done
-            $SUDO pacman -Sy --noconfirm "${DEPS_TO_INSTALL[@]}"
-        elif command -v apk &> /dev/null; then
-            DEPS_TO_INSTALL=()
-            for dep in "${MISSING_DEPS[@]}"; do
-                if [ "$dep" = "qemu-utils" ]; then
-                    DEPS_TO_INSTALL+=("qemu-img")
-                elif [ "$dep" = "libvirt-daemon-system" ]; then
-                    DEPS_TO_INSTALL+=("libvirt")
-                else
-                    DEPS_TO_INSTALL+=("$dep")
-                fi
-            done
-            $SUDO apk add "${DEPS_TO_INSTALL[@]}"
-        else
-            echo -e "${RED}Unsupported package manager. Please install dependencies manually: ${MISSING_DEPS[*]}${NC}"
-            exit 1
-        fi
-        # Ensure docker and libvirtd services are enabled and started on systemd/openrc hosts
-        if command -v systemctl &> /dev/null; then
-            $SUDO systemctl enable --now docker || true
-            $SUDO systemctl enable --now libvirtd || true
-        elif command -v rc-service &> /dev/null; then
-            $SUDO rc-update add docker default || true
-            $SUDO rc-service docker start || true
-            $SUDO rc-update add libvirtd default || true
-            $SUDO rc-service libvirtd start || true
-        fi
-
-        # Ensure user is in libvirt and kvm groups
-        if [ "$(id -u)" -ne 0 ]; then
-            if ! groups "$USER" | grep -q "\blibvirt\b"; then
-                echo -e "${YELLOW}Adding $USER to libvirt group...${NC}"
-                $SUDO usermod -aG libvirt "$USER" || true
-            fi
-            if ! groups "$USER" | grep -q "\bkvm\b"; then
-                echo -e "${YELLOW}Adding $USER to kvm group...${NC}"
-                $SUDO usermod -aG kvm "$USER" || true
-            fi
-        fi
-
-        # Make libvirt socket accessible
-        if [ -S /var/run/libvirt/libvirt-sock ]; then
-            $SUDO chmod 666 /var/run/libvirt/libvirt-sock
-        fi
-    else
-        echo -e "${RED}Cannot proceed without dependencies. Exiting.${NC}"
-        exit 1
+        echo -e "${YELLOW}Warning: KVM module not detected in lsmod. If you are in a VM, ensure nested virtualization is enabled.${NC}"
     fi
 fi
 

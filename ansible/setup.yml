@@ -1,0 +1,119 @@
+---
+- name: Setup BrokenOps Host Dependencies
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+    - name: Gather distribution facts
+      ansible.builtin.setup:
+        filter: ansible_distribution*
+
+    - name: Install dependencies (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - qemu-utils
+          - libvirt-daemon-system
+          - libvirt-clients
+          - bridge-utils
+          - genisoimage
+          - xorriso
+          - curl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install dependencies (RedHat/Fedora)
+      ansible.builtin.dnf:
+        name:
+          - docker
+          - docker-compose
+          - qemu-kvm
+          - qemu-img
+          - libvirt
+          - libvirt-client
+          - bridge-utils
+          - genisoimage
+          - xorriso
+          - curl
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install dependencies (Arch)
+      ansible.builtin.pacman:
+        name:
+          - docker
+          - docker-compose
+          - qemu-base
+          - libvirt
+          - bridge-utils
+          - cdrtools
+          - curl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Archlinux"
+
+    - name: Install dependencies (Alpine)
+      ansible.builtin.apk:
+        name:
+          - docker
+          - docker-cli-compose
+          - qemu-img
+          - libvirt
+          - bridge
+          - cdrkit
+          - curl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Alpine"
+
+    - name: Ensure docker service is started and enabled
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+      when: ansible_service_mgr == "systemd"
+
+    - name: Ensure libvirtd service is started and enabled
+      ansible.builtin.systemd:
+        name: libvirtd
+        state: started
+        enabled: yes
+      when: ansible_service_mgr == "systemd"
+
+    - name: Ensure docker service is started (OpenRC)
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+      when: ansible_service_mgr == "openrc"
+
+    - name: Ensure libvirtd service is started (OpenRC)
+      ansible.builtin.service:
+        name: libvirtd
+        state: started
+        enabled: yes
+      when: ansible_service_mgr == "openrc"
+
+    - name: Add current user to groups
+      ansible.builtin.user:
+        name: "{{ lookup('env', 'USER') or lookup('env', 'LOGNAME') }}"
+        groups: 
+          - docker
+          - libvirt
+          - kvm
+        append: yes
+      when: lookup('env', 'USER') != 'root'
+
+    - name: Set permissions on libvirt socket
+      ansible.builtin.file:
+        path: /var/run/libvirt/libvirt-sock
+        mode: '0666'
+      when: ansible_os_family != "Windows"
+
+    - name: Ensure libvirt default network is active
+      ansible.builtin.shell: |
+        virsh net-start default || true
+        virsh net-autostart default || true
+      changed_when: false
