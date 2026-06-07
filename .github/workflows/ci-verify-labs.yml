@@ -71,12 +71,6 @@ jobs:
       - name: Start BrokenOps Engine
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          # Patch for host networking in CI
-          sed -i 's/ports:/network_mode: \"host\"\n    #ports:/' docker-compose.yml
-          sed -i '/extra_hosts:/d' docker-compose.yml
-          sed -i '/- \"host.docker.internal:host-gateway\"/d' docker-compose.yml
-          sed -i 's/host.docker.internal/127.0.0.1/g' frontend/nginx.conf
-          
           export PUID=$(id -u)
           export PGID=$(id -g)
           export LIBVIRT_GID=$(getent group libvirt | cut -d: -f3 || echo "104")
@@ -89,11 +83,11 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           for i in {1..30}; do
-            if curl -s -I http://localhost/api/labs | grep -q \"200 OK\"; then
+            if curl -s http://localhost/api/labs > /dev/null; then
               echo "API is up!"
               break
             fi
-            echo "Waiting for API (200 OK)..."
+            echo "Waiting for API..."
             sleep 2
           done
 
@@ -106,4 +100,8 @@ jobs:
       - name: Run Verification Script
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          python scripts/test_labs.py --key keys/id_ed25519 --labs ${{ steps.extract-labs.outputs.changed_labs }}
+          if ! python scripts/test_labs.py --key keys/id_ed25519 --labs ${{ steps.extract-labs.outputs.changed_labs }}; then
+            echo "❌ Verification failed! Capture backend logs:"
+            docker logs brokenops-be
+            exit 1
+          fi
