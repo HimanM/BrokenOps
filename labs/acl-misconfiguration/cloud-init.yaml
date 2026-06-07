@@ -1,0 +1,9 @@
+#cloud-config
+packages:
+  - acl
+runcmd:
+  - useradd -m -s /bin/bash webapp
+  - mkdir -p /var/log/webapp
+  - chown root:webapp /var/log/webapp
+  - chmod 775 /var/log/webapp
+  - setfacl -m u:webapp:rx /var/log/webapp
