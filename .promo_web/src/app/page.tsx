@@ -7,13 +7,15 @@ import { fetchContributors, fetchLatestRelease, Contributor, ReleaseInfo } from 
 
 function previewMarkdown(text: string): string {
   return (text || '')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^\s*[-*+]\s+/gm, 'â€¢ ')
+    .replace(/^#{1,6}\s+(.*)$/gm, '$1\n')
+    .replace(/^\s*[-*+]\s+/gm, '- ')
+    .replace(/^\s*>\s?/gm, '')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')
     .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n\s*\n/g, '\n\n')
     .trim();
 }
 
