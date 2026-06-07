@@ -13,6 +13,9 @@
         name:
           - containerd
           - runc
+          - containerd.io
+          - docker-ce
+          - docker-ce-cli
         state: absent
       when: ansible_os_family == "Debian"
 
@@ -120,8 +123,40 @@
         mode: '0666'
       when: ansible_os_family != "Windows"
 
-    - name: Ensure libvirt default network is active
+    - name: Set permissions on KVM device
+      ansible.builtin.file:
+        path: /dev/kvm
+        mode: '0666'
+      when: ansible_os_family != "Windows"
+
+    - name: Ensure workspace is traversable for libvirt
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: '0755'
+        state: directory
+      loop:
+        - /workspace
+        - /workspace/data
+        - /workspace/data/images
+      when: ansible_os_family != "Windows" and lookup('env', 'PWD') == '/workspace'
+
+    - name: Ensure libvirt default network is defined and active
       ansible.builtin.shell: |
+        if ! virsh net-info default >/dev/null 2>&1; then
+          cat <<EOF > /tmp/default-net.xml
+          <network>
+            <name>default</name>
+            <forward mode='nat'/>
+            <bridge name='virbr0' stp='on' delay='0'/>
+            <ip address='192.168.122.1' netmask='255.255.255.0'>
+              <dhcp>
+                <range start='192.168.122.2' end='192.168.122.254'/>
+              </dhcp>
+            </ip>
+          </network>
+        EOF
+          virsh net-define /tmp/default-net.xml
+        fi
         virsh net-start default || true
         virsh net-autostart default || true
       changed_when: false

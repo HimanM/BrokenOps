@@ -70,19 +70,21 @@ fi
 HOST_UID=$(id -u)
 HOST_GID=$(id -g)
 LIBVIRT_GID=$(getent group libvirt | cut -d: -f3)
+KVM_GID=$(getent group kvm | cut -d: -f3)
 
 if [ -z "$LIBVIRT_GID" ]; then
     echo -e "${RED}Could not determine libvirt group ID on host. Is libvirtd installed?${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}Detected Host UID: $HOST_UID, GID: $HOST_GID, libvirt GID: $LIBVIRT_GID${NC}"
+echo -e "${GREEN}Detected Host UID: $HOST_UID, GID: $HOST_GID, libvirt GID: $LIBVIRT_GID, KVM GID: ${KVM_GID:-none}${NC}"
 
 # 4. Generate .env file
 cat <<EOF > .env
 PUID=$HOST_UID
 PGID=$HOST_GID
 LIBVIRT_GID=$LIBVIRT_GID
+KVM_GID=${KVM_GID:-0}
 FRONTEND_PORT=$FRONTEND_PORT
 HOST_PROJECT_ROOT=$PWD
 EOF

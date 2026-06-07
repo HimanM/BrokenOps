@@ -5,8 +5,9 @@ set -e
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 LIBVIRT_GID=${LIBVIRT_GID:-104}
+KVM_GID=${KVM_GID:-0}
 
-echo "Starting backend container with PUID: $PUID, PGID: $PGID, LIBVIRT_GID: $LIBVIRT_GID"
+echo "Starting backend container with PUID: $PUID, PGID: $PGID, LIBVIRT_GID: $LIBVIRT_GID, KVM_GID: $KVM_GID"
 
 # Create brokenops group if it doesn't exist
 if ! getent group brokenops >/dev/null; then
@@ -18,6 +19,13 @@ if ! getent group libvirt >/dev/null; then
     groupadd -o -g "$LIBVIRT_GID" libvirt
 fi
 
+# Create kvm group if it doesn't exist to match host
+if [ "$KVM_GID" -ne 0 ]; then
+    if ! getent group kvm >/dev/null; then
+        groupadd -o -g "$KVM_GID" kvm
+    fi
+fi
+
 # Create brokenops user if it doesn't exist
 if ! getent passwd brokenops >/dev/null; then
     useradd -o -u "$PUID" -g "$PGID" -m brokenops
@@ -25,6 +33,11 @@ fi
 
 # Ensure user is in libvirt group
 usermod -aG libvirt brokenops
+
+# Ensure user is in kvm group if it exists
+if getent group kvm >/dev/null; then
+    usermod -aG kvm brokenops
+fi
 
 # Change ownership of /app directory itself so SQLite can write
 chown brokenops:brokenops /app

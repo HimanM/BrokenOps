@@ -78,7 +78,9 @@ class LabEngine:
             dom = self.conn.createXML(xml, 0)
             return True
         except libvirt.libvirtError as e:
-            print(f"Failed to create VM {name}: {e}")
+            print(f"ERROR: Failed to create VM {name}: {e}", flush=True)
+            # Log the XML for debugging
+            print(f"DEBUG: XML used for {name}:\n{xml}", flush=True)
             return False
 
     def get_vm_ip(self, name: str) -> str:
