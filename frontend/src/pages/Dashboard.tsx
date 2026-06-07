@@ -224,8 +224,8 @@ export default function Dashboard() {
       <main className="mx-auto w-full max-w-[1900px] px-6 py-6 xl:px-10 xl:py-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(240px,1fr)_minmax(920px,1040px)_minmax(240px,1fr)]">
           <aside className="hidden xl:block">
-            <div className="sticky top-24 space-y-4">
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+            <div className="sticky top-24 flex h-[calc(100vh-7.75rem)] flex-col gap-4 overflow-y-auto pr-1">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#14c6cb]">Browse</div>
                 <div className="mt-4 space-y-2">
                   <FilterButton
@@ -250,7 +250,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Current filter</div>
                 <p className="mt-3 text-sm font-semibold text-white">{activeLabel}</p>
                 <p className="mt-2 text-sm leading-6 text-[#8d93a1]">
@@ -258,7 +258,7 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Difficulty ladder</div>
                 <div className="mt-4 space-y-3">
                   <DifficultyRow tone="easy" label="Beginner" body="Fast repair loops and first-pass service failures." />
@@ -430,8 +430,8 @@ export default function Dashboard() {
           </section>
 
           <aside className="hidden xl:block">
-            <div className="sticky top-24 space-y-4">
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+            <div className="sticky top-24 flex h-[calc(100vh-7.75rem)] flex-col gap-4 overflow-y-auto pr-1">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Inventory</div>
                 <div className="mt-4 grid gap-3">
                   <Metric value={labs.length} label="Labs" />
@@ -439,13 +439,13 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Progress</div>
                 <p className="mt-3 text-3xl font-semibold text-white">{totalSolved}</p>
                 <p className="mt-1 text-sm leading-6 text-[#8d93a1]">Completed labs tracked locally in this browser profile.</p>
               </div>
 
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Project</div>
                 <a
                   href={repoUrl}
@@ -461,7 +461,7 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#252830] bg-[#12151b] p-4 text-sm text-[#656a76]">
+              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4 text-sm text-[#656a76]">
                 <p>BrokenOps is built for realistic Linux, network, platform, and service troubleshooting practice.</p>
               </div>
             </div>
