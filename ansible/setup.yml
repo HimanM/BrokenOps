@@ -17,7 +17,7 @@
           - docker-ce
           - docker-ce-cli
         state: absent
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Install dependencies (Debian/Ubuntu)
       ansible.builtin.apt:
@@ -33,7 +33,15 @@
           - curl
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
+      ignore_errors: yes
+
+    - name: Fallback install for older Debian/Ubuntu (docker-compose v1)
+      ansible.builtin.apt:
+        name:
+          - docker-compose
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Install dependencies (RedHat/Fedora)
       ansible.builtin.dnf:
@@ -49,7 +57,7 @@
           - xorriso
           - curl
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Install dependencies (Arch)
       ansible.builtin.pacman:
@@ -64,7 +72,7 @@
           - curl
         state: present
         update_cache: yes
-      when: ansible_os_family == "Archlinux"
+      when: ansible_facts['os_family'] == "Archlinux"
 
     - name: Install dependencies (Alpine)
       ansible.builtin.apk:
@@ -78,35 +86,35 @@
           - curl
         state: present
         update_cache: yes
-      when: ansible_os_family == "Alpine"
+      when: ansible_facts['os_family'] == "Alpine"
 
     - name: Ensure docker service is started and enabled
       ansible.builtin.systemd:
         name: docker
         state: started
         enabled: yes
-      when: ansible_service_mgr == "systemd"
+      when: ansible_facts['service_mgr'] == "systemd"
 
     - name: Ensure libvirtd service is started and enabled
       ansible.builtin.systemd:
         name: libvirtd
         state: started
         enabled: yes
-      when: ansible_service_mgr == "systemd"
+      when: ansible_facts['service_mgr'] == "systemd"
 
     - name: Ensure docker service is started (OpenRC)
       ansible.builtin.service:
         name: docker
         state: started
         enabled: yes
-      when: ansible_service_mgr == "openrc"
+      when: ansible_facts['service_mgr'] == "openrc"
 
     - name: Ensure libvirtd service is started (OpenRC)
       ansible.builtin.service:
         name: libvirtd
         state: started
         enabled: yes
-      when: ansible_service_mgr == "openrc"
+      when: ansible_facts['service_mgr'] == "openrc"
 
     - name: Add current user to groups
       ansible.builtin.user:
@@ -121,12 +129,12 @@
     - name: Disable SELinux (Fedora/RedHat)
       ansible.builtin.selinux:
         state: disabled
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
       failed_when: false
 
     - name: Disable SELinux immediately (setenforce 0)
       ansible.builtin.command: setenforce 0
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
       failed_when: false
       changed_when: false
 
@@ -139,7 +147,7 @@
         - 'security_driver = "none"'
         - 'user = "root"'
         - 'group = "root"'
-      when: ansible_os_family != "Windows"
+      when: ansible_facts['os_family'] != "Windows"
       notify: Restart libvirtd
 
     - name: Disable firewalld (Fedora/RedHat)
@@ -147,7 +155,7 @@
         name: firewalld
         state: stopped
         enabled: no
-      when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
+      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['service_mgr'] == "systemd"
       failed_when: false
 
     - name: Disable iptables (Arch)
@@ -155,12 +163,12 @@
         name: iptables
         state: stopped
         enabled: no
-      when: ansible_os_family == "Archlinux" and ansible_service_mgr == "systemd"
+      when: ansible_facts['os_family'] == "Archlinux" and ansible_facts['service_mgr'] == "systemd"
       failed_when: false
 
     - name: Disable UFW (Ubuntu/Debian)
       ansible.builtin.command: ufw disable
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
       failed_when: false
       changed_when: false
 
@@ -176,22 +184,22 @@
         - /workspace/data/images
         - /workspace/data/vms
         - /workspace/keys
-      when: ansible_os_family != "Windows" and (lookup('env', 'PWD') == '/workspace' or ansible_env.PWD == '/workspace')
+      when: ansible_facts['os_family'] != "Windows" and (lookup('env', 'PWD') == '/workspace' or ansible_env.PWD == '/workspace')
 
     - name: Set permissions on libvirt socket
       ansible.builtin.file:
         path: /var/run/libvirt/libvirt-sock
         mode: '0666'
-      when: ansible_os_family != "Windows"
+      when: ansible_facts['os_family'] != "Windows"
 
     - name: Set permissions on KVM device
       ansible.builtin.file:
         path: /dev/kvm
         mode: '0666'
-      when: ansible_os_family != "Windows"
+      when: ansible_facts['os_family'] != "Windows"
       failed_when: false
 
-    - name: Ensure libvirt default network is defined and active
+    - name: Ensure libvirt default network is defined
       ansible.builtin.shell: |
         if ! virsh net-info default >/dev/null 2>&1; then
           cat <<EOF > /tmp/default-net.xml
@@ -208,13 +216,23 @@
         EOF
           virsh net-define /tmp/default-net.xml
         fi
-        virsh net-start default || true
+      changed_when: false
+
+    - name: Ensure libvirt default network is active
+      ansible.builtin.shell: |
+        if ! virsh net-info default | grep -q "Active:.*yes"; then
+          # Force destroy if bridge exists but network is inactive (cleanup)
+          ip link set virbr0 down >/dev/null 2>&1 || true
+          brctl delbr virbr0 >/dev/null 2>&1 || true
+          virsh net-start default
+        fi
         virsh net-autostart default || true
       changed_when: false
+      failed_when: false
 
   handlers:
     - name: Restart libvirtd
       ansible.builtin.systemd:
         name: libvirtd
         state: restarted
-      when: ansible_service_mgr == "systemd"
+      when: ansible_facts['service_mgr'] == "systemd"
