@@ -18,6 +18,7 @@ services:
     devices:
       - /dev/kvm:/dev/kvm
     network_mode: "host"
+    privileged: true
     restart: unless-stopped
 
   brokenops-fe:

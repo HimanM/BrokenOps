@@ -117,6 +117,40 @@
         append: yes
       when: lookup('env', 'USER') != 'root'
 
+    - name: Allow traffic from Docker bridge to host (Fedora/firewalld)
+      ansible.builtin.command:
+        cmd: firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="172.17.0.0/16" accept'
+      when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
+      failed_when: false
+      changed_when: false
+
+    - name: Reload firewalld
+      ansible.builtin.systemd:
+        name: firewalld
+        state: reloaded
+      when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
+      failed_when: false
+
+    - name: Disable UFW (Ubuntu/Debian)
+      ansible.builtin.command: ufw disable
+      when: ansible_os_family == "Debian"
+      failed_when: false
+      changed_when: false
+
+    - name: Ensure workspace and data are traversable and readable/writable
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: '0777'
+        state: directory
+        recurse: no
+      loop:
+        - /workspace
+        - /workspace/data
+        - /workspace/data/images
+        - /workspace/data/vms
+        - /workspace/keys
+      when: ansible_os_family != "Windows" and (lookup('env', 'PWD') == '/workspace' or ansible_env.PWD == '/workspace')
+
     - name: Set permissions on libvirt socket
       ansible.builtin.file:
         path: /var/run/libvirt/libvirt-sock
@@ -128,17 +162,7 @@
         path: /dev/kvm
         mode: '0666'
       when: ansible_os_family != "Windows"
-
-    - name: Ensure workspace is traversable for libvirt
-      ansible.builtin.file:
-        path: "{{ item }}"
-        mode: '0755'
-        state: directory
-      loop:
-        - /workspace
-        - /workspace/data
-        - /workspace/data/images
-      when: ansible_os_family != "Windows" and lookup('env', 'PWD') == '/workspace'
+      failed_when: false
 
     - name: Ensure libvirt default network is defined and active
       ansible.builtin.shell: |

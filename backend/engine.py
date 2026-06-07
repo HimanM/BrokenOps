@@ -19,9 +19,16 @@ class LabEngine:
     def _generate_domain_xml(self, name, memory_mb, vcpus, disk_path, cloud_iso_path):
         disk_path_host = self._map_to_host_path(disk_path)
         cloud_iso_path_host = self._map_to_host_path(cloud_iso_path)
+        
+        # Check if KVM is available, otherwise fallback to QEMU TCG
+        domain_type = "kvm"
+        if not os.path.exists("/dev/kvm"):
+            print("WARNING: /dev/kvm not found. Falling back to 'qemu' (TCG) emulation.", flush=True)
+            domain_type = "qemu"
+
         # A simple QEMU/KVM domain XML
         xml = f"""
-        <domain type='kvm'>
+        <domain type='{domain_type}'>
           <name>{name}</name>
           <memory unit='MiB'>{memory_mb}</memory>
           <vcpu placement='static'>{vcpus}</vcpu>
