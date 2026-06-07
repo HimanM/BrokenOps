@@ -9,6 +9,11 @@ KVM_GID=${KVM_GID:-0}
 
 echo "Starting backend container with PUID: $PUID, PGID: $PGID, LIBVIRT_GID: $LIBVIRT_GID, KVM_GID: $KVM_GID"
 
+if [ "$PUID" = "0" ]; then
+    echo "PUID is 0; running backend as root for this host/CI environment."
+    exec "$@"
+fi
+
 # Create brokenops group if it doesn't exist
 if ! getent group brokenops >/dev/null; then
     groupadd -o -g "$PGID" brokenops

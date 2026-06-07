@@ -44,7 +44,7 @@ jobs:
           
           # Wait for API to be healthy
           for i in {1..30}; do
-            if curl -s http://localhost/api/labs > /dev/null; then
+            if curl -fsS http://localhost/api/labs > /dev/null; then
               echo "API is up!"
               break
             fi
@@ -97,7 +97,7 @@ jobs:
             
             echo '=== Waiting for API inside Guest ==='
             for i in {1..30}; do
-              if curl -s http://localhost/api/labs > /dev/null; then
+              if curl -fsS http://localhost/api/labs > /dev/null; then
                 echo 'API is up!'
                 break
               fi

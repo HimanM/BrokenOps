@@ -2,6 +2,19 @@ import libvirt
 import xml.etree.ElementTree as ET
 import os
 
+DEFAULT_NETWORK_XML = """
+<network>
+  <name>default</name>
+  <forward mode='nat'/>
+  <bridge name='virbr0' stp='on' delay='0'/>
+  <ip address='192.168.122.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.122.2' end='192.168.122.254'/>
+    </dhcp>
+  </ip>
+</network>
+"""
+
 class LabEngine:
     def __init__(self, qemu_uri: str = "qemu:///system"):
         try:
@@ -66,9 +79,37 @@ class LabEngine:
         """
         return xml
 
+    def ensure_default_network(self):
+        if not self.conn:
+            return False, "Not connected to libvirt"
+
+        try:
+            network = self.conn.networkLookupByName("default")
+        except libvirt.libvirtError:
+            try:
+                network = self.conn.networkDefineXML(DEFAULT_NETWORK_XML)
+            except libvirt.libvirtError as e:
+                return False, f"libvirt default network is missing and could not be defined: {e}"
+
+        try:
+            if not network.isActive():
+                network.create()
+            network.setAutostart(1)
+            return True, ""
+        except libvirt.libvirtError as e:
+            return False, (
+                "libvirt default network is not active and could not be started. "
+                "On the host, run: sudo virsh net-start default && sudo virsh net-autostart default. "
+                f"Original error: {e}"
+            )
+
     def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1):
         if not self.conn:
             return False, "Not connected to libvirt"
+
+        network_ok, network_error = self.ensure_default_network()
+        if not network_ok:
+            return False, network_error
         
         xml = self._generate_domain_xml(name, memory_mb, vcpus, disk_path, cloud_iso_path)
         
