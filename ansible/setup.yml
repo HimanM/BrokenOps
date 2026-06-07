@@ -5,7 +5,7 @@
   become: true
   tasks:
     - name: Gather distribution facts
-      ansible.builtin:setup:
+      ansible.builtin.setup:
         filter: ansible_distribution*
 
     - name: Remove conflicting Docker packages (Debian/Ubuntu)
