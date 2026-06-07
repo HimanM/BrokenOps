@@ -5,20 +5,24 @@ LAB_NETWORKS = {
     "standard": {
         "name": "brokenops",
         "bridge": "brokenops0",
-        "address": "192.168.123.1",
-        "range_start": "192.168.123.2",
-        "range_end": "192.168.123.254",
+        "subnets": [123, 124, 125, 126, 127, 128],
     },
     "classic": {
         "name": "brokenops122",
         "bridge": "brokenops122",
-        "address": "192.168.122.1",
-        "range_start": "192.168.122.2",
-        "range_end": "192.168.122.254",
+        "subnets": [122],
     },
 }
 
-def build_network_xml(network):
+def network_with_subnet(network, subnet):
+    configured = dict(network)
+    configured["address"] = f"192.168.{subnet}.1"
+    configured["range_start"] = f"192.168.{subnet}.2"
+    configured["range_end"] = f"192.168.{subnet}.254"
+    return configured
+
+def build_network_xml(network, subnet):
+    network = network_with_subnet(network, subnet)
     return f"""
 <network>
   <name>{network['name']}</name>
@@ -100,42 +104,49 @@ class LabEngine:
         if not self.conn:
             return False, None, "Not connected to libvirt"
 
-        try:
-            default_network = self.conn.networkLookupByName("default")
-            if default_network.isActive():
-                return True, "default", ""
-        except libvirt.libvirtError:
-            pass
-
         network_key = "classic" if prefer_classic_network else "standard"
         network_config = LAB_NETWORKS[network_key]
 
-        try:
-            network = self.conn.networkLookupByName(network_config["name"])
-            xml = network.XMLDesc(0)
-            expected = f"address='{network_config['address']}'"
-            if expected not in xml:
-                if network.isActive():
-                    network.destroy()
-                network.undefine()
-                network = self.conn.networkDefineXML(build_network_xml(network_config))
-        except libvirt.libvirtError:
+        last_error = None
+        for subnet in network_config["subnets"]:
+            configured_network = network_with_subnet(network_config, subnet)
             try:
-                network = self.conn.networkDefineXML(build_network_xml(network_config))
+                network = self.conn.networkLookupByName(configured_network["name"])
+                xml = network.XMLDesc(0)
+                expected = f"address='{configured_network['address']}'"
+                if expected not in xml:
+                    if network.isActive():
+                        network.destroy()
+                    network.undefine()
+                    network = self.conn.networkDefineXML(build_network_xml(network_config, subnet))
             except libvirt.libvirtError as e:
-                return False, None, f"libvirt {network_config['name']!r} network is missing and could not be defined: {e}"
+                try:
+                    network = self.conn.networkDefineXML(build_network_xml(network_config, subnet))
+                except libvirt.libvirtError as define_error:
+                    last_error = define_error
+                    continue
 
-        try:
-            if not network.isActive():
-                network.create()
-            network.setAutostart(1)
-            return True, network_config["name"], ""
-        except libvirt.libvirtError as e:
-            return False, None, (
-                f"libvirt {network_config['name']!r} network is not active and could not be started. "
-                "Ensure dnsmasq is installed and libvirtd is running on the host. "
-                f"Original error: {e}"
-            )
+            try:
+                if not network.isActive():
+                    network.create()
+                network.setAutostart(1)
+                return True, configured_network["name"], ""
+            except libvirt.libvirtError as e:
+                last_error = e
+                if "Network is already in use" not in str(e):
+                    break
+                try:
+                    if network.isActive():
+                        network.destroy()
+                    network.undefine()
+                except libvirt.libvirtError:
+                    pass
+
+        return False, None, (
+            f"libvirt {network_config['name']!r} network is not active and could not be started. "
+            "Ensure dnsmasq is installed and libvirtd is running on the host. "
+            f"Original error: {last_error}"
+        )
 
     def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1, prefer_classic_network: bool = False):
         if not self.conn:
