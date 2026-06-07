@@ -1,0 +1,22 @@
+#cloud-config
+packages: [nginx, openssl]
+runcmd:
+  - mkdir -p /etc/nginx/ssl
+  - openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/pair1.key -out /etc/nginx/ssl/pair1.crt -subj "/CN=pair1"
+  - openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/pair2.key -out /etc/nginx/ssl/pair2.crt -subj "/CN=pair2"
+  - cp /etc/nginx/ssl/pair2.crt /etc/nginx/ssl/server.crt
+  - cp /etc/nginx/ssl/pair1.key /etc/nginx/ssl/server.key
+  - cp /etc/nginx/ssl/pair2.key /etc/nginx/ssl/server.key.correct
+  - |
+    cat <<EOF > /etc/nginx/sites-available/ssl
+    server {
+        listen 443 ssl default_server;
+        server_name _;
+        ssl_certificate /etc/nginx/ssl/server.crt;
+        ssl_certificate_key /etc/nginx/ssl/server.key;
+        location / { root /var/www/html; index index.html; }
+    }
+    EOF
+  - ln -s /etc/nginx/sites-available/ssl /etc/nginx/sites-enabled/ssl
+  - rm -f /etc/nginx/sites-enabled/default
+  - systemctl restart nginx || true
