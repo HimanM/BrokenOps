@@ -94,70 +94,110 @@ export default function Home() {
         </a>
       </section>
 
-      {/* Overview */}
-      <section id="overview" style={{ borderTop: '1px solid var(--card-border)' }}>
-        <div className="overview-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '4rem' }}>
-          <div>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Local-First Troubleshooting</h2>
-            <p style={{ color: 'var(--accent)', fontFamily: 'var(--mono-font)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>THE BROKENOPS PHILOSOPHY</p>
-          </div>
-          <div style={{ fontSize: '1.125rem', lineHeight: 1.8, color: 'var(--dimmed)' }}>
-            <p style={{ marginBottom: '1.5rem' }}>
-              BrokenOps isn&apos;t another cloud-based sandbox. It&apos;s a collection of intentionally broken local environments designed to teach you how Linux systems fail and how to fix them.
-            </p>
-            <p>
-              By focusing on local Linux installations with KVM/libvirt, we ensure that you&apos;re learning skills that translate directly to production environments.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Overview, Release & Requirements Hub */}
+      <section id="overview" style={{ 
+        borderTop: '1px solid var(--card-border)',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '6rem 1.5rem'
+      }}>
+        <div className="hub-grid">
+          {/* Column 1: Philosophy & Release */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
+            <div>
+              <p style={{ color: 'var(--accent)', fontFamily: 'var(--mono-font)', fontSize: '0.7rem', letterSpacing: '0.2em', marginBottom: '1.25rem' }}>01. PHILOSOPHY</p>
+              <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>Local-First Troubleshooting</h2>
+              <div style={{ fontSize: '1.1rem', lineHeight: 1.8, color: 'var(--dimmed)' }}>
+                <p style={{ marginBottom: '1.5rem' }}>
+                  BrokenOps isn&apos;t another cloud-based sandbox. It&apos;s a collection of intentionally broken local environments designed to teach you how Linux systems fail and how to fix them.
+                </p>
+                <p>
+                  By focusing on local Linux installations with KVM/libvirt, we ensure that you&apos;re learning skills that translate directly to production environments.
+                </p>
+              </div>
+            </div>
 
-      {/* Latest Release */}
-      <section id="release" style={{ borderTop: '1px solid var(--card-border)' }}>
-        <div className="release-callout" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'minmax(0, 1fr) auto', 
-          gap: '2rem', 
-          alignItems: 'center' 
-        }}>
-          <div>
-            <p style={{ fontFamily: 'var(--mono-font)', color: 'var(--accent)', fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.75rem' }}>
-              LATEST RELEASE
-            </p>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-              {latestRelease ? limitText(latestRelease.name || latestRelease.tag_name, 72) : 'No release loaded yet'}
-            </h2>
-            <p style={{ color: 'var(--dimmed)', fontSize: '1rem', lineHeight: 1.8, maxWidth: '72ch' }}>
-              {latestRelease
-                ? limitText(previewMarkdown(latestRelease.body), 260) || 'A recent BrokenOps release from GitHub.'
-                : 'The homepage reads the GitHub Releases API and shows the newest published prerelease or normal release.'}
-            </p>
+            <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '3rem' }}>
+              <p style={{ fontFamily: 'var(--mono-font)', color: 'var(--accent)', fontSize: '0.7rem', letterSpacing: '0.2em', marginBottom: '1.25rem' }}>02. LATEST RELEASE</p>
+              <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>
+                {latestRelease ? limitText(latestRelease.name || latestRelease.tag_name, 48) : 'No release loaded yet'}
+              </h3>
+              <p style={{ color: 'var(--dimmed)', fontSize: '0.95rem', lineHeight: 1.6, maxWidth: '50ch', marginBottom: '2rem' }}>
+                {latestRelease
+                  ? limitText(previewMarkdown(latestRelease.body), 160)
+                  : 'Fetching the latest updates from GitHub...'}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <a
+                  href={latestRelease?.html_url || 'https://github.com/HimanM/BrokenOps/releases'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button secondary"
+                  style={{ fontSize: '0.65rem', padding: '0.4rem 1rem' }}
+                >
+                  View Release
+                </a>
+                {latestRelease && (
+                  <>
+                    <span style={{ 
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: '4px',
+                      border: '1px solid var(--card-border)',
+                      color: 'var(--accent)',
+                      fontFamily: 'var(--mono-font)',
+                      fontSize: '0.6rem',
+                      letterSpacing: '0.05em'
+                    }}>
+                      {latestRelease.prerelease ? 'PRE-RELEASE' : 'RELEASE'}
+                    </span>
+                    <span style={{ color: 'var(--dimmed)', fontSize: '0.7rem', fontFamily: 'var(--mono-font)' }}>
+                      {new Date(latestRelease.published_at || latestRelease.created_at).toLocaleDateString()}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <span style={{ 
-              display: 'inline-block',
-              padding: '0.35rem 0.75rem',
-              borderRadius: '999px',
-              border: '1px solid var(--card-border)',
-              color: 'var(--accent)',
-              fontFamily: 'var(--mono-font)',
-              fontSize: '0.7rem',
-              letterSpacing: '0.12em',
-              marginBottom: '1rem'
+
+          {/* Column 2: Requirements */}
+          <div>
+            <p style={{ color: 'var(--accent)', fontFamily: 'var(--mono-font)', fontSize: '0.7rem', letterSpacing: '0.2em', marginBottom: '1.25rem' }}>03. SYSTEM REQUIREMENTS</p>
+            <div style={{ 
+              background: 'rgba(212, 175, 55, 0.03)', 
+              border: '1px solid var(--card-border)', 
+              borderRadius: '8px', 
+              padding: '2.5rem 2rem'
             }}>
-              {latestRelease?.prerelease ? 'PRE-RELEASE' : 'RELEASE'}
-            </span>
-            <p style={{ color: 'var(--dimmed)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-              {latestRelease ? new Date(latestRelease.published_at || latestRelease.created_at).toLocaleDateString() : 'Waiting for release data'}
-            </p>
-            <a
-              href={latestRelease?.html_url || 'https://github.com/HimanM/BrokenOps/releases'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="button"
-            >
-              Open release
-            </a>
+               <div className="requirements-compact">
+                  <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
+                    <div>
+                      <p style={{ color: 'var(--accent)', fontFamily: 'var(--mono-font)', fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>CPU</p>
+                      <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>{siteData.requirements?.suggestedHost.cpu} Cores</p>
+                    </div>
+                    <p style={{ fontSize: '0.55rem', color: 'var(--dimmed)', textAlign: 'right', width: '60px', lineHeight: 1.2 }}>FREE AT IDLE</p>
+                  </div>
+                  <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
+                    <div>
+                      <p style={{ color: 'var(--accent)', fontFamily: 'var(--mono-font)', fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>RAM</p>
+                      <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>{siteData.requirements?.suggestedHost.memory} GB</p>
+                    </div>
+                    <p style={{ fontSize: '0.55rem', color: 'var(--dimmed)', textAlign: 'right', width: '60px', lineHeight: 1.2 }}>FREE AT IDLE</p>
+                  </div>
+                  <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem' }}>
+                    <div>
+                      <p style={{ color: 'var(--accent)', fontFamily: 'var(--mono-font)', fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>DISK</p>
+                      <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>{siteData.requirements?.suggestedHost.disk} GB</p>
+                    </div>
+                    <p style={{ fontSize: '0.55rem', color: 'var(--dimmed)', textAlign: 'right', width: '60px', lineHeight: 1.2 }}>FREE SPACE</p>
+                  </div>
+               </div>
+               <p style={{ fontSize: '0.75rem', color: 'var(--dimmed)', marginTop: '2.5rem', textAlign: 'center', lineHeight: 1.6 }}>
+                 Calculated from the largest lab scenario ({siteData.requirements?.maxLab.cpu} vCPU, {siteData.requirements?.maxLab.memory}MB RAM) 
+                 plus host OS overhead.
+               </p>
+            </div>
           </div>
         </div>
       </section>
@@ -184,7 +224,8 @@ export default function Home() {
               <code>./deploy.sh{"\n"}# choose a lab from the dashboard</code>
             </pre>
           </div>
-          <div style={{ width: '100%', marginTop: '2rem', border: '1px solid rgba(212,175,55,0.28)', background: '#0a0a0a', borderRadius: '6px', padding: '1.5rem 1.75rem', textAlign: 'center' }}>
+
+          <div style={{ width: '100%', marginTop: '4rem', border: '1px solid rgba(212,175,55,0.28)', background: '#0a0a0a', borderRadius: '6px', padding: '1.5rem 1.75rem', textAlign: 'center' }}>
             <p style={{ color: '#f1e2b0', fontSize: '1.02rem', lineHeight: 1.8, margin: 0, fontWeight: 500 }}>
               {'BrokenOps requires a native Linux host with KVM and libvirt available locally. WSL2, Docker Desktop virtualization, and nested virtualization are not supported.'}
             </p>

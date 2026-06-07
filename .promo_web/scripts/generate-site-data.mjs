@@ -35,11 +35,27 @@ function readLabYaml(labPath) {
     const match = content.match(new RegExp(`^${key}:\\s*(.+)$`, "m"));
     return match ? match[1].trim().replace(/^["']|["']$/g, "") : "";
   };
+
+  // Extract VM resources
+  const vmBlock = content.match(/vm:\s*([\s\S]+?)(?:\n\w+:|$)/);
+  let memory = 0;
+  let cpu = 0;
+  let disk = 0;
+  if (vmBlock) {
+    const memoryMatch = vmBlock[1].match(/memory:\s*(\d+)/);
+    const cpuMatch = vmBlock[1].match(/cpu:\s*(\d+)/);
+    const diskMatch = vmBlock[1].match(/disk:\s*["']?(\d+)G["']?/);
+    if (memoryMatch) memory = parseInt(memoryMatch[1], 10);
+    if (cpuMatch) cpu = parseInt(cpuMatch[1], 10);
+    if (diskMatch) disk = parseInt(diskMatch[1], 10);
+  }
+
   return {
     id: get("id"),
     name: get("name"),
     category: get("category"),
     difficulty: get("difficulty"),
+    resources: { memory, cpu, disk }
   };
 }
 
@@ -63,8 +79,8 @@ function gitLogForLab(labId) {
   }
 }
 
-const labs = readdirSync(labsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
+const allLabs = readdirSync(labsDir, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && existsSync(path.join(labsDir, entry.name, "lab.yaml")))
   .map((entry) => {
     const labPath = path.join(labsDir, entry.name);
     const yaml = readLabYaml(labPath);
@@ -82,8 +98,19 @@ const labs = readdirSync(labsDir, { withFileTypes: true })
       updatedAt: gitInfo.updatedAt,
       commit: gitInfo.sha,
       url: `https://github.com/HimanM/BrokenOps/tree/main/labs/${entry.name}`,
+      resources: yaml.resources
     };
-  })
+  });
+
+const requirements = allLabs.reduce((acc, lab) => {
+  return {
+    memory: Math.max(acc.memory, lab.resources.memory),
+    cpu: Math.max(acc.cpu, lab.resources.cpu),
+    disk: Math.max(acc.disk, lab.resources.disk)
+  };
+}, { memory: 0, cpu: 0, disk: 0 });
+
+const labs = [...allLabs]
   .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
   .slice(0, 8);
 
@@ -93,6 +120,14 @@ writeFileSync(
   JSON.stringify(
     {
       generatedAt: new Date().toISOString(),
+      requirements: {
+        maxLab: requirements,
+        suggestedHost: {
+          memory: Math.ceil(requirements.memory / 1024) + 1, // GB
+          cpu: requirements.cpu + 1,
+          disk: requirements.disk + 5 // GB
+        }
+      },
       labs,
     },
     null,

@@ -243,6 +243,19 @@ section {
   color: var(--accent);
 }
 
+.hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.requirements-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 /* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
   section {
@@ -302,7 +315,26 @@ section {
     text-align: center;
   }
 
+  .hub-grid {
+    grid-template-columns: 1fr !important;
+    gap: 3rem !important;
+  }
+
+  .requirements-compact {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center;
+    gap: 0.75rem !important;
+  }
+
+  .requirements-compact .card {
+    flex: 1 1 120px;
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 0 !important;
+  }
+
   #labs .grid-container {
+
     display: flex !important;
     overflow-x: auto;
     scroll-snap-type: x mandatory;

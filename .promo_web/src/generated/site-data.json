@@ -1,6 +1,130 @@
 {
-  "generatedAt": "2026-06-07T13:57:50.645Z",
+  "generatedAt": "2026-06-07T18:12:41.052Z",
+  "requirements": {
+    "maxLab": {
+      "memory": 2048,
+      "cpu": 2,
+      "disk": 20
+    },
+    "suggestedHost": {
+      "memory": 3,
+      "cpu": 3,
+      "disk": 25
+    }
+  },
   "labs": [
+    {
+      "id": "docker-broken",
+      "title": "Docker Daemon Crash",
+      "summary": "Scenario A developer was trying to configure the Docker daemon to use a custom data root (/var/lib/docker_custom), but something went wrong and now the docker service refuses to st",
+      "category": "containers",
+      "difficulty": "advanced",
+      "labId": "docker-broken",
+      "updatedAt": "2026-06-07T23:34:22+05:30",
+      "commit": "f1fedb4cf89187ac44663c9fda4055ac5cbf194a",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-broken",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
+    },
+    {
+      "id": "docker-daemon-down",
+      "title": "Docker Daemon Down",
+      "summary": "Scenario The DevOps team recently tried to standardize Docker configurations across all servers.",
+      "category": "docker",
+      "difficulty": "intermediate",
+      "labId": "docker-daemon-down",
+      "updatedAt": "2026-06-07T17:58:37+00:00",
+      "commit": "5a1332c8838dc5a7fd8bb45ebde1393f40cd9531",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-daemon-down",
+      "resources": {
+        "memory": 2048,
+        "cpu": 2,
+        "disk": 20
+      }
+    },
+    {
+      "id": "acl-misconfiguration",
+      "title": "ACL Misconfiguration",
+      "summary": "Scenario A web application running as the webapp user is failing to write its logs to /var/log/webapp.",
+      "category": "linux",
+      "difficulty": "intermediate",
+      "labId": "acl-misconfiguration",
+      "updatedAt": "2026-06-07T17:57:14+00:00",
+      "commit": "d1fba1517aa4d6f52ce6202d3f1ee17f1e5a280d",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/acl-misconfiguration",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
+    },
+    {
+      "id": "dns-search-domain",
+      "title": "Broken DNS Search Domain",
+      "summary": "Scenario Internal application services use short hostnames to communicate with each other.",
+      "category": "networking",
+      "difficulty": "intermediate",
+      "labId": "dns-search-domain",
+      "updatedAt": "2026-06-07T17:55:10+00:00",
+      "commit": "f23959cfdd53e6a3eb20ef2fc3de95dda64feb4b",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/dns-search-domain",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
+    },
+    {
+      "id": "netplan-syntax-error",
+      "title": "Netplan Syntax Error",
+      "summary": "Scenario A junior administrator tried to add a secondary network interface configuration to the server.",
+      "category": "networking",
+      "difficulty": "beginner",
+      "labId": "netplan-syntax-error",
+      "updatedAt": "2026-06-07T17:52:56+00:00",
+      "commit": "300f7421fdb0e6492ee2dcd24d9c077645eae523",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/netplan-syntax-error",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
+    },
+    {
+      "id": "nginx-ssl-mismatch",
+      "title": "Nginx SSL Certificate Mismatch",
+      "summary": "Scenario Nginx fails to start after an SSL cert update.",
+      "category": "web",
+      "difficulty": "intermediate",
+      "labId": "nginx-ssl-mismatch",
+      "updatedAt": "2026-06-07T17:51:56+00:00",
+      "commit": "d192ae766d4ef5596a3b4d0a7a5f1b02e00ada37",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/nginx-ssl-mismatch",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
+    },
+    {
+      "id": "nfs-subnet-mismatch",
+      "title": "NFS Export Subnet Mismatch",
+      "summary": "Scenario The engineering team is trying to mount a shared data directory from this server using NFS.",
+      "category": "networking",
+      "difficulty": "intermediate",
+      "labId": "nfs-subnet-mismatch",
+      "updatedAt": "2026-06-07T17:47:31+00:00",
+      "commit": "2219197061fe9134a99877d5660eed260e3c66fb",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/nfs-subnet-mismatch",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
+    },
     {
       "id": "gateway-broken",
       "title": "Wrong Default Gateway",
@@ -10,84 +134,12 @@
       "labId": "gateway-broken",
       "updatedAt": "2026-06-07T12:27:30+05:30",
       "commit": "f4571246e71a841c383a597ee419eed50fdca79c",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/gateway-broken"
-    },
-    {
-      "id": "nginx-broken",
-      "title": "Nginx Service Down",
-      "summary": "Scenario You have just joined a new company as a junior sysadmin.",
-      "category": "linux",
-      "difficulty": "beginner",
-      "labId": "nginx-broken",
-      "updatedAt": "2026-06-06T22:25:30+05:30",
-      "commit": "4def314b1fe9430d8c804d1425bd6a2af96c37f3",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/nginx-broken"
-    },
-    {
-      "id": "docker-bind-mount-permissions",
-      "title": "Docker Bind Mount Permissions",
-      "summary": "Scenario A microservice named web-app is running as a Docker container.",
-      "category": "docker",
-      "difficulty": "intermediate",
-      "labId": "docker-bind-mount-permissions",
-      "updatedAt": "2026-06-06T14:52:06+00:00",
-      "commit": "e011ed833426d5661cf8194fb0933b3f7066a207",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-bind-mount-permissions"
-    },
-    {
-      "id": "php-fpm-socket-mismatch",
-      "title": "PHP-FPM Socket Mismatch",
-      "summary": "Scenario A newly deployed web server has been configured to host a PHP application.",
-      "category": "web",
-      "difficulty": "intermediate",
-      "labId": "php-fpm-socket-mismatch",
-      "updatedAt": "2026-06-06T14:51:49+00:00",
-      "commit": "3da0f03197b6b67d6cdc7273b84087977241ce88",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/php-fpm-socket-mismatch"
-    },
-    {
-      "id": "redis-persistence-permissions",
-      "title": "Redis Persistence Failure",
-      "summary": "Scenario A developer has reported that their Redis instance running on the database server works perfectly while running, but loses all recent data whenever the server or the Redis",
-      "category": "databases",
-      "difficulty": "intermediate",
-      "labId": "redis-persistence-permissions",
-      "updatedAt": "2026-06-06T14:51:39+00:00",
-      "commit": "6f4a2487b2c9dd4bf8031087e04a507dbbc64c1a",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/redis-persistence-permissions"
-    },
-    {
-      "id": "web-upload-permissions",
-      "title": "Web Upload Directory Permissions",
-      "summary": "Scenario A web portal has been set up to allow internal users to upload system logs for analysis.",
-      "category": "web",
-      "difficulty": "intermediate",
-      "labId": "web-upload-permissions",
-      "updatedAt": "2026-06-06T14:51:25+00:00",
-      "commit": "a63bf1718c2eaf57be4070b3b373f18591ebc4eb",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/web-upload-permissions"
-    },
-    {
-      "id": "logrotate-broken",
-      "title": "Logrotate Misconfiguration",
-      "summary": "Scenario A production logging application writes diagnostic logs to /var/log/noisy-app.log.",
-      "category": "linux",
-      "difficulty": "intermediate",
-      "labId": "logrotate-broken",
-      "updatedAt": "2026-06-06T14:51:11+00:00",
-      "commit": "b28b2673daaeecf8aacf6f95aaa4241686c57c18",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/logrotate-broken"
-    },
-    {
-      "id": "cron-broken",
-      "title": "Cron Job Never Executes",
-      "summary": "Scenario A system administrator configured a cron job to run a cleanup script /opt/cleanup.sh every minute.",
-      "category": "linux",
-      "difficulty": "beginner",
-      "labId": "cron-broken",
-      "updatedAt": "2026-06-06T13:45:41+00:00",
-      "commit": "7c6c044f852796fc3b93e29d9f487bcfee3dcb8f",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/cron-broken"
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/gateway-broken",
+      "resources": {
+        "memory": 1024,
+        "cpu": 1,
+        "disk": 10
+      }
     }
   ]
 }
