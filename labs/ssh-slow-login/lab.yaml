@@ -1,0 +1,13 @@
+id: "ssh-slow-login"
+name: "SSH Slow Login"
+category: "networking"
+difficulty: "advanced"
+description:
+  summary: "SSH logins take an unusually long time to establish a connection."
+vm:
+  name: "ssh-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
