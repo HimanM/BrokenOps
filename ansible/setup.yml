@@ -8,6 +8,14 @@
       ansible.builtin.setup:
         filter: ansible_distribution*
 
+    - name: Remove conflicting Docker packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - containerd
+          - runc
+        state: absent
+      when: ansible_os_family == "Debian"
+
     - name: Install dependencies (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
@@ -27,8 +35,8 @@
     - name: Install dependencies (RedHat/Fedora)
       ansible.builtin.dnf:
         name:
-          - docker
-          - docker-compose-plugin
+          - moby-engine
+          - docker-compose
           - qemu-kvm
           - qemu-img
           - libvirt

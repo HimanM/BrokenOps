@@ -14,6 +14,8 @@ services:
       - ./labs:/app/labs
       - ./keys:/app/keys
       - /var/run/libvirt:/var/run/libvirt
+    devices:
+      - /dev/kvm:/dev/kvm
     network_mode: "host"
     restart: unless-stopped
 
