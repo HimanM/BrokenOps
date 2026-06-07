@@ -3,13 +3,9 @@
   hosts: localhost
   connection: local
   become: true
-  vars:
-    # Service names vary by distro
-    libvirt_service_name: "{{ 'libvirtd' if ansible_facts['os_family'] != 'Debian' else 'libvirt-daemon-system' }}"
-
   tasks:
     - name: Gather distribution facts
-      ansible.builtin.setup:
+      ansible.builtin:setup:
         filter: ansible_distribution*
 
     - name: Remove conflicting Docker packages (Debian/Ubuntu)
@@ -32,6 +28,8 @@
           - libvirt-daemon-system
           - libvirt-clients
           - bridge-utils
+          - dnsmasq-base
+          - iptables
           - genisoimage
           - xorriso
           - curl
@@ -201,6 +199,8 @@
       ansible.builtin.shell: |
         # Check if active
         if ! virsh net-info default | grep -q "Active:.*yes"; then
+          # Stop conflicting dnsmasq if any
+          systemctl stop dnsmasq >/dev/null 2>&1 || true
           # Ensure bridge is clear
           ip link set virbr0 down >/dev/null 2>&1 || true
           brctl delbr virbr0 >/dev/null 2>&1 || true
@@ -210,3 +210,12 @@
         virsh net-autostart default || true
       changed_when: false
       failed_when: false
+
+    - name: Final check for libvirt network status
+      ansible.builtin.shell: virsh net-info default
+      register: net_info
+      changed_when: false
+
+    - name: Debug libvirt network status
+      ansible.builtin.debug:
+        var: net_info.stdout_lines
