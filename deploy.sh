@@ -35,7 +35,9 @@ fi
 
 # 2. Run Ansible playbook to setup host
 echo -e "${BLUE}Running Ansible playbook for host setup...${NC}"
-$SUDO ansible-playbook ansible/setup.yml
+# Use absolute path if possible or ensure PATH is inherited
+ANSIBLE_BIN=$(command -v ansible-playbook)
+$SUDO "$ANSIBLE_BIN" ansible/setup.yml
 
 # 3. Check for KVM (still good to have a quick check here)
 if command -v lsmod &> /dev/null; then
@@ -43,6 +45,18 @@ if command -v lsmod &> /dev/null; then
         echo -e "${YELLOW}Warning: KVM module not detected in lsmod. If you are in a VM, ensure nested virtualization is enabled.${NC}"
     fi
 fi
+
+# 3.5 Detect Docker Compose command
+DOCKER_COMPOSE="docker compose"
+if ! docker compose version &> /dev/null; then
+    if command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE="docker-compose"
+    else
+        echo -e "${RED}Error: Neither 'docker compose' nor 'docker-compose' found.${NC}"
+        exit 1
+    fi
+fi
+echo -e "${GREEN}Using Docker Compose command: $DOCKER_COMPOSE${NC}"
 
 # 2. Get Port configuration
 if [ "$ASSUME_YES" = "1" ]; then
@@ -92,7 +106,7 @@ fi
 # 6. Build and Start via Docker Compose
 if [ "$DRY_RUN" != "1" ]; then
     echo -e "${BLUE}Building and starting Docker containers...${NC}"
-    docker compose up -d --build
+    $DOCKER_COMPOSE up -d --build
 else
     echo -e "${YELLOW}Dry-run mode active. Skipping Docker Compose startup.${NC}"
 fi

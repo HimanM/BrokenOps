@@ -28,7 +28,7 @@
       ansible.builtin.dnf:
         name:
           - docker
-          - docker-compose
+          - docker-compose-plugin
           - qemu-kvm
           - qemu-img
           - libvirt
@@ -47,7 +47,7 @@
           - docker-compose
           - qemu-base
           - libvirt
-          - bridge-utils
+          - iproute2
           - cdrtools
           - curl
         state: present
