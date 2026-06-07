@@ -129,18 +129,20 @@
       failed_when: false
       changed_when: false
 
-    - name: Allow traffic from Docker bridge to host (Fedora/firewalld)
-      ansible.builtin.command:
-        cmd: firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="172.17.0.0/16" accept'
-      when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
-      failed_when: false
-      changed_when: false
-
-    - name: Reload firewalld
+    - name: Disable firewalld (Fedora/RedHat)
       ansible.builtin.systemd:
         name: firewalld
-        state: reloaded
+        state: stopped
+        enabled: no
       when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
+      failed_when: false
+
+    - name: Disable iptables (Arch)
+      ansible.builtin.systemd:
+        name: iptables
+        state: stopped
+        enabled: no
+      when: ansible_os_family == "Archlinux" and ansible_service_mgr == "systemd"
       failed_when: false
 
     - name: Disable UFW (Ubuntu/Debian)

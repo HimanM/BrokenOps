@@ -27,9 +27,13 @@ class LabEngine:
             domain_type = "qemu"
 
         # Explicitly find emulator path to avoid libvirt discovery issues on some distros
-        emulator = "/usr/bin/qemu-system-x86_64"
-        if not os.path.exists(emulator):
-            emulator = "/usr/bin/qemu-kvm"
+        emulator = None
+        for path in ["/usr/bin/qemu-system-x86_64", "/usr/bin/qemu-kvm", "/usr/libexec/qemu-kvm"]:
+            if os.path.exists(path):
+                emulator = path
+                break
+        
+        emulator_xml = f"<emulator>{emulator}</emulator>" if emulator else ""
 
         # A simple QEMU/KVM domain XML
         xml = f"""
@@ -42,7 +46,7 @@ class LabEngine:
             <boot dev='hd'/>
           </os>
           <devices>
-            <emulator>{emulator}</emulator>
+            {emulator_xml}
             <disk type='file' device='disk'>
               <driver name='qemu' type='qcow2'/>
               <source file='{disk_path_host}'/>
