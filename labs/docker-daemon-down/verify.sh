@@ -15,6 +15,7 @@ fi
 # Try to run a docker command
 if ! docker ps > /dev/null 2>&1; then
     echo "FAILURE: Cannot communicate with Docker daemon."
+    journalctl -u docker -n 20 --no-pager
     exit 1
 fi
 
