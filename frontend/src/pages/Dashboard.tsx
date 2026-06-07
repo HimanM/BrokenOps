@@ -127,6 +127,7 @@ export default function Dashboard() {
   });
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -184,6 +185,14 @@ export default function Dashboard() {
   for (const lab of labs) {
     categoryCounts.set(lab.category, (categoryCounts.get(lab.category) ?? 0) + 1);
   }
+
+  const previewCount = activeCategory === 'all' ? 4 : 6;
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((current) =>
+      current.includes(category) ? current.filter((item) => item !== category) : [...current, category],
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#050608] text-white selection:bg-[#2b89ff]/30">
@@ -324,10 +333,13 @@ export default function Dashboard() {
                 <RefreshCw className="h-7 w-7 animate-spin text-[#14c6cb]" />
               </div>
             ) : groupedLabs.length > 0 ? (
-              <div className={`mt-6 grid gap-5 ${activeCategory === 'all' ? '2xl:grid-cols-2' : ''}`}>
+              <div className="mt-6 space-y-5">
                 {groupedLabs.map(({ category, labs: labsInCategory }) => {
                   const meta = getCategoryMeta(category);
                   const Icon = meta.Icon;
+                  const expanded = expandedCategories.includes(category) || activeCategory !== 'all';
+                  const visibleLabs = expanded ? labsInCategory : labsInCategory.slice(0, previewCount);
+                  const hiddenCount = Math.max(labsInCategory.length - visibleLabs.length, 0);
 
                   return (
                     <div key={category} className="overflow-hidden rounded-2xl border border-[#252830] bg-[#12151b]">
@@ -343,10 +355,19 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </div>
+                        {activeCategory === 'all' && labsInCategory.length > previewCount && (
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(category)}
+                            className="shrink-0 rounded-lg border border-[#3b3d45] bg-[#15181e] px-3 py-2 text-sm font-semibold text-[#b2b6bd] transition-colors hover:border-[#656a76] hover:text-white"
+                          >
+                            {expanded ? 'Show less' : `Show ${hiddenCount} more`}
+                          </button>
+                        )}
                       </div>
 
                       <div className="divide-y divide-[#252830]">
-                        {labsInCategory.map((lab) => {
+                        {visibleLabs.map((lab) => {
                           const completed = completedLabs.includes(lab.id);
                           return (
                             <article
