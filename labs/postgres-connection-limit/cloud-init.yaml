@@ -1,0 +1,39 @@
+#cloud-config
+packages:
+  - postgresql
+  - python3-psycopg2
+
+runcmd:
+  - |
+    sudo -u postgres psql -c "CREATE USER appuser WITH PASSWORD 'apppassword';"
+    sudo -u postgres psql -c "ALTER SYSTEM SET listen_addresses = '*';"
+    echo "host all all 0.0.0.0/0 md5" | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
+    sudo -u postgres psql -c "ALTER SYSTEM SET max_connections = 10;"
+    sudo -u postgres psql -c "ALTER SYSTEM SET superuser_reserved_connections = 3;"
+    systemctl restart postgresql
+  - |
+    cat <<EOF > /usr/local/bin/exhaust_connections.py
+    import psycopg2
+    import time
+    import sys
+
+    connections = []
+    # Try to open many connections as normal user
+    # max_connections(10) - superuser_reserved(3) = 7 available for normal users
+    # But internal background workers also take slots, so it might be 5 or 6.
+    for i in range(20):
+        try:
+            conn = psycopg2.connect("dbname=postgres user=appuser password=apppassword host=localhost")
+            connections.append(conn)
+            cur = conn.cursor()
+            cur.execute("SELECT 1")
+            print(f"Opened connection {i+1}")
+        except Exception as e:
+            print(f"Connection {i+1} failed: {e}")
+    
+    print(f"Successfully opened {len(connections)} connections.")
+    while True:
+        time.sleep(10)
+    EOF
+  - chmod +x /usr/local/bin/exhaust_connections.py
+  - nohup python3 /usr/local/bin/exhaust_connections.py > /var/log/exhaust_connections.log 2>&1 &

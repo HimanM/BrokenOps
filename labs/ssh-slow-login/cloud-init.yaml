@@ -1,0 +1,14 @@
+#cloud-config
+runcmd:
+  - |
+    # Enable UseDNS in sshd_config
+    echo "UseDNS yes" >> /etc/ssh/sshd_config
+    systemctl restart ssh
+  - |
+    # Configure an unreachable DNS server to cause timeouts
+    mkdir -p /etc/systemd/resolved.conf.d
+    cat <<EOF > /etc/systemd/resolved.conf.d/broken-dns.conf
+    [Resolve]
+    DNS=192.0.2.1
+    EOF
+    systemctl restart systemd-resolved
