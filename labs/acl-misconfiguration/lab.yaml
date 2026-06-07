@@ -1,0 +1,13 @@
+id: "acl-misconfiguration"
+name: "ACL Misconfiguration"
+category: "linux"
+difficulty: "intermediate"
+description:
+  summary: "An application cannot write to its log directory despite seemingly correct standard permissions."
+vm:
+  name: "acl-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
