@@ -22,9 +22,11 @@ export default function LabView() {
   const [loading, setLoading] = useState(true);
   const [showSolution, setShowSolution] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const manualStopInProgress = useRef(false);
   
   // Provisioning state
-  const [hasAutoLaunched, setHasAutoLaunched] = useState(false);
+  const hasAutoLaunched = useRef(false);
   const [provisioningStatus, setProvisioningStatus] = useState<'idle'|'launching'|'waiting_ip'|'provisioning'|'ready'>('idle');
   const [vmIp, setVmIp] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -63,7 +65,7 @@ export default function LabView() {
         if (res.ok) {
           const data = await res.json();
           setVmIp(data.ip);
-          if (data.status === 'running') {
+          if (data.status === 'running' && data.ip) {
             setProvisioningStatus('ready');
             if (data.remaining_seconds !== undefined) {
               setRemainingSeconds(data.remaining_seconds);
@@ -72,8 +74,10 @@ export default function LabView() {
             setProvisioningStatus('idle');
             setVmIp(null);
             setRemainingSeconds(null);
-            // If the lab expired and stopped behind our back, send them to dashboard
-            if (provisioningStatus === 'ready') {
+            // If the lab expired and stopped behind our back, send them to dashboard.
+            // Manual stops navigate after the DELETE request succeeds, so do not
+            // reuse the expiration message while that user action is in flight.
+            if (provisioningStatus === 'ready' && !manualStopInProgress.current) {
               alert('Lab time has expired! The environment was automatically destroyed.');
               navigate('/');
             }
@@ -83,19 +87,23 @@ export default function LabView() {
             setProvisioningStatus('waiting_ip');
           }
         }
-      } catch (e) {}
+      } catch (error) {
+        console.error('Failed to fetch lab status', error);
+      }
     }, 2000);
     return () => clearInterval(interval);
   }, [labId, provisioningStatus, navigate]);
 
   // Local timer for smooth countdown
+  const hasCountdown = remainingSeconds !== null && remainingSeconds > 0;
+
   useEffect(() => {
-    if (remainingSeconds === null || remainingSeconds <= 0) return;
+    if (!hasCountdown) return;
     const interval = setInterval(() => {
       setRemainingSeconds(prev => prev !== null && prev > 0 ? prev - 1 : 0);
     }, 1000);
     return () => clearInterval(interval);
-  }, [remainingSeconds !== null]);
+  }, [hasCountdown]);
 
   // Format time
   const formatTime = (secs: number) => {
@@ -104,7 +112,7 @@ export default function LabView() {
     return `${m}:${s}`;
   };
 
-  const handleAction = async (action: 'launch' | 'stop' | 'reset') => {
+  const handleAction = useCallback(async (action: 'launch' | 'stop' | 'reset') => {
     setActionLoading(action);
     if (action === 'launch' || action === 'reset') setProvisioningStatus('launching');
     
@@ -114,6 +122,7 @@ export default function LabView() {
       
       if (res.ok) {
         if (action === 'stop') {
+          alert('Lab stopped. The environment was manually destroyed.');
           navigate('/');
         } else if (action === 'launch' || action === 'reset') {
           setProvisioningStatus('waiting_ip');
@@ -124,15 +133,34 @@ export default function LabView() {
         setProvisioningStatus('idle');
       }
     } catch (err) {
+      console.error(`Network error during ${action}`, err);
       alert(`Network error during ${action}.`);
       setProvisioningStatus('idle');
     } finally {
       setActionLoading(null);
+      if (action === 'stop') {
+        manualStopInProgress.current = false;
+      }
       if (action === 'stop' || action === 'reset') {
         setVerifyResult(null);
         setVmIp(null);
       }
     }
+  }, [labId, navigate]);
+
+
+  const requestStopLab = () => {
+    setShowStopConfirm(true);
+  };
+
+  const cancelStopLab = () => {
+    setShowStopConfirm(false);
+  };
+
+  const confirmStopLab = () => {
+    manualStopInProgress.current = true;
+    setShowStopConfirm(false);
+    handleAction('stop');
   };
 
   const handleVerify = async () => {
@@ -156,6 +184,7 @@ export default function LabView() {
         alert(`Failed to verify: ${error.detail}`);
       }
     } catch (err) {
+      console.error('Network error during verification', err);
       alert('Network error during verification.');
     } finally {
       setIsVerifying(false);
@@ -163,13 +192,13 @@ export default function LabView() {
   };
 
   useEffect(() => {
-    if (!loading && lab && searchParams.get('autoLaunch') === 'true' && !hasAutoLaunched) {
-      setHasAutoLaunched(true);
+    if (!loading && lab && searchParams.get('autoLaunch') === 'true' && !hasAutoLaunched.current) {
+      hasAutoLaunched.current = true;
       searchParams.delete('autoLaunch');
       setSearchParams(searchParams, { replace: true });
       handleAction('launch');
     }
-  }, [loading, lab, searchParams, hasAutoLaunched, setSearchParams]);
+  }, [loading, lab, searchParams, setSearchParams, handleAction]);
 
   const startDragging = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -206,6 +235,41 @@ export default function LabView() {
 
   return (
     <div className="h-screen bg-slate-50 text-slate-900 flex flex-col overflow-hidden">
+
+      {showStopConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="stop-lab-confirm-title"
+        >
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl border border-slate-200">
+            <h2 id="stop-lab-confirm-title" className="text-lg font-bold text-slate-900 mb-2">
+              Stop this lab?
+            </h2>
+            <p className="text-sm text-slate-600 mb-6">
+              Are you sure you want to stop this lab? The VM will be destroyed and any unsaved work in the environment will be lost.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={cancelStopLab}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-md text-sm font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmStopLab}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition-colors"
+              >
+                Yes, stop lab
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navbar */}
       <nav className="border-b border-slate-200 bg-white px-6 h-16 flex items-center justify-between shadow-sm shrink-0 z-10">
         <div className="flex items-center gap-4">
@@ -227,7 +291,7 @@ export default function LabView() {
             <CheckCircle className="w-4 h-4" /> {isVerifying ? 'Verifying...' : 'Verify'}
           </button>
           <button 
-            onClick={() => handleAction('stop')} disabled={!!actionLoading}
+            onClick={requestStopLab} disabled={!!actionLoading}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-semibold transition-colors disabled:opacity-50"
           >
             <Square className="w-4 h-4" /> {actionLoading === 'stop' ? 'Stopping...' : 'Stop'}
