@@ -7,6 +7,7 @@ runcmd:
   - |
     sudo -u postgres psql -c "CREATE USER appuser WITH PASSWORD 'apppassword';"
     sudo -u postgres psql -c "ALTER SYSTEM SET listen_addresses = '*';"
+    echo "host all all 0.0.0.0/0 md5" | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
     sudo -u postgres psql -c "ALTER SYSTEM SET max_connections = 10;"
     sudo -u postgres psql -c "ALTER SYSTEM SET superuser_reserved_connections = 3;"
     systemctl restart postgresql
