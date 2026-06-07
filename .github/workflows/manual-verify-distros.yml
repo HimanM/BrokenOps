@@ -59,6 +59,13 @@ jobs:
           if ! python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken; then
             echo "❌ Verification failed! Capture backend logs:"
             docker logs brokenops-be
+            echo "=== Libvirt diagnostics ==="
+            sudo virsh list --all || true
+            sudo virsh net-list --all || true
+            sudo virsh net-info brokenops || true
+            sudo virsh net-dhcp-leases brokenops || true
+            sudo virsh dumpxml nginx-lab || true
+            sudo tail -200 /var/log/libvirt/qemu/nginx-lab-serial.log || true
             exit 1
           fi
 
@@ -112,6 +119,13 @@ jobs:
             if ! python scripts/test_labs.py --key keys/id_ed25519 --labs nginx-broken; then
               echo '❌ Verification failed! Capture backend logs:'
               docker logs brokenops-be
+              echo '=== Libvirt diagnostics ==='
+              virsh list --all || true
+              virsh net-list --all || true
+              virsh net-info brokenops || true
+              virsh net-dhcp-leases brokenops || true
+              virsh dumpxml nginx-lab || true
+              tail -200 /var/log/libvirt/qemu/nginx-lab-serial.log || true
               exit 1
             fi
           "

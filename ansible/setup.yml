@@ -192,15 +192,22 @@
 
     - name: Ensure BrokenOps libvirt network is defined
       ansible.builtin.shell: |
+        if virsh net-info brokenops >/dev/null 2>&1; then
+          if ! virsh net-dumpxml brokenops | grep -q "address='192.168.123.1'"; then
+            virsh net-destroy brokenops >/dev/null 2>&1 || true
+            virsh net-undefine brokenops
+          fi
+        fi
+
         if ! virsh net-info brokenops >/dev/null 2>&1; then
           cat <<EOF > /tmp/brokenops-net.xml
           <network>
             <name>brokenops</name>
             <forward mode='nat'/>
             <bridge name='brokenops0' stp='on' delay='0'/>
-            <ip address='192.168.122.1' netmask='255.255.255.0'>
+            <ip address='192.168.123.1' netmask='255.255.255.0'>
               <dhcp>
-                <range start='192.168.122.2' end='192.168.122.254'/>
+                <range start='192.168.123.2' end='192.168.123.254'/>
               </dhcp>
             </ip>
           </network>

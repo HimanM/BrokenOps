@@ -214,7 +214,8 @@ def launch_lab(lab_id: str):
             disk_path=overlay_path,
             cloud_iso_path=iso_path,
             memory_mb=memory_mb,
-            vcpus=vcpus
+            vcpus=vcpus,
+            prefer_classic_network=lab_config.get("requires_classic_libvirt_network", False)
         )
         
         if not success:

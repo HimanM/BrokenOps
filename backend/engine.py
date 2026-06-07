@@ -1,16 +1,32 @@
 import libvirt
 import os
 
-LAB_NETWORK_NAME = "brokenops"
-LAB_NETWORK_BRIDGE = "brokenops0"
-LAB_NETWORK_XML = f"""
+LAB_NETWORKS = {
+    "standard": {
+        "name": "brokenops",
+        "bridge": "brokenops0",
+        "address": "192.168.123.1",
+        "range_start": "192.168.123.2",
+        "range_end": "192.168.123.254",
+    },
+    "classic": {
+        "name": "brokenops122",
+        "bridge": "brokenops122",
+        "address": "192.168.122.1",
+        "range_start": "192.168.122.2",
+        "range_end": "192.168.122.254",
+    },
+}
+
+def build_network_xml(network):
+    return f"""
 <network>
-  <name>{LAB_NETWORK_NAME}</name>
+  <name>{network['name']}</name>
   <forward mode='nat'/>
-  <bridge name='{LAB_NETWORK_BRIDGE}' stp='on' delay='0'/>
-  <ip address='192.168.122.1' netmask='255.255.255.0'>
+  <bridge name='{network['bridge']}' stp='on' delay='0'/>
+  <ip address='{network['address']}' netmask='255.255.255.0'>
     <dhcp>
-      <range start='192.168.122.2' end='192.168.122.254'/>
+      <range start='{network['range_start']}' end='{network['range_end']}'/>
     </dhcp>
   </ip>
 </network>
@@ -80,7 +96,7 @@ class LabEngine:
         """
         return xml
 
-    def ensure_lab_network(self):
+    def ensure_lab_network(self, prefer_classic_network=False):
         if not self.conn:
             return False, None, "Not connected to libvirt"
 
@@ -91,31 +107,41 @@ class LabEngine:
         except libvirt.libvirtError:
             pass
 
+        network_key = "classic" if prefer_classic_network else "standard"
+        network_config = LAB_NETWORKS[network_key]
+
         try:
-            network = self.conn.networkLookupByName(LAB_NETWORK_NAME)
+            network = self.conn.networkLookupByName(network_config["name"])
+            xml = network.XMLDesc(0)
+            expected = f"address='{network_config['address']}'"
+            if expected not in xml:
+                if network.isActive():
+                    network.destroy()
+                network.undefine()
+                network = self.conn.networkDefineXML(build_network_xml(network_config))
         except libvirt.libvirtError:
             try:
-                network = self.conn.networkDefineXML(LAB_NETWORK_XML)
+                network = self.conn.networkDefineXML(build_network_xml(network_config))
             except libvirt.libvirtError as e:
-                return False, None, f"libvirt {LAB_NETWORK_NAME!r} network is missing and could not be defined: {e}"
+                return False, None, f"libvirt {network_config['name']!r} network is missing and could not be defined: {e}"
 
         try:
             if not network.isActive():
                 network.create()
             network.setAutostart(1)
-            return True, LAB_NETWORK_NAME, ""
+            return True, network_config["name"], ""
         except libvirt.libvirtError as e:
             return False, None, (
-                f"libvirt {LAB_NETWORK_NAME!r} network is not active and could not be started. "
+                f"libvirt {network_config['name']!r} network is not active and could not be started. "
                 "Ensure dnsmasq is installed and libvirtd is running on the host. "
                 f"Original error: {e}"
             )
 
-    def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1):
+    def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1, prefer_classic_network: bool = False):
         if not self.conn:
             return False, "Not connected to libvirt"
 
-        network_ok, network_name, network_error = self.ensure_lab_network()
+        network_ok, network_name, network_error = self.ensure_lab_network(prefer_classic_network)
         if not network_ok:
             return False, network_error
         
