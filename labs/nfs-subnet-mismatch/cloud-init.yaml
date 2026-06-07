@@ -1,0 +1,13 @@
+#cloud-config
+packages:
+  - nfs-kernel-server
+
+runcmd:
+  - mkdir -p /srv/nfs/shared
+  - chown nobody:nogroup /srv/nfs/shared
+  - chmod 777 /srv/nfs/shared
+  - |
+    # Export to a bogus subnet that doesn't match the VM's network
+    echo "/srv/nfs/shared 192.0.2.0/24(rw,sync,no_subtree_check)" >> /etc/exports
+  - exportfs -ra
+  - systemctl restart nfs-kernel-server
