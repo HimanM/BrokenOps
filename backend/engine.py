@@ -26,6 +26,11 @@ class LabEngine:
             print("WARNING: /dev/kvm not found. Falling back to 'qemu' (TCG) emulation.", flush=True)
             domain_type = "qemu"
 
+        # Explicitly find emulator path to avoid libvirt discovery issues on some distros
+        emulator = "/usr/bin/qemu-system-x86_64"
+        if not os.path.exists(emulator):
+            emulator = "/usr/bin/qemu-kvm"
+
         # A simple QEMU/KVM domain XML
         xml = f"""
         <domain type='{domain_type}'>
@@ -37,6 +42,7 @@ class LabEngine:
             <boot dev='hd'/>
           </os>
           <devices>
+            <emulator>{emulator}</emulator>
             <disk type='file' device='disk'>
               <driver name='qemu' type='qcow2'/>
               <source file='{disk_path_host}'/>

@@ -117,6 +117,18 @@
         append: yes
       when: lookup('env', 'USER') != 'root'
 
+    - name: Disable SELinux (Fedora/RedHat)
+      ansible.builtin.selinux:
+        state: disabled
+      when: ansible_os_family == "RedHat"
+      failed_when: false
+
+    - name: Disable SELinux immediately (setenforce 0)
+      ansible.builtin.command: setenforce 0
+      when: ansible_os_family == "RedHat"
+      failed_when: false
+      changed_when: false
+
     - name: Allow traffic from Docker bridge to host (Fedora/firewalld)
       ansible.builtin.command:
         cmd: firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="172.17.0.0/16" accept'
