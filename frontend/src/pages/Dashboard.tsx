@@ -224,10 +224,10 @@ export default function Dashboard() {
       <main className="mx-auto w-full max-w-[1900px] px-6 py-6 xl:px-10 xl:py-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(240px,1fr)_minmax(920px,1040px)_minmax(240px,1fr)]">
           <aside className="hidden xl:block">
-            <div className="sticky top-24 flex h-[calc(100vh-7.75rem)] flex-col gap-4 overflow-y-auto pr-1">
-              <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
+            <div className="sticky top-24 flex h-[calc(100vh-7.75rem)] flex-col gap-4 overflow-hidden">
+              <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#14c6cb]">Browse</div>
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-panel">
                   <FilterButton
                     active={activeCategory === 'all'}
                     label="All categories"
@@ -430,7 +430,7 @@ export default function Dashboard() {
           </section>
 
           <aside className="hidden xl:block">
-            <div className="sticky top-24 flex h-[calc(100vh-7.75rem)] flex-col gap-4 overflow-y-auto pr-1">
+            <div className="sticky top-24 flex h-[calc(100vh-7.75rem)] flex-col gap-4 overflow-hidden">
               <div className="shrink-0 rounded-2xl border border-[#252830] bg-[#12151b] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[#656a76]">Inventory</div>
                 <div className="mt-4 grid gap-3">

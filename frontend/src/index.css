@@ -26,4 +26,27 @@
   input {
     font: inherit;
   }
+
+  .scrollbar-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #3b3d45 #0b0d11;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar-track {
+    background: #0b0d11;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar-thumb {
+    background: #3b3d45;
+    border-radius: 9999px;
+    border: 2px solid #0b0d11;
+  }
+
+  .scrollbar-panel::-webkit-scrollbar-thumb:hover {
+    background: #656a76;
+  }
 }

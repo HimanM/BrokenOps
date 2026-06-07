@@ -1,24 +1,57 @@
 #!/bin/bash
 
-# Colors for output
+set -e
+
+RESET='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
+CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+WHITE='\033[1;37m'
+
+banner() {
+    printf "\n${CYAN}${BOLD}%s${RESET}\n" "===================================================="
+    printf "${CYAN}${BOLD}%-52s${RESET}\n" "$1"
+    printf "${CYAN}${BOLD}%s${RESET}\n\n" "===================================================="
+}
+
+section() {
+    printf "\n${BLUE}${BOLD}%s${RESET}\n" "────────────────────────────────────────────────────"
+    printf "${WHITE}${BOLD}%s${RESET}\n" "$1"
+    printf "${BLUE}${BOLD}%s${RESET}\n" "────────────────────────────────────────────────────"
+}
+
+status() {
+    printf "${GREEN}${BOLD}•${RESET} %s\n" "$1"
+}
+
+warn() {
+    printf "${YELLOW}${BOLD}!${RESET} %s\n" "$1"
+}
+
+error() {
+    printf "${RED}${BOLD}x${RESET} %s\n" "$1"
+}
+
+prompt() {
+    printf "\n${WHITE}${BOLD}%s${RESET}\n" "$1"
+    printf "${CYAN}${BOLD}>${RESET} %s" "$2"
+}
 
 SUDO=""
 if [ "$(id -u)" -ne 0 ] && command -v sudo &> /dev/null; then
     SUDO="sudo"
 fi
 
-echo -e "${BLUE}====================================================${NC}"
-echo -e "${BLUE}      🚀 BrokenOps Production Deploy Script         ${NC}"
-echo -e "${BLUE}====================================================${NC}"
+banner "BrokenOps Production Deploy"
+printf "${DIM}Native Linux deployment for the lab platform.${RESET}\n"
 
-# 1. Check for and install Ansible if missing
+section "Host Setup"
 if ! command -v ansible-playbook &> /dev/null; then
-    echo -e "${YELLOW}Ansible not found. Installing Ansible...${NC}"
+    warn "Ansible not found. Installing Ansible..."
     if command -v apt-get &> /dev/null; then
         $SUDO apt-get update && $SUDO apt-get install -y ansible
     elif command -v dnf &> /dev/null; then
@@ -28,58 +61,59 @@ if ! command -v ansible-playbook &> /dev/null; then
     elif command -v apk &> /dev/null; then
         $SUDO apk add ansible
     else
-        echo -e "${RED}Unsupported package manager. Please install Ansible manually.${NC}"
+        error "Unsupported package manager. Please install Ansible manually."
         exit 1
     fi
+else
+    status "Ansible is already available."
 fi
 
-# 2. Run Ansible playbook to setup host
-echo -e "${BLUE}Running Ansible playbook for host setup...${NC}"
-# Use absolute path if possible or ensure PATH is inherited
+status "Running Ansible playbook for host setup..."
 ANSIBLE_BIN=$(command -v ansible-playbook)
 $SUDO "$ANSIBLE_BIN" ansible/setup.yml
 
-# 3. Check for KVM (still good to have a quick check here)
 if command -v lsmod &> /dev/null; then
     if ! lsmod | grep -iq kvm; then
-        echo -e "${YELLOW}Warning: KVM module not detected in lsmod. If you are in a VM, ensure nested virtualization is enabled.${NC}"
+        warn "KVM module not detected in lsmod. If you are in a VM, ensure nested virtualization is enabled."
     fi
 fi
 
-# 3.5 Detect Docker Compose command
+section "Container Runtime"
 DOCKER_COMPOSE="docker compose"
 if ! docker compose version &> /dev/null; then
     if command -v docker-compose &> /dev/null; then
         DOCKER_COMPOSE="docker-compose"
     else
-        echo -e "${RED}Error: Neither 'docker compose' nor 'docker-compose' found.${NC}"
+        error "Neither 'docker compose' nor 'docker-compose' found."
         exit 1
     fi
 fi
-echo -e "${GREEN}Using Docker Compose command: $DOCKER_COMPOSE${NC}"
+status "Using Docker Compose command: $DOCKER_COMPOSE"
 
-# 2. Get Port configuration
+section "User Input"
 if [ "$ASSUME_YES" = "1" ]; then
     FRONTEND_PORT=${FRONTEND_PORT:-80}
+    status "Auto-confirm mode enabled. Using frontend port $FRONTEND_PORT."
 else
-    read -p "Which port should the BrokenOps UI run on? [default: 80]: " FRONTEND_PORT
+    prompt "Which port should the BrokenOps UI run on?" "[default: 80] "
+    read FRONTEND_PORT
     FRONTEND_PORT=${FRONTEND_PORT:-80}
 fi
 
-# 3. Get Host UID/GID for strict permissions
+section "Host Identity"
 HOST_UID=$(id -u)
 HOST_GID=$(id -g)
 LIBVIRT_GID=$(getent group libvirt | cut -d: -f3)
 KVM_GID=$(getent group kvm | cut -d: -f3)
 
 if [ -z "$LIBVIRT_GID" ]; then
-    echo -e "${RED}Could not determine libvirt group ID on host. Is libvirtd installed?${NC}"
+    error "Could not determine libvirt group ID on host. Is libvirtd installed?"
     exit 1
 fi
 
-echo -e "${GREEN}Detected Host UID: $HOST_UID, GID: $HOST_GID, libvirt GID: $LIBVIRT_GID, KVM GID: ${KVM_GID:-none}${NC}"
+status "Detected Host UID: $HOST_UID, GID: $HOST_GID, libvirt GID: $LIBVIRT_GID, KVM GID: ${KVM_GID:-none}"
 
-# 4. Generate .env file
+section "Environment File"
 cat <<EOF > .env
 PUID=$HOST_UID
 PGID=$HOST_GID
@@ -89,33 +123,35 @@ FRONTEND_PORT=$FRONTEND_PORT
 HOST_PROJECT_ROOT=$PWD
 EOF
 
-echo -e "${GREEN}Generated .env file for Docker Compose.${NC}"
+status "Generated .env file for Docker Compose."
 
-# 5. Generate SSH keys if they don't exist
+section "Assets"
 if [ ! -f "keys/id_ed25519" ]; then
-    echo -e "${YELLOW}Generating SSH keys for VM access...${NC}"
+    warn "Generating SSH keys for VM access..."
     mkdir -p keys
     ssh-keygen -t ed25519 -f keys/id_ed25519 -N ""
+else
+    status "SSH key already exists."
 fi
 
-# 5.5 Download default base image if missing
 mkdir -p data/images
 if [ ! -f "data/images/ubuntu-24.04-base.qcow2" ]; then
-    echo -e "${YELLOW}Downloading Ubuntu 24.04 base image...${NC}"
+    warn "Downloading Ubuntu 24.04 base image..."
     curl -f -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -o data/images/ubuntu-24.04-base.qcow2 https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+else
+    status "Ubuntu 24.04 base image already present."
 fi
 
-# 6. Build and Start via Docker Compose
+section "Startup"
 if [ "$DRY_RUN" != "1" ]; then
-    echo -e "${BLUE}Building and starting Docker containers...${NC}"
+    status "Building and starting Docker containers..."
     $DOCKER_COMPOSE up -d --build
 else
-    echo -e "${YELLOW}Dry-run mode active. Skipping Docker Compose startup.${NC}"
+    warn "Dry-run mode active. Skipping Docker Compose startup."
 fi
 
-echo -e "${GREEN}====================================================${NC}"
-echo -e "${GREEN}✨ BrokenOps successfully deployed via Docker! ✨   ${NC}"
-echo -e "${GREEN}====================================================${NC}"
-echo -e "${BLUE}UI Access:${NC}    http://localhost:$FRONTEND_PORT"
-echo -e "${YELLOW}Note: The backend API is safely hidden inside the Docker network.${NC}"
-echo -e "${GREEN}======================By HimanM=====================${NC}"
+section "Complete"
+printf "${GREEN}${BOLD}%s${RESET}\n" "BrokenOps successfully deployed."
+printf "${BLUE}${BOLD}UI Access:${RESET} http://localhost:%s\n" "$FRONTEND_PORT"
+printf "${DIM}Backend API remains inside the Docker network.${RESET}\n"
+printf "${DIM}Built by HimanM${RESET}\n"
