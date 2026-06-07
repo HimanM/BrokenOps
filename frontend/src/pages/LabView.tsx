@@ -531,23 +531,27 @@ export default function LabView() {
           onMouseDown={startDragging}
         />
 
-        <section className="relative min-h-[45vh] min-w-0 flex-1 overflow-hidden bg-black lg:h-full" style={{ flexBasis: `${100 - leftWidth}%` }}>
-          <div className="flex h-12 items-center justify-between border-b border-[#252830] bg-[#15181e] px-4">
+        <section className="min-h-[45vh] min-w-0 flex-1 bg-black px-0 pb-4 lg:h-full lg:px-0 lg:pb-5" style={{ flexBasis: `${100 - leftWidth}%` }}>
+          <div className="flex h-full flex-col overflow-hidden rounded-t-none rounded-b-none border-l border-[#252830] bg-black">
+            <div className="flex h-12 shrink-0 items-center justify-between border-b border-[#252830] bg-[#15181e] px-4">
             <div className="flex items-center gap-2">
               <Terminal className="h-4 w-4 text-[#14c6cb]" />
               <span className="text-sm font-semibold text-white">root@{lab.id}</span>
             </div>
             <span className="hidden text-xs font-medium text-[#656a76] md:inline">{vmIp || 'No IP lease'}</span>
-          </div>
-
-          {!ready ? (
-            <div className="absolute inset-0 top-12 flex flex-col items-center justify-center bg-black px-6 text-center">
-              <RefreshState label={status.title} />
-              <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#b2b6bd]">{status.body}</p>
             </div>
-          ) : (
-            <TerminalWindow labId={labId!} embedded />
-          )}
+
+            <div className="relative min-h-0 flex-1 overflow-hidden bg-black">
+              {!ready ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black px-6 text-center">
+                  <RefreshState label={status.title} />
+                  <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#b2b6bd]">{status.body}</p>
+                </div>
+              ) : (
+                <TerminalWindow labId={labId!} embedded />
+              )}
+            </div>
+          </div>
         </section>
       </div>
     </div>
