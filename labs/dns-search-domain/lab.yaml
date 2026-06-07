@@ -1,0 +1,13 @@
+id: "dns-search-domain"
+name: "Broken DNS Search Domain"
+category: "networking"
+difficulty: "intermediate"
+description:
+  summary: "Short hostnames fail to resolve while fully qualified domain names (FQDN) work correctly."
+vm:
+  name: "dns-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
