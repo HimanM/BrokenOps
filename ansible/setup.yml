@@ -3,6 +3,10 @@
   hosts: localhost
   connection: local
   become: true
+  vars:
+    # Service names vary by distro
+    libvirt_service_name: "{{ 'libvirtd' if ansible_facts['os_family'] != 'Debian' else 'libvirt-daemon-system' }}"
+
   tasks:
     - name: Gather distribution facts
       ansible.builtin.setup:
@@ -74,47 +78,23 @@
         update_cache: yes
       when: ansible_facts['os_family'] == "Archlinux"
 
-    - name: Install dependencies (Alpine)
-      ansible.builtin.apk:
-        name:
-          - docker
-          - docker-cli-compose
-          - qemu-img
-          - libvirt
-          - bridge
-          - cdrkit
-          - curl
-        state: present
-        update_cache: yes
-      when: ansible_facts['os_family'] == "Alpine"
-
     - name: Ensure docker service is started and enabled
-      ansible.builtin.systemd:
-        name: docker
-        state: started
-        enabled: yes
-      when: ansible_facts['service_mgr'] == "systemd"
-
-    - name: Ensure libvirtd service is started and enabled
-      ansible.builtin.systemd:
-        name: libvirtd
-        state: started
-        enabled: yes
-      when: ansible_facts['service_mgr'] == "systemd"
-
-    - name: Ensure docker service is started (OpenRC)
       ansible.builtin.service:
         name: docker
         state: started
         enabled: yes
-      when: ansible_facts['service_mgr'] == "openrc"
+      when: ansible_facts['service_mgr'] in ["systemd", "openrc"]
 
-    - name: Ensure libvirtd service is started (OpenRC)
+    - name: Ensure libvirt service is started and enabled
       ansible.builtin.service:
-        name: libvirtd
+        name: "{{ item }}"
         state: started
         enabled: yes
-      when: ansible_facts['service_mgr'] == "openrc"
+      loop:
+        - libvirtd
+        - libvirt-daemon-system
+      failed_when: false
+      when: ansible_facts['service_mgr'] in ["systemd", "openrc"]
 
     - name: Add current user to groups
       ansible.builtin.user:
@@ -148,29 +128,28 @@
         - 'user = "root"'
         - 'group = "root"'
       when: ansible_facts['os_family'] != "Windows"
-      notify: Restart libvirtd
 
-    - name: Disable firewalld (Fedora/RedHat)
-      ansible.builtin.systemd:
-        name: firewalld
+    - name: Restart libvirt service if config changed
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - libvirtd
+        - libvirt-daemon-system
+      failed_when: false
+      when: ansible_facts['service_mgr'] in ["systemd", "openrc"]
+
+    - name: Disable firewalls (Aggressive for CI)
+      ansible.builtin.service:
+        name: "{{ item }}"
         state: stopped
         enabled: no
-      when: ansible_facts['os_family'] == "RedHat" and ansible_facts['service_mgr'] == "systemd"
+      loop:
+        - firewalld
+        - ufw
+        - iptables
       failed_when: false
-
-    - name: Disable iptables (Arch)
-      ansible.builtin.systemd:
-        name: iptables
-        state: stopped
-        enabled: no
-      when: ansible_facts['os_family'] == "Archlinux" and ansible_facts['service_mgr'] == "systemd"
-      failed_when: false
-
-    - name: Disable UFW (Ubuntu/Debian)
-      ansible.builtin.command: ufw disable
-      when: ansible_facts['os_family'] == "Debian"
-      failed_when: false
-      changed_when: false
+      when: ansible_facts['service_mgr'] == "systemd"
 
     - name: Ensure workspace and data are traversable and readable/writable
       ansible.builtin.file:
@@ -218,21 +197,16 @@
         fi
       changed_when: false
 
-    - name: Ensure libvirt default network is active
+    - name: Force activate libvirt default network
       ansible.builtin.shell: |
+        # Check if active
         if ! virsh net-info default | grep -q "Active:.*yes"; then
-          # Force destroy if bridge exists but network is inactive (cleanup)
+          # Ensure bridge is clear
           ip link set virbr0 down >/dev/null 2>&1 || true
           brctl delbr virbr0 >/dev/null 2>&1 || true
+          # Start network
           virsh net-start default
         fi
         virsh net-autostart default || true
       changed_when: false
       failed_when: false
-
-  handlers:
-    - name: Restart libvirtd
-      ansible.builtin.systemd:
-        name: libvirtd
-        state: restarted
-      when: ansible_facts['service_mgr'] == "systemd"
