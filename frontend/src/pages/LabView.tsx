@@ -445,22 +445,24 @@ export default function LabView() {
           className="min-h-0 w-full overflow-y-auto border-b border-[#252830] bg-black lg:h-full lg:border-b-0"
           style={{ flexBasis: `${leftWidth}%` }}
         >
-          <div className="space-y-5 p-4 lg:p-6">
-            <div className="rounded-xl border border-[#252830] bg-[#15181e]">
-              <div className="flex items-center justify-between border-b border-[#252830] px-5 py-4">
+          <div className="flex h-full min-h-0 flex-col gap-5 p-4 lg:p-6">
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-[#252830] bg-[#15181e]">
+              <div className="flex shrink-0 items-center justify-between border-b border-[#252830] px-5 py-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#656a76]">Brief</div>
                   <h2 className="mt-1 text-xl font-semibold leading-tight text-white">Task description</h2>
                 </div>
                 <PanelLeft className="h-5 w-5 text-[#656a76]" />
               </div>
-              <div className="prose prose-invert max-w-none p-5 prose-headings:tracking-normal prose-p:text-[#d6d8dc] prose-li:text-[#d6d8dc] prose-strong:text-white prose-code:text-[#14c6cb] prose-pre:border prose-pre:border-[#252830] prose-pre:bg-black">
-                {lab.question ? <ReactMarkdown>{lab.question}</ReactMarkdown> : <p>No task brief was provided for this lab.</p>}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="prose prose-invert max-w-none p-5 prose-headings:tracking-normal prose-p:text-[#d6d8dc] prose-li:text-[#d6d8dc] prose-strong:text-white prose-code:text-[#14c6cb] prose-pre:border prose-pre:border-[#252830] prose-pre:bg-black">
+                  {lab.question ? <ReactMarkdown>{lab.question}</ReactMarkdown> : <p>No task brief was provided for this lab.</p>}
+                </div>
               </div>
             </div>
 
             {lab.exposed_ports && lab.exposed_ports.length > 0 && vmIp && ready && (
-              <div className="rounded-xl border border-[#14c6cb]/20 bg-[#14c6cb]/10 p-5">
+              <div className="shrink-0 rounded-xl border border-[#14c6cb]/20 bg-[#14c6cb]/10 p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#14c6cb]">Exposed services</div>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {lab.exposed_ports.map((port) => (
@@ -479,7 +481,7 @@ export default function LabView() {
               </div>
             )}
 
-            <div className="rounded-xl border border-[#252830] bg-[#15181e] p-5">
+            <div className="max-h-[36vh] shrink-0 overflow-y-auto rounded-xl border border-[#252830] bg-[#15181e] p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#656a76]">Verification</div>
