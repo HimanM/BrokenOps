@@ -49,4 +49,28 @@
   .scrollbar-panel::-webkit-scrollbar-thumb:hover {
     background: #656a76;
   }
+
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #3b3d45 #050608;
+  }
+
+  html::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: #050608;
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: #3b3d45;
+    border-radius: 9999px;
+    border: 2px solid #050608;
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: #656a76;
+  }
 }
