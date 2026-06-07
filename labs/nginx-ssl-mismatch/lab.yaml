@@ -1,0 +1,15 @@
+id: "nginx-ssl-mismatch"
+name: "Nginx SSL Certificate Mismatch"
+category: "web"
+difficulty: "intermediate"
+description:
+  summary: "Nginx fails to start because the configured SSL certificate and private key do not match."
+vm:
+  name: "nginx-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
+exposed_ports:
+  - 443
