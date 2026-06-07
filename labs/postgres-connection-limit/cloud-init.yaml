@@ -1,0 +1,33 @@
+#cloud-config
+packages:
+  - postgresql
+  - python3-psycopg2
+
+runcmd:
+  - sudo -u postgres psql -c "ALTER SYSTEM SET max_connections = 10;"
+  - sudo -u postgres psql -c "ALTER SYSTEM SET superuser_reserved_connections = 2;"
+  - systemctl restart postgresql
+  - |
+    cat <<EOF > /usr/local/bin/exhaust_connections.py
+    import psycopg2
+    import time
+    import sys
+
+    connections = []
+    # Open enough connections to fill max_connections (10)
+    for i in range(15):
+        try:
+            conn = psycopg2.connect("dbname=postgres user=postgres")
+            connections.append(conn)
+            # Keep transaction open to ensure it stays in pg_stat_activity
+            cur = conn.cursor()
+            cur.execute("SELECT 1")
+        except Exception as e:
+            print(f"Connection {i} failed: {e}")
+    
+    print(f"Successfully opened {len(connections)} connections.")
+    while True:
+        time.sleep(10)
+    EOF
+  - chmod +x /usr/local/bin/exhaust_connections.py
+  - nohup python3 /usr/local/bin/exhaust_connections.py > /var/log/exhaust_connections.log 2>&1 &

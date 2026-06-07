@@ -1,0 +1,15 @@
+id: "postgres-connection-limit"
+name: "PostgreSQL Connection Limit Reached"
+category: "database"
+difficulty: "advanced"
+description:
+  summary: "The application cannot connect to the database because all connection slots are occupied."
+vm:
+  name: "postgres-lab"
+  memory: 2048
+  cpu: 2
+  disk: "20G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
+exposed_ports:
+  - 5432
