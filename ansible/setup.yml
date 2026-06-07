@@ -18,12 +18,11 @@
           - docker-ce-cli
         state: absent
       when: ansible_facts['os_family'] == "Debian"
+      ignore_errors: yes
 
-    - name: Install dependencies (Debian/Ubuntu)
+    - name: Install system dependencies (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
-          - docker.io
-          - docker-compose-plugin
           - qemu-utils
           - libvirt-daemon-system
           - libvirt-clients
@@ -36,13 +35,16 @@
         state: present
         update_cache: yes
       when: ansible_facts['os_family'] == "Debian"
-      ignore_errors: yes
 
-    - name: Fallback install for older Debian/Ubuntu (docker-compose v1)
+    - name: Install Docker components (Debian/Ubuntu)
       ansible.builtin.apt:
-        name:
-          - docker-compose
+        name: "{{ item }}"
         state: present
+      loop:
+        - docker.io
+        - docker-compose-plugin
+        - docker-compose
+      ignore_errors: yes
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Install dependencies (RedHat/Fedora)
@@ -75,6 +77,20 @@
         state: present
         update_cache: yes
       when: ansible_facts['os_family'] == "Archlinux"
+
+    - name: Install dependencies (Alpine)
+      ansible.builtin.apk:
+        name:
+          - docker
+          - docker-cli-compose
+          - qemu-img
+          - libvirt
+          - bridge
+          - cdrkit
+          - curl
+        state: present
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Alpine"
 
     - name: Ensure docker service is started and enabled
       ansible.builtin.service:
@@ -116,6 +132,11 @@
       failed_when: false
       changed_when: false
 
+    - name: Check if Libvirt QEMU config exists
+      ansible.builtin.stat:
+        path: /etc/libvirt/qemu.conf
+      register: qemu_conf
+
     - name: Configure Libvirt to skip security driver (permissive)
       ansible.builtin.lineinfile:
         path: /etc/libvirt/qemu.conf
@@ -125,17 +146,8 @@
         - 'security_driver = "none"'
         - 'user = "root"'
         - 'group = "root"'
-      when: ansible_facts['os_family'] != "Windows"
-
-    - name: Restart libvirt service if config changed
-      ansible.builtin.service:
-        name: "{{ item }}"
-        state: restarted
-      loop:
-        - libvirtd
-        - libvirt-daemon-system
-      failed_when: false
-      when: ansible_facts['service_mgr'] in ["systemd", "openrc"]
+      when: qemu_conf.stat.exists
+      notify: Restart libvirt service
 
     - name: Disable firewalls (Aggressive for CI)
       ansible.builtin.service:
@@ -219,3 +231,14 @@
     - name: Debug libvirt network status
       ansible.builtin.debug:
         var: net_info.stdout_lines
+
+  handlers:
+    - name: Restart libvirt service
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - libvirtd
+        - libvirt-daemon-system
+      failed_when: false
+      when: ansible_facts['service_mgr'] in ["systemd", "openrc"]
