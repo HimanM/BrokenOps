@@ -1,0 +1,17 @@
+#cloud-config
+packages:
+  - docker.io
+
+runcmd:
+  - mkdir -p /etc/docker
+  - |
+    cat <<EOF > /etc/docker/daemon.json
+    {
+      "debug": true,
+      "log-driver": "json-file",
+      "log-opts": {
+        "max-size": "10m"
+      },
+    }
+    EOF
+  - systemctl restart docker || true
