@@ -21,6 +21,14 @@ The project is built around native KVM and libvirt. It is meant to run on a real
 - Runs verification scripts against the live VM
 - Tracks completed labs locally in the frontend
 
+## Lab screenshots
+
+The current lab dashboard is documented below. The images are stored in `docs/`.
+
+![BrokenOps dashboard top fold](./docs/lab-dashboard-top.png)
+
+![BrokenOps nginx service down lab](./docs/lab-nginx-service-down-success.png)
+
 ## Platform requirements
 
 BrokenOps is not a generic Docker-only web app. The VM workflow depends on native Linux virtualization.
