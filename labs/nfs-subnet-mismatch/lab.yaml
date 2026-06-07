@@ -1,0 +1,13 @@
+id: "nfs-subnet-mismatch"
+name: "NFS Export Subnet Mismatch"
+category: "networking"
+difficulty: "intermediate"
+description:
+  summary: "NFS clients are unable to mount a shared directory due to restrictive export rules."
+vm:
+  name: "nfs-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
