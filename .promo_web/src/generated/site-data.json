@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-06-07T13:42:49.998Z",
+  "labs": [
+    {
+      "id": "gateway-broken",
+      "title": "Wrong Default Gateway",
+      "summary": "Scenario A teammate deployed a custom network profile via Netplan under /etc/netplan/.",
+      "category": "networking",
+      "difficulty": "beginner",
+      "labId": "gateway-broken",
+      "updatedAt": "2026-06-07T12:27:30+05:30",
+      "commit": "f4571246e71a841c383a597ee419eed50fdca79c",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/gateway-broken"
+    },
+    {
+      "id": "nginx-broken",
+      "title": "Nginx Service Down",
+      "summary": "Scenario You have just joined a new company as a junior sysadmin.",
+      "category": "linux",
+      "difficulty": "beginner",
+      "labId": "nginx-broken",
+      "updatedAt": "2026-06-06T22:25:30+05:30",
+      "commit": "4def314b1fe9430d8c804d1425bd6a2af96c37f3",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/nginx-broken"
+    },
+    {
+      "id": "docker-bind-mount-permissions",
+      "title": "Docker Bind Mount Permissions",
+      "summary": "Scenario A microservice named web-app is running as a Docker container.",
+      "category": "docker",
+      "difficulty": "intermediate",
+      "labId": "docker-bind-mount-permissions",
+      "updatedAt": "2026-06-06T14:52:06+00:00",
+      "commit": "e011ed833426d5661cf8194fb0933b3f7066a207",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-bind-mount-permissions"
+    },
+    {
+      "id": "php-fpm-socket-mismatch",
+      "title": "PHP-FPM Socket Mismatch",
+      "summary": "Scenario A newly deployed web server has been configured to host a PHP application.",
+      "category": "web",
+      "difficulty": "intermediate",
+      "labId": "php-fpm-socket-mismatch",
+      "updatedAt": "2026-06-06T14:51:49+00:00",
+      "commit": "3da0f03197b6b67d6cdc7273b84087977241ce88",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/php-fpm-socket-mismatch"
+    },
+    {
+      "id": "redis-persistence-permissions",
+      "title": "Redis Persistence Failure",
+      "summary": "Scenario A developer has reported that their Redis instance running on the database server works perfectly while running, but loses all recent data whenever the server or the Redis",
+      "category": "databases",
+      "difficulty": "intermediate",
+      "labId": "redis-persistence-permissions",
+      "updatedAt": "2026-06-06T14:51:39+00:00",
+      "commit": "6f4a2487b2c9dd4bf8031087e04a507dbbc64c1a",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/redis-persistence-permissions"
+    },
+    {
+      "id": "web-upload-permissions",
+      "title": "Web Upload Directory Permissions",
+      "summary": "Scenario A web portal has been set up to allow internal users to upload system logs for analysis.",
+      "category": "web",
+      "difficulty": "intermediate",
+      "labId": "web-upload-permissions",
+      "updatedAt": "2026-06-06T14:51:25+00:00",
+      "commit": "a63bf1718c2eaf57be4070b3b373f18591ebc4eb",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/web-upload-permissions"
+    },
+    {
+      "id": "logrotate-broken",
+      "title": "Logrotate Misconfiguration",
+      "summary": "Scenario A production logging application writes diagnostic logs to /var/log/noisy-app.log.",
+      "category": "linux",
+      "difficulty": "intermediate",
+      "labId": "logrotate-broken",
+      "updatedAt": "2026-06-06T14:51:11+00:00",
+      "commit": "b28b2673daaeecf8aacf6f95aaa4241686c57c18",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/logrotate-broken"
+    },
+    {
+      "id": "cron-broken",
+      "title": "Cron Job Never Executes",
+      "summary": "Scenario A system administrator configured a cron job to run a cleanup script /opt/cleanup.sh every minute.",
+      "category": "linux",
+      "difficulty": "beginner",
+      "labId": "cron-broken",
+      "updatedAt": "2026-06-06T13:45:41+00:00",
+      "commit": "7c6c044f852796fc3b93e29d9f487bcfee3dcb8f",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/cron-broken"
+    }
+  ]
+}
