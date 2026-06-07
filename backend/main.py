@@ -209,7 +209,7 @@ def launch_lab(lab_id: str):
         iso_path = cloud_builder.build_iso(vm_name, user_data_content)
         
         # Launch VM
-        success = engine.launch_vm(
+        success, error_msg = engine.launch_vm(
             name=vm_name,
             disk_path=overlay_path,
             cloud_iso_path=iso_path,
@@ -218,7 +218,7 @@ def launch_lab(lab_id: str):
         )
         
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to launch Libvirt VM")
+            raise HTTPException(status_code=500, detail=f"Failed to launch Libvirt VM: {error_msg}")
             
         return {"status": "launched", "lab_id": lab_id, "vm_name": vm_name}
     except Exception as e:

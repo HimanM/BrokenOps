@@ -68,7 +68,7 @@ class LabEngine:
 
     def launch_vm(self, name: str, disk_path: str, cloud_iso_path: str, memory_mb: int = 1024, vcpus: int = 1):
         if not self.conn:
-            raise Exception("Not connected to libvirt")
+            return False, "Not connected to libvirt"
         
         xml = self._generate_domain_xml(name, memory_mb, vcpus, disk_path, cloud_iso_path)
         
@@ -83,12 +83,12 @@ class LabEngine:
 
         try:
             dom = self.conn.createXML(xml, 0)
-            return True
+            return True, ""
         except libvirt.libvirtError as e:
             print(f"ERROR: Failed to create VM {name}: {e}", flush=True)
             # Log the XML for debugging
             print(f"DEBUG: XML used for {name}:\n{xml}", flush=True)
-            return False
+            return False, str(e)
 
     def get_vm_ip(self, name: str) -> str:
         if not self.conn:
