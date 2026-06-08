@@ -11,5 +11,3 @@ vm:
   disk: "10G"
 cloud_init: "cloud-init.yaml"
 verify_script: "verify.sh"
-exposed_ports:
-  - 80

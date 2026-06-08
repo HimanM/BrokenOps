@@ -1,5 +1,5 @@
 ### The Issue
-The Nginx rate limiting was misconfigured with a very low base rate (`1r/s`) and no `burst` parameter. Without a burst allowance, Nginx strictly rejects any request that arrives less than 1 second after the previous one, which is too restrictive for modern applications and browser behavior.
+The Nginx rate limiting was misconfigured with a very low base rate (`1r/m`) and no `burst` parameter. Without a burst allowance, Nginx strictly rejects any request that arrives less than 1 minute after the previous one, which is too restrictive for modern applications and browser behavior.
 
 ### Step-by-Step Fix
 
@@ -16,7 +16,7 @@ The Nginx rate limiting was misconfigured with a very low base rate (`1r/s`) and
    ls /etc/nginx/conf.d/
    cat /etc/nginx/conf.d/rate_limit.conf
    ```
-   You will see `rate=1r/s`.
+   You will see `rate=1r/m`.
 
 3. **Tune the configuration**:
    Increase the base rate and, more importantly, add a `burst` parameter to the `limit_req` directive in the site configuration.
