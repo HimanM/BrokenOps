@@ -4,11 +4,12 @@ packages:
 
 runcmd:
   - |
-    # Get the host's primary subnet using hostname -I
-    HOST_IP=\$(hostname -I | awk '{print \$1}')
-    HOST_SUBNET=\$(ip -o -f inet addr show | grep "\$HOST_IP" | awk '{print \$4}' | head -n 1)
-    # Create a docker network that overlaps with the host's subnet
-    docker network create --subnet=\$HOST_SUBNET broken_net
+    # Create a dummy interface to simulate a physical network that conflicts
+    ip link add name dummy0 type dummy
+    ip addr add 10.99.99.99/24 dev dummy0
+    ip link set dev dummy0 up
+    # Create a docker network that overlaps with the dummy interface's subnet
+    docker network create --subnet=10.99.99.0/24 broken_net
   - |
     # Start a container on this network
     docker run -d --name app_container --network broken_net alpine sleep infinity

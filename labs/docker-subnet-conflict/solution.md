@@ -4,9 +4,9 @@ The container was attached to a custom Docker network (`broken_net`) configured 
 ### Step-by-Step Fix
 
 1. **Verify the problem**:
-   Confirm that the container cannot reach the host IP.
+   Confirm that the container cannot reach the host IP (`10.99.99.99` in this lab).
    ```bash
-   HOST_IP=$(hostname -I | awk '{print $1}')
+   HOST_IP="10.99.99.99"
    docker exec app_container ping -c 1 $HOST_IP
    ```
 
