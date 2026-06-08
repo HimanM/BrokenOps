@@ -1,0 +1,13 @@
+id: "zombie-processes"
+name: "Clean Up Zombie Processes"
+category: "linux"
+difficulty: "intermediate"
+description:
+  summary: "The system has an accumulating number of zombie processes. Identify the bad parent process and clean them up."
+vm:
+  name: "zombie-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
