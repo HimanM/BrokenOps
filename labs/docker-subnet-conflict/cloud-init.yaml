@@ -1,0 +1,12 @@
+#cloud-config
+packages:
+  - docker.io
+
+runcmd:
+  - |
+    # Create a docker network that overlaps with a public IP range (Google DNS)
+    # This prevents containers on this network from reaching 8.8.8.8
+    docker network create --subnet=8.8.8.0/24 broken_net
+  - |
+    # Start a container on this network that tries to reach 8.8.8.8
+    docker run -d --name app_container --network broken_net nginx
