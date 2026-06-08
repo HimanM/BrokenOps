@@ -14,8 +14,7 @@ runcmd:
         server_name _;
         location /api/ {
             limit_req zone=mylimit;
-            root /var/www/html;
-            try_files /index.html =404;
+            empty_gif;
         }
         location / {
             root /var/www/html;
@@ -23,7 +22,5 @@ runcmd:
         }
     }
     EOF
-  - mkdir -p /var/www/html
-  - echo "ok" > /var/www/html/index.html
   - nginx -t
   - systemctl restart nginx
