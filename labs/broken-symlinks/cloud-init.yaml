@@ -16,11 +16,13 @@ runcmd:
     # Pointing to the old location which doesn't exist
     ln -s /opt/app/old_location/app_config /opt/app/config/current_config
     
-    # Create a broken hard link scenario
-    # A hard link to a file, but the file content is empty or wrong, and the real one moved
+    # Create a messy hard link scenario
+    # A hard link to a file was created before the migration.
+    # The learner needs to realize the existing link points to outdated/wrong data
+    # and needs to be replaced with a link to the new source of truth.
     echo "wrong_data" > /opt/app/data/db_file
     ln /opt/app/data/db_file /opt/app/data/current_db
-    rm /opt/app/data/db_file
+    rm /opt/app/data/db_file # The link current_db still exists but has 'wrong_data'
     
     # Set up a script that fails if links are broken
     cat <<EOF > /opt/app/bin/run.sh

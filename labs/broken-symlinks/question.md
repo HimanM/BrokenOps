@@ -5,10 +5,10 @@ The application relies on specific file paths:
 - A configuration file at `/opt/app/config/current_config`
 - A database file at `/opt/app/data/current_db`
 
-It appears some symbolic links (soft links) and hard links were broken or left pointing to incorrect or deleted files during the move.
+It appears some symbolic links (soft links) were broken, and hard links were left pointing to outdated or incorrect data during the move.
 
 ### Objective
-Diagnose the broken links in `/opt/app/config/` and `/opt/app/data/`, and re-create them so they point to the correct files in `/opt/app/new_location/`. 
+Diagnose the broken links in `/opt/app/config/` and identify the outdated data in `/opt/app/data/`. Re-create the links so they point to the correct files in `/opt/app/new_location/`. 
 - `current_config` should be a soft link to `app_config`.
 - `current_db` should be a hard link to `app_db`.
 

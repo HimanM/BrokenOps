@@ -1,7 +1,7 @@
 ### The Issue
 During a messy file migration, the original target files for the application were moved to `/opt/app/new_location/`, but the links pointing to them were not properly updated.
 - The soft link `/opt/app/config/current_config` was left pointing to a non-existent path (`/opt/app/old_location/app_config`).
-- The hard link `/opt/app/data/current_db` was left pointing to an old inode containing incorrect data.
+- The hard link `/opt/app/data/current_db` was left pointing to an old inode containing outdated data. Remember: hard links share the same inode as the original file; even if the original is deleted, the link persists with the old data!
 
 ### Step-by-Step Fix
 
