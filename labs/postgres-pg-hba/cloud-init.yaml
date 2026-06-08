@@ -1,0 +1,15 @@
+#cloud-config
+packages:
+  - postgresql
+  - postgresql-client
+
+runcmd:
+  - sudo -u postgres psql -c "CREATE USER appuser WITH PASSWORD 'apppassword';"
+  - sudo -u postgres psql -c "CREATE DATABASE appdb OWNER appuser;"
+  - |
+    # Find pg_hba.conf and modify it to reject the appuser locally
+    PG_HBA=$(find /etc/postgresql -name pg_hba.conf | head -n 1)
+    # Add a reject rule at the very top for appuser from localhost
+    sed -i '1i host appdb appuser 127.0.0.1/32 reject' $PG_HBA
+    sed -i '1i local appdb appuser reject' $PG_HBA
+    systemctl restart postgresql
