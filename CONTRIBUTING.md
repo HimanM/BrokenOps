@@ -78,7 +78,7 @@ When opening a pull request:
 
 ## Development Setup
 
-The platform consists of a backend (Flask API) and a frontend (HTML/JS).
+The platform consists of a backend (FastAPI application) and a frontend (React 19 + Vite interface).
 Both run inside Docker containers orchestrated by Docker Compose.
 
 ### Prerequisites
@@ -93,9 +93,8 @@ Both run inside Docker containers orchestrated by Docker Compose.
 ./deploy.sh
 ```
 
-This script builds and starts all containers. The backend API is available at
-`http://localhost:5000` and the frontend is served by the backend at
-`http://localhost:5000`.
+This script builds and starts all containers. The frontend is available at
+`http://localhost:80` and the backend is exposed by the FastAPI container.
 
 ### Running Tests
 
@@ -115,8 +114,8 @@ BrokenOps/
 │       ├── solution.sh
 │       ├── question.md
 │       └── solution.md
-├── backend/              # Flask API
-├── frontend/             # Web UI (served by backend)
+├── backend/              # FastAPI application
+├── frontend/             # React 19 + Vite interface
 ├── scripts/
 │   └── test_labs.py      # Lab validation script
 ├── deploy.sh             # Docker Compose deployment script
