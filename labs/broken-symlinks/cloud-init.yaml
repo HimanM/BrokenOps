@@ -1,0 +1,45 @@
+#cloud-config
+runcmd:
+  - |
+    # Create application directory structure
+    mkdir -p /opt/app/bin
+    mkdir -p /opt/app/config
+    mkdir -p /opt/app/data
+    mkdir -p /opt/app/new_location
+    
+    # Create the original target files
+    echo "binary_data" > /opt/app/new_location/app_binary
+    echo "config_data" > /opt/app/new_location/app_config
+    echo "db_data" > /opt/app/new_location/app_db
+
+    # Create the broken soft link
+    # Pointing to the old location which doesn't exist
+    ln -s /opt/app/old_location/app_config /opt/app/config/current_config
+    
+    # Create a broken hard link scenario
+    # A hard link to a file, but the file content is empty or wrong, and the real one moved
+    echo "wrong_data" > /opt/app/data/db_file
+    ln /opt/app/data/db_file /opt/app/data/current_db
+    rm /opt/app/data/db_file
+    
+    # Set up a script that fails if links are broken
+    cat <<EOF > /opt/app/bin/run.sh
+    #!/bin/bash
+    if [ ! -e /opt/app/config/current_config ]; then
+        echo "Error: config not found"
+        exit 1
+    fi
+    if [ "\$(cat /opt/app/config/current_config)" != "config_data" ]; then
+        echo "Error: invalid config data"
+        exit 1
+    fi
+    
+    if [ "\$(cat /opt/app/data/current_db)" != "db_data" ]; then
+        echo "Error: invalid db data"
+        exit 1
+    fi
+    
+    echo "Application running successfully"
+    exit 0
+    EOF
+    chmod +x /opt/app/bin/run.sh
