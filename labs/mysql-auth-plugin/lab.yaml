@@ -5,7 +5,7 @@ difficulty: "intermediate"
 description:
   summary: "An application is unable to authenticate with the MySQL database because the user account is configured with an incompatible authentication plugin."
 vm:
-  name: "mysql-lab"
+  name: "mysql-auth-lab"
   memory: 2048
   cpu: 2
   disk: "20G"
