@@ -5,7 +5,7 @@ difficulty: "advanced"
 description:
   summary: "The application is encountering 'too many connections' errors because MySQL max_connections is configured too low for the workload."
 vm:
-  name: "mysql-lab"
+  name: "mysql-maxconn-lab"
   memory: 2048
   cpu: 2
   disk: "20G"
