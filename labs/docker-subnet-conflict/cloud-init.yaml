@@ -1,0 +1,15 @@
+#cloud-config
+packages:
+  - docker.io
+
+runcmd:
+  - |
+    # Create a dummy interface to simulate a physical network that conflicts
+    ip link add name dummy0 type dummy
+    ip addr add 10.99.99.99/24 dev dummy0
+    ip link set dev dummy0 up
+    # Create a docker network that overlaps with the dummy interface's subnet
+    docker network create --subnet=10.99.99.0/24 broken_net
+  - |
+    # Start a container on this network
+    docker run -d --name app_container --network broken_net alpine sleep infinity
