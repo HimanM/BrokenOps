@@ -9,4 +9,4 @@ runcmd:
     docker network create --subnet=8.8.8.0/24 broken_net
   - |
     # Start a container on this network that tries to reach 8.8.8.8
-    docker run -d --name app_container --network broken_net nginx
+    docker run -d --name app_container --network broken_net alpine sleep infinity

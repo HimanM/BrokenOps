@@ -10,4 +10,4 @@ docker network rm broken_net || true
 docker network create --subnet=172.30.0.0/24 safe_net || true
 
 # Restart the container on the new safe network
-docker run -d --name app_container --network safe_net nginx
+docker run -d --name app_container --network safe_net alpine sleep infinity
