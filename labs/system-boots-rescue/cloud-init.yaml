@@ -1,0 +1,11 @@
+#cloud-config
+runcmd:
+  - |
+    # Change the default target to rescue.target
+    systemctl set-default rescue.target
+    # Ensure SSH stays alive in rescue mode so the lab can be verified
+    mkdir -p /etc/systemd/system/rescue.target.wants
+    ln -sf /lib/systemd/system/ssh.service /etc/systemd/system/rescue.target.wants/ssh.service
+    systemctl daemon-reload
+    # Actively isolate to rescue mode to simulate the broken state during the session
+    systemctl isolate rescue.target
