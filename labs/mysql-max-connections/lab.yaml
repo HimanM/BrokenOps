@@ -1,0 +1,13 @@
+id: "mysql-max-connections"
+name: "MySQL Max Connections Too Low"
+category: "database"
+difficulty: "advanced"
+description:
+  summary: "The application is encountering 'too many connections' errors because MySQL max_connections is configured too low for the workload."
+vm:
+  name: "mysql-lab"
+  memory: 2048
+  cpu: 2
+  disk: "20G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"

@@ -1,0 +1,36 @@
+#cloud-config
+packages:
+  - mysql-server
+  - mysql-client
+  - python3-pymysql
+
+runcmd:
+  - |
+    # Create the appuser
+    mysql -e "CREATE USER 'appuser'@'localhost' IDENTIFIED BY 'apppassword';"
+    mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'appuser'@'localhost';"
+    mysql -e "FLUSH PRIVILEGES;"
+    # Set max_connections very low
+    echo "[mysqld]" > /etc/mysql/mysql.conf.d/zz-broken.cnf
+    echo "max_connections = 10" >> /etc/mysql/mysql.conf.d/zz-broken.cnf
+    systemctl restart mysql
+  - |
+    # Create a script to simulate heavy load
+    cat <<EOF > /usr/local/bin/exhaust_mysql.py
+    import pymysql
+    import time
+
+    conns = []
+    # Try to open 15 connections when max is 10
+    for i in range(15):
+        try:
+            c = pymysql.connect(host='localhost', user='appuser', password='apppassword')
+            conns.append(c)
+        except Exception as e:
+            pass
+
+    while True:
+        time.sleep(10)
+    EOF
+    chmod +x /usr/local/bin/exhaust_mysql.py
+    nohup python3 /usr/local/bin/exhaust_mysql.py > /dev/null 2>&1 &
