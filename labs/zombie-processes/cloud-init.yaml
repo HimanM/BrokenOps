@@ -1,6 +1,7 @@
 #cloud-config
 packages:
   - python3
+  - psmisc
 
 runcmd:
   - |

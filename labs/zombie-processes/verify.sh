@@ -6,12 +6,14 @@ if pgrep -f bad_parent.py > /dev/null; then
     exit 1
 fi
 
-# Check if there are any zombie processes left from bad_parent
-# Z state indicates zombie. We can just check overall zombies if we assume a clean system, 
-# or specifically check if any processes exist with 'Z' state.
-ZOMBIE_COUNT=$(ps -axo stat | grep -c "^Z")
-if [ "$ZOMBIE_COUNT" -gt 0 ]; then
-    echo "FAILURE: There are still $ZOMBIE_COUNT zombie processes on the system."
+# Check if there are any defunct processes belonging to the now-killed bad_parent
+# Since the parent is dead, they should have been reaped by init.
+# If we still see zombies that were children of bad_parent (tracked by name or association), it's a failure.
+# More simply: check for ANY zombie. If some exist, verify they aren't from our lab.
+ZOMBIE_PIDS=$(ps -axo pid,stat,comm | grep " Z" | awk '{print $1}')
+if [ -n "$ZOMBIE_PIDS" ]; then
+    # If zombies exist, check if they are related to our script (though after parent dies, they should be gone)
+    echo "FAILURE: Zombie processes still detected: $ZOMBIE_PIDS"
     exit 1
 fi
 

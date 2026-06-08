@@ -6,9 +6,9 @@ You cannot `kill -9` a zombie process directly because it is already dead. To cl
 ### Step-by-Step Fix
 
 1. **Verify the problem**:
-   Run `top` or `ps aux | grep 'Z'` to see the zombie processes.
+   Run `ps aux | grep 'Z'` to see the zombie processes.
    ```bash
-   top -b -n 1 | grep zombie
+   ps aux | grep 'Z'
    ```
 
 2. **Identify the parent**:
