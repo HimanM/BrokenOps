@@ -1,0 +1,5 @@
+#cloud-config
+runcmd:
+  - |
+    # Change the default target to rescue.target
+    systemctl set-default rescue.target

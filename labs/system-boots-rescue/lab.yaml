@@ -1,0 +1,13 @@
+id: "system-boots-rescue"
+name: "System Boots into Rescue Target"
+category: "linux"
+difficulty: "intermediate"
+description:
+  summary: "The server is stuck in rescue mode upon boot, preventing normal services from starting."
+vm:
+  name: "systemd-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
