@@ -16,14 +16,14 @@ The system's default boot target was incorrectly set to `rescue.target`. Systemd
    sudo systemctl set-default multi-user.target
    ```
 
-3. **Verify the change**:
+3. **Start normal services immediately**:
+   Instead of rebooting, you can tell systemd to switch to the normal target right now.
+   ```bash
+   sudo systemctl isolate multi-user.target
+   ```
+
+4. **Verify the change**:
    ```bash
    systemctl get-default
-   ```
-   It should now return `multi-user.target`.
-
-4. **Reboot (Optional but recommended in real life)**:
-   In a real scenario, you would reboot to ensure the system starts all services correctly.
-   ```bash
-   sudo reboot
+   systemctl is-active multi-user.target
    ```
