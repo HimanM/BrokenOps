@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Get the host's IP address
-HOST_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+# Get the host's IP address (interface agnostic)
+HOST_IP=$(hostname -I | awk '{print $1}')
 
 # Execute a ping to the host IP from inside the container
 if docker exec app_container ping -c 1 -W 2 $HOST_IP > /dev/null 2>&1; then

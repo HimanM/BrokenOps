@@ -6,7 +6,7 @@ The container was attached to a custom Docker network (`broken_net`) configured 
 1. **Verify the problem**:
    Confirm that the container cannot reach the host IP.
    ```bash
-   HOST_IP=$(ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+   HOST_IP=$(hostname -I | awk '{print $1}')
    docker exec app_container ping -c 1 $HOST_IP
    ```
 
@@ -21,7 +21,7 @@ The container was attached to a custom Docker network (`broken_net`) configured 
    Look at the subnet configuration for `broken_net` and compare it to the host's subnet.
    ```bash
    docker network inspect broken_net
-   ip a show eth0
+   ip a
    ```
    You will notice the `Subnet` matches the host's physical network.
 
