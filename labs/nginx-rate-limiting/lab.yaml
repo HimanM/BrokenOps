@@ -1,0 +1,13 @@
+id: "nginx-rate-limiting"
+name: "Nginx Aggressive Rate Limiting"
+category: "web"
+difficulty: "advanced"
+description:
+  summary: "Legitimate users are receiving frequent 429 Too Many Requests errors due to misconfigured rate limiting."
+vm:
+  name: "nginx-lab"
+  memory: 1024
+  cpu: 1
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"

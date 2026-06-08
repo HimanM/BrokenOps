@@ -1,0 +1,26 @@
+#cloud-config
+packages:
+  - nginx
+
+runcmd:
+  - |
+    cat <<EOF > /etc/nginx/conf.d/rate_limit.conf
+    limit_req_zone \$binary_remote_addr zone=mylimit:10m rate=1r/m;
+    EOF
+  - |
+    cat <<EOF > /etc/nginx/sites-available/default
+    server {
+        listen 80 default_server;
+        server_name _;
+        location /api/ {
+            limit_req zone=mylimit;
+            empty_gif;
+        }
+        location / {
+            root /var/www/html;
+            index index.html;
+        }
+    }
+    EOF
+  - nginx -t
+  - systemctl restart nginx
