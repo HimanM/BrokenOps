@@ -28,8 +28,13 @@ PostgreSQL uses a file named `pg_hba.conf` (Host-Based Authentication) to contro
    host appdb appuser 127.0.0.1/32 reject
    ```
 
-4. **Remove or change the rules**:
-   Delete those `reject` lines. The default rules further down the file (e.g., `host all all 127.0.0.1/32 scram-sha-256` or `md5`) will then allow the connection since the user has a valid password.
+4. **Remove the rules**:
+   Delete those specific `reject` lines for `appuser`. Be careful not to remove other unrelated rules.
+   ```text
+   local appdb appuser reject
+   host appdb appuser 127.0.0.1/32 reject
+   ```
+   The default rules further down the file (e.g., `host all all 127.0.0.1/32 scram-sha-256` or `md5`) will then allow the connection since the user has a valid password.
 
 5. **Reload PostgreSQL**:
    Changes to `pg_hba.conf` do not require a full restart, only a reload.
