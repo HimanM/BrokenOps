@@ -3,6 +3,8 @@ import time
 import glob
 import subprocess
 import asyncio
+import shlex
+import uuid
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
@@ -18,6 +20,10 @@ from pydantic import BaseModel
 from lab_parser import LabParser
 from cloud_init import CloudInitBuilder
 from engine import LabEngine
+try:
+    from backend.shell_sandbox import build_restricted_shell_command, build_restricted_shell_rcfile
+except ImportError:
+    from shell_sandbox import build_restricted_shell_command, build_restricted_shell_rcfile
 
 LAB_TIMEOUT_SECONDS = 3600
 
@@ -299,6 +305,8 @@ async def lab_status(lab_id: str):
 @app.websocket("/labs/{lab_id}/terminal")
 async def websocket_terminal(websocket: WebSocket, lab_id: str):
     await websocket.accept()
+    conn = None
+    restricted_rcfile_path = None
     
     try:
         lab_config = parser.parse_lab(lab_id)
@@ -321,7 +329,6 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
         
         priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
         
-        conn = None
         for _ in range(15): # Try for up to 30 seconds
             try:
                 conn = await asyncssh.connect(vm_ip, username='root', client_keys=[priv_key_path], known_hosts=None)
@@ -333,50 +340,72 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
             await websocket.send_text("\r\n[Error] SSH Connection timed out. VM may still be booting.\r\n")
             await websocket.close()
             return
+
+        restricted_rcfile_path = f"/tmp/brokenops-shell-{uuid.uuid4().hex}.rc"
+        restricted_rcfile = build_restricted_shell_rcfile()
+        restricted_rcfile_command = (
+            f"cat > {shlex.quote(restricted_rcfile_path)} <<'BROKENOPS_RC'\n"
+            f"{restricted_rcfile}"
+            "BROKENOPS_RC\n"
+            f"chmod 600 {shlex.quote(restricted_rcfile_path)}"
+        )
+        await conn.run(restricted_rcfile_command, check=True)
+
+        shell_command = build_restricted_shell_command(restricted_rcfile_path)
+        async with conn.create_process(shell_command, term_type='xterm') as process:
+            await websocket.send_text("\r\n[Info] Connected!\r\n")
             
-        async with conn:
-            async with conn.create_process('bash', term_type='xterm') as process:
-                await websocket.send_text("\r\n[Info] Connected!\r\n")
-                
-                async def read_stdout():
-                    try:
-                        while not process.stdout.at_eof():
-                            data = await process.stdout.read(4096)
-                            if data:
-                                await websocket.send_text(data)
-                    except Exception:
-                        pass
-                        
-                async def read_stderr():
-                    try:
-                        while not process.stderr.at_eof():
-                            data = await process.stderr.read(4096)
-                            if data:
-                                await websocket.send_text(data)
-                    except Exception:
-                        pass
-                        
-                async def read_ws():
-                    import json
-                    try:
-                        while True:
-                            msg = await websocket.receive_text()
-                            try:
-                                payload = json.loads(msg)
-                                if payload.get("type") == "data":
-                                    process.stdin.write(payload["data"])
-                                elif payload.get("type") == "resize":
-                                    process.change_terminal_size(payload["cols"], payload["rows"], 0, 0)
-                            except json.JSONDecodeError:
-                                process.stdin.write(msg)
-                    except WebSocketDisconnect:
-                        process.terminate()
-                        
-                await asyncio.gather(read_stdout(), read_stderr(), read_ws())
+            async def read_stdout():
+                try:
+                    while not process.stdout.at_eof():
+                        data = await process.stdout.read(4096)
+                        if data:
+                            await websocket.send_text(data)
+                except Exception:
+                    pass
+                    
+            async def read_stderr():
+                try:
+                    while not process.stderr.at_eof():
+                        data = await process.stderr.read(4096)
+                        if data:
+                            await websocket.send_text(data)
+                except Exception:
+                    pass
+                    
+            async def read_ws():
+                import json
+                try:
+                    while True:
+                        msg = await websocket.receive_text()
+                        try:
+                            payload = json.loads(msg)
+                            if payload.get("type") == "data":
+                                process.stdin.write(payload["data"])
+                            elif payload.get("type") == "resize":
+                                process.change_terminal_size(payload["cols"], payload["rows"], 0, 0)
+                        except json.JSONDecodeError:
+                            process.stdin.write(msg)
+                except WebSocketDisconnect:
+                    process.terminate()
+                    
+            await asyncio.gather(read_stdout(), read_stderr(), read_ws())
                 
     except Exception as e:
         await websocket.send_text(f"\r\n[Error] Terminal failed: {str(e)}\r\n")
     finally:
+        if restricted_rcfile_path:
+            try:
+                if conn:
+                    await conn.run(f"rm -f {shlex.quote(restricted_rcfile_path)}", check=False)
+            except Exception:
+                pass
+        if conn:
+            try:
+                conn.close()
+                await conn.wait_closed()
+            except Exception:
+                pass
         try:
             await websocket.close()
         except Exception:
