@@ -27,9 +27,10 @@ exposed_ports:
 ```
 
 - **`verify_script`**: Name of the verification script inside the lab folder.
-- **`exposed_ports`**: (Optional) List of ports that the web UI should provide "Open" buttons for.
-- **`port_works_initially`**: (Optional, default `false`) If `true`, the CI test will ensure that the exposed ports successfully return an HTTP 200 response upon initial lab provision (useful for labs where the web server is working, but the application is broken elsewhere).
+- **`exposed_ports`**: (Optional) List of ports that the web UI should provide "Open" buttons for. Adding a port does not make the lab easier by itself; it only tells BrokenOps that users should be able to reach that service through the browser proxy.
+- **`port_works_initially`**: (Optional, default `false`) If `true`, the CI test will ensure that the exposed ports successfully return an HTTP 200 response upon initial lab provision. Use this only when the intended broken state is somewhere else and the exposed service is supposed to be healthy from the start.
 - When a port is exposed, the service must listen on an interface reachable from outside the VM, not just `127.0.0.1`. The browser proxy connects to the VM over its IP address, so loopback-only listeners will still fail even if `curl http://127.0.0.1:<port>` works inside the guest.
+- If you want the port to remain exposed while the lab is still broken, keep `exposed_ports` enabled and make the initial state fail for a different reason, such as a bad upstream address, a missing runtime directory, or an ACL/firewall problem. The goal is for the browser Open Port button to work both before and after the user fixes the lab, without any surprise “works in the guest, fails in the UI” behavior.
 
 ## 2. `cloud-init.yaml` (Required)
 
