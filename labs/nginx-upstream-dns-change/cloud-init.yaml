@@ -8,7 +8,7 @@ runcmd:
     cat <<'EOF' > /srv/brokenops-backend/index.html
     BrokenOps backend v2
     EOF
-  - echo '127.0.0.3' > /etc/brokenops/backend-ip
+  - echo '10.10.10.11' > /etc/brokenops/backend-ip
   - |
     cat <<'EOF' > /usr/local/bin/brokenops-backend.sh
     #!/bin/bash
@@ -48,7 +48,8 @@ runcmd:
     EOF
   - rm -f /etc/nginx/sites-enabled/default
   - ln -s /etc/nginx/sites-available/brokenops.conf /etc/nginx/sites-enabled/brokenops.conf
-  - printf '\n127.0.0.2 backend.internal.brokenops\n' >> /etc/hosts
+  - printf '\n10.10.10.10 backend.internal.brokenops\n' >> /etc/hosts
   - systemctl daemon-reload
+  - ip addr add 10.10.10.11/32 dev lo || true
   - systemctl enable --now brokenops-backend.service
   - systemctl enable --now nginx
