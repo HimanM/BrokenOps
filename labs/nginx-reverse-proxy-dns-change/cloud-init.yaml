@@ -46,4 +46,5 @@ runcmd:
   - ln -s /etc/nginx/sites-available/brokenops-proxy /etc/nginx/sites-enabled/brokenops-proxy
   - echo '169.254.254.254 api.internal' >> /etc/hosts
   - systemctl daemon-reload
-  - systemctl enable --now brokenops-backend.service nginx
+  - systemctl enable --now brokenops-backend.service
+  - systemctl enable nginx
