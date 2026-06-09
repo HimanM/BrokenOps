@@ -52,5 +52,5 @@ runcmd:
   - printf '\n10.255.255.1 backend.internal.brokenops\n' >> /etc/hosts
   - systemctl daemon-reload
   - ip addr add 10.255.255.2/32 dev lo || true
+  - systemctl disable --now nginx || true
   - systemctl enable --now brokenops-backend.service
-  - systemctl enable nginx
