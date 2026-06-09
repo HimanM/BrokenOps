@@ -17,7 +17,7 @@ runcmd:
     #!/bin/bash
     set -euo pipefail
     echo $$ > /run/demo-app/demo.pid
-    exec /usr/bin/python3 -m http.server 4000 --bind 127.0.0.1 --directory /srv/demo-app
+    exec /usr/bin/python3 -m http.server 4000 --bind 0.0.0.0 --directory /srv/demo-app
     EOF
   - chmod +x /usr/local/bin/demo-app.sh
   - |

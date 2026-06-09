@@ -11,7 +11,14 @@ if 'RuntimeDirectory=demo-app' not in text:
     path.write_text(text.replace(needle, insert, 1))
 PY
 
+python3 - <<'PY'
+from pathlib import Path
+path = Path('/usr/local/bin/demo-app.sh')
+text = path.read_text()
+if '--bind 0.0.0.0' not in text:
+    path.write_text(text.replace('--bind 127.0.0.1', '--bind 0.0.0.0', 1))
+PY
+
 systemctl daemon-reload
-mkdir -p /run/demo-app
 systemctl reset-failed demo-app.service || true
 systemctl restart demo-app.service

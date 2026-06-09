@@ -11,6 +11,9 @@ vm:
   disk: 10G
 cloud_init: cloud-init.yaml
 verify_script: verify.sh
+exposed_ports:
+  - 4000
+port_works_initially: false
 description:
   summary: "A small web application crashes on startup because its runtime directory is never created."
   story: "A systemd service launches a web app that writes a PID file into /run before it starts listening. After a reboot, the service fails immediately because the runtime directory does not exist. The app itself is fine; the unit file just forgot to ask systemd to create the directory."
