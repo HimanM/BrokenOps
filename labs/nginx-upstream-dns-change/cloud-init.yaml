@@ -1,0 +1,56 @@
+#cloud-config
+packages:
+  - nginx
+  - python3
+runcmd:
+  - mkdir -p /srv/brokenops-backend /etc/brokenops /etc/systemd/system /etc/nginx/sites-available /etc/nginx/sites-enabled
+  - |
+    cat <<'EOF' > /srv/brokenops-backend/index.html
+    BrokenOps backend v2
+    EOF
+  - echo '10.255.255.2' > /etc/brokenops/backend-ip
+  - |
+    cat <<'EOF' > /usr/local/bin/brokenops-backend.sh
+    #!/bin/bash
+    set -euo pipefail
+    IP=$(cat /etc/brokenops/backend-ip)
+    exec /usr/bin/python3 -m http.server 5000 --bind "$IP" --directory /srv/brokenops-backend
+    EOF
+  - chmod +x /usr/local/bin/brokenops-backend.sh
+  - ip addr add 10.255.255.2/32 dev lo || true
+  - |
+    cat <<'EOF' > /etc/systemd/system/brokenops-backend.service
+    [Unit]
+    Description=BrokenOps backend
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/brokenops-backend.sh
+    Restart=always
+    RestartSec=2
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - |
+    cat <<'EOF' > /etc/nginx/sites-available/brokenops.conf
+    server {
+        listen 80 default_server;
+        server_name _;
+
+        location / {
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_pass http://backend.internal.brokenops:5001;
+        }
+    }
+    EOF
+  - rm -f /etc/nginx/sites-enabled/default
+  - ln -s /etc/nginx/sites-available/brokenops.conf /etc/nginx/sites-enabled/brokenops.conf
+  - printf '\n10.255.255.1 backend.internal.brokenops\n' >> /etc/hosts
+  - systemctl daemon-reload
+  - ip addr add 10.255.255.2/32 dev lo || true
+  - systemctl disable --now nginx || true
+  - systemctl enable --now brokenops-backend.service

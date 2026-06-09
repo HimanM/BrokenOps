@@ -1,0 +1,27 @@
+id: nginx-upstream-dns-change
+name: Nginx Reverse Proxy Breaks After Upstream DNS Change
+category: web
+difficulty: advanced
+provider: libvirt
+vm:
+  name: nginx-dns-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+port_works_initially: false
+description:
+  summary: "Nginx proxies to a backend hostname, but the backend moved to a new IP and Nginx kept using the stale address."
+  story: "A frontend service sits behind Nginx and the backend hostname changed to a new IP after provisioning. The backend itself is healthy, but Nginx still forwards requests to the old address it resolved earlier, so the proxy now returns errors until it is refreshed."
+  objectives:
+    - Inspect the reverse proxy and backend hostname setup
+    - Determine why Nginx still talks to the old upstream address
+    - Refresh the proxy so it resolves the backend's current address
+tags:
+  - web
+  - nginx
+  - networking
