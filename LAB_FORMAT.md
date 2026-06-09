@@ -32,6 +32,28 @@ exposed_ports:
 - When a port is exposed, the service must listen on an interface reachable from outside the VM, not just `127.0.0.1`. The browser proxy connects to the VM over its IP address, so loopback-only listeners will still fail even if `curl http://127.0.0.1:<port>` works inside the guest.
 - If you want the port to remain exposed while the lab is still broken, keep `exposed_ports` enabled and make the initial state fail for a different reason, such as a bad upstream address, a missing runtime directory, or an ACL/firewall problem. The goal is for the browser Open Port button to work both before and after the user fixes the lab, without any surprise “works in the guest, fails in the UI” behavior.
 
+### Exposed Port Guidance
+
+If a lab exposes a port, the service inside the VM must be reachable from outside the guest, not just from `127.0.0.1` inside the VM.
+
+Important rules:
+- Bind the service to `0.0.0.0` or the VM interface that the platform can reach.
+- Do not rely on localhost-only listeners for a port that should work from the Open Port UI.
+- `curl http://127.0.0.1:<port>` working inside the VM is not enough if the UI proxy connects by the VM IP.
+- If the lab is meant to teach a localhost-only or socket-bound service, omit `exposed_ports` instead of exposing a port that cannot be reached.
+- If `port_works_initially: false`, the initial broken state should still be intentional and reproducible; the exposed port should become reachable only after the user fixes the lab.
+
+Example listener setup that works with the UI proxy:
+```bash
+python3 -m http.server 4000 --bind 0.0.0.0
+```
+
+Recommended checklist before opening a PR with exposed ports:
+1. Confirm the service is listening on `0.0.0.0:<port>` or the correct non-loopback interface after the solution.
+2. Confirm the initial failure is the one the lab is teaching, not an accidental proxy or binding problem.
+3. Confirm the browser/Open Port path works after the solution, not just a local shell curl.
+4. Keep `exposed_ports` in `lab.yaml` when the UI should show the port; do not remove it just to make CI pass.
+
 ## 2. `cloud-init.yaml` (Required)
 
 This file tells the `ubuntu-24.04-base.qcow2` image how to configure itself on first boot. Use this to intentionally break the system.
