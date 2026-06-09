@@ -1,0 +1,28 @@
+id: ca-certificates-missing
+name: HTTPS Downloads Fail Because CA Certificates Are Missing
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: ca-certificates-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 8443
+port_works_initially: false
+description:
+  summary: "A bootstrap service cannot download a package over HTTPS because the trust store was never updated."
+  story: "An internal tool is hosted on a local HTTPS endpoint. The bootstrap service tries to fetch the package during boot, but certificate validation fails before the package can be installed. The CA certificate file is present on disk, yet the system trust store was never refreshed."
+  objectives:
+    - Inspect the HTTPS bootstrap service and understand what it is trying to download
+    - Restore trust in the local CA certificate
+    - Rerun the bootstrap flow so the package installs successfully
+tags:
+  - linux
+  - tls
+  - packages
+  - security

@@ -1,0 +1,73 @@
+#cloud-config
+packages:
+  - ca-certificates
+  - curl
+  - openssl
+runcmd:
+  - mkdir -p /etc/labtool/certs /srv/labtool/repo /tmp/labtool-pkg/DEBIAN /tmp/labtool-pkg/usr/local/bin
+  - |
+    cat <<'EOF' > /tmp/labtool-pkg/DEBIAN/control
+    Package: labtool
+    Version: 1.0
+    Section: utils
+    Priority: optional
+    Architecture: all
+    Maintainer: BrokenOps <brokenops@example.com>
+    Description: Small internal tool used by the HTTPS bootstrap lab
+    EOF
+  - |
+    cat <<'EOF' > /tmp/labtool-pkg/usr/local/bin/labtool
+    #!/bin/bash
+    echo "labtool 1.0"
+    EOF
+  - chmod +x /tmp/labtool-pkg/usr/local/bin/labtool
+  - dpkg-deb --build /tmp/labtool-pkg /srv/labtool/repo/labtool_1.0_all.deb
+  - |
+    openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes \
+      -keyout /etc/labtool/certs/server.key \
+      -out /etc/labtool/certs/server.crt \
+      -subj "/CN=localhost" \
+      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+  - cp /etc/labtool/certs/server.crt /usr/local/share/ca-certificates/labtool-localhost.crt
+  - |
+    cat <<'EOF' > /usr/local/bin/install-labtool.sh
+    #!/bin/bash
+    set -euo pipefail
+    tmp=$(mktemp /tmp/labtool.XXXXXX.deb)
+    curl -fsS https://localhost:8443/labtool_1.0_all.deb -o "$tmp"
+    dpkg -i "$tmp"
+    EOF
+  - chmod +x /usr/local/bin/install-labtool.sh
+  - |
+    cat <<'EOF' > /etc/systemd/system/lab-https.service
+    [Unit]
+    Description=HTTPS file server for the BrokenOps bootstrap lab
+    After=network.target
+
+    [Service]
+    Type=simple
+    WorkingDirectory=/srv/labtool/repo
+    ExecStart=/usr/bin/openssl s_server -quiet -accept 8443 -cert /etc/labtool/certs/server.crt -key /etc/labtool/certs/server.key -WWW
+    Restart=always
+    RestartSec=2
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - |
+    cat <<'EOF' > /etc/systemd/system/lab-bootstrap.service
+    [Unit]
+    Description=Install the labtool package over HTTPS
+    Requires=lab-https.service
+    After=lab-https.service
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/local/bin/install-labtool.sh
+    RemainAfterExit=yes
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - systemctl daemon-reload
+  - systemctl enable --now lab-https.service lab-bootstrap.service || true
