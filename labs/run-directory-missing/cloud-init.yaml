@@ -1,0 +1,38 @@
+#cloud-config
+packages:
+  - python3
+runcmd:
+  - mkdir -p /srv/demo-app /etc/systemd/system
+  - |
+    cat <<'EOF' > /srv/demo-app/index.html
+    <html>
+      <body>
+        <h1>BrokenOps demo app</h1>
+        <p>The service is healthy when the runtime directory exists.</p>
+      </body>
+    </html>
+    EOF
+  - |
+    cat <<'EOF' > /usr/local/bin/demo-app.sh
+    #!/bin/bash
+    set -euo pipefail
+    echo $$ > /run/demo-app/demo.pid
+    exec /usr/bin/python3 -m http.server 4000 --bind 0.0.0.0 --directory /srv/demo-app
+    EOF
+  - chmod +x /usr/local/bin/demo-app.sh
+  - |
+    cat <<'EOF' > /etc/systemd/system/demo-app.service
+    [Unit]
+    Description=BrokenOps demo app
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/demo-app.sh
+    Restart=on-failure
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - systemctl daemon-reload
+  - systemctl enable --now demo-app.service || true
