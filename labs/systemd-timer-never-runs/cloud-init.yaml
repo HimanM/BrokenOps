@@ -1,33 +1,33 @@
 #cloud-config
-runcmd:
-  - mkdir -p /usr/local/bin /etc/systemd/system /var/log
-  - |
-    cat <<'EOF' > /usr/local/bin/nightly-backup.sh
-    #!/bin/bash
-    set -euo pipefail
-    echo "$(date -Is) nightly backup completed" >> /var/log/nightly-backup.log
-    EOF
-  - chmod +x /usr/local/bin/nightly-backup.sh
-  - |
-    cat <<'EOF' > /etc/systemd/system/nightly-backup.service
-    [Unit]
-    Description=Nightly backup job
+write_files:
+  - path: /usr/local/bin/nightly-backup.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      echo "$(date -Is) nightly backup completed" >> /var/log/nightly-backup.log
+  - path: /etc/systemd/system/nightly-backup.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Nightly backup job
 
-    [Service]
-    Type=oneshot
-    ExecStart=/usr/local/bin/nightly-backup.sh
-    EOF
-  - |
-    cat <<'EOF' > /etc/systemd/system/nightly-backup.timer
-    [Unit]
-    Description=Run nightly backup after boot and every minute
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/nightly-backup.sh
+  - path: /etc/systemd/system/nightly-backup.timer
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Run nightly backup after boot and every minute
 
-    [Timer]
-    OnBootSec=5s
-    OnUnitActiveSec=60s
-    Unit=nightly-backup.service
+      [Timer]
+      OnBootSec=5s
+      OnUnitActiveSec=60s
+      Unit=nightly-backup.service
 
-    [Install]
-    WantedBy=graphical.target
-    EOF
-  - systemctl daemon-reload
+      [Install]
+      WantedBy=graphical.target
