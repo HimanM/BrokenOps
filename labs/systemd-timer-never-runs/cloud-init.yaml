@@ -1,0 +1,33 @@
+#cloud-config
+write_files:
+  - path: /usr/local/bin/nightly-backup.sh
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      echo "$(date -Is) nightly backup completed" >> /var/log/nightly-backup.log
+  - path: /etc/systemd/system/nightly-backup.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Nightly backup job
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/nightly-backup.sh
+  - path: /etc/systemd/system/nightly-backup.timer
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Run nightly backup after boot and every minute
+
+      [Timer]
+      OnBootSec=5s
+      OnUnitActiveSec=60s
+      Unit=nightly-backup.service
+
+      [Install]
+      WantedBy=graphical.target
