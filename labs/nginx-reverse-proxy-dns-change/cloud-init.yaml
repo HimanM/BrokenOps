@@ -1,0 +1,50 @@
+#cloud-config
+packages:
+  - nginx
+  - python3
+runcmd:
+  - mkdir -p /srv/backend /etc/nginx/sites-available /etc/nginx/sites-enabled
+  - |
+    cat <<'EOF' > /srv/backend/index.html
+    <html>
+      <body>
+        <h1>BrokenOps backend</h1>
+        <p>The upstream service is healthy.</p>
+      </body>
+    </html>
+    EOF
+  - |
+    cat <<'EOF' > /etc/systemd/system/brokenops-backend.service
+    [Unit]
+    Description=BrokenOps backend service
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/python3 -m http.server 3000 --bind 127.0.0.1 --directory /srv/backend
+    Restart=always
+    RestartSec=2
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - |
+    cat <<'EOF' > /etc/nginx/sites-available/brokenops-proxy
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        location / {
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_pass http://api.internal:3001;
+        }
+    }
+    EOF
+  - rm -f /etc/nginx/sites-enabled/default
+  - ln -s /etc/nginx/sites-available/brokenops-proxy /etc/nginx/sites-enabled/brokenops-proxy
+  - echo '169.254.254.254 api.internal' >> /etc/hosts
+  - systemctl daemon-reload
+  - systemctl disable --now nginx || true
+  - systemctl enable --now brokenops-backend.service
