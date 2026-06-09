@@ -1,0 +1,28 @@
+id: run-directory-missing
+name: Application Fails to Start Because /run Directory Is Not Created at Boot
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: run-directory-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 4000
+port_works_initially: false
+description:
+  summary: "A small web application crashes on startup because its runtime directory is never created."
+  story: "A systemd service launches a web app that writes a PID file into /run before it starts listening. After a reboot, the service fails immediately because the runtime directory does not exist. The app itself is fine; the unit file just forgot to ask systemd to create the directory."
+  objectives:
+    - Inspect the application service definition
+    - Find why the service cannot create its PID file under /run
+    - Fix the unit so systemd creates the runtime directory at start
+tags:
+  - linux
+  - systemd
+  - runtime-directory
+  - web
