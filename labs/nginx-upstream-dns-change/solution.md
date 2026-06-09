@@ -1,15 +1,15 @@
 ### The Issue
 
-Nginx resolved the backend hostname before the backend moved to its new IP address. That first lookup was cached, so the proxy kept sending requests to the old address until Nginx was refreshed.
+Nginx was still sending requests to the old backend address after the hostname moved to a new IP. The stale DNS entry in `/etc/hosts` kept the proxy pointed at the wrong place.
 
 ### Step-by-Step Fix
 
-1. **Confirm the backend hostname now points to the new IP**:
+1. **Update the stale hostname mapping**:
    ```bash
-   getent hosts backend.internal.brokenops
+   sudo sed -i 's/^127.0.0.2 backend.internal.brokenops$/127.0.0.3 backend.internal.brokenops/' /etc/hosts
    ```
 
-2. **Reload Nginx so it resolves the upstream again**:
+2. **Reload Nginx so it picks up the updated backend address**:
    ```bash
    sudo systemctl reload nginx
    ```
@@ -18,6 +18,3 @@ Nginx resolved the backend hostname before the backend moved to its new IP addre
    ```bash
    curl -i http://localhost/
    ```
-
-4. **Outcome**:
-   Once Nginx reloads, it picks up the updated backend address and the reverse proxy starts returning the backend response again.

@@ -1,58 +1,54 @@
 #cloud-config
-    packages:
-      - nginx
-      - python3
-    runcmd:
-      - mkdir -p /srv/brokenops-backend /etc/brokenops /etc/systemd/system /etc/nginx/sites-available /etc/nginx/sites-enabled
-      - |
-        cat <<'EOF' > /srv/brokenops-backend/index.html
-        BrokenOps backend v2
-        EOF
-      - echo '127.0.0.2' > /etc/brokenops/backend-ip
-      - |
-        cat <<'EOF' > /usr/local/bin/brokenops-backend.sh
-        #!/bin/bash
-        set -euo pipefail
-        IP=$(cat /etc/brokenops/backend-ip)
-        exec /usr/bin/python3 -m http.server 5000 --bind "$IP" --directory /srv/brokenops-backend
-        EOF
-      - chmod +x /usr/local/bin/brokenops-backend.sh
-      - |
-        cat <<'EOF' > /etc/systemd/system/brokenops-backend.service
-        [Unit]
-        Description=BrokenOps backend
-        After=network.target
+packages:
+  - nginx
+  - python3
+runcmd:
+  - mkdir -p /srv/brokenops-backend /etc/brokenops /etc/systemd/system /etc/nginx/sites-available /etc/nginx/sites-enabled
+  - |
+    cat <<'EOF' > /srv/brokenops-backend/index.html
+    BrokenOps backend v2
+    EOF
+  - echo '127.0.0.3' > /etc/brokenops/backend-ip
+  - |
+    cat <<'EOF' > /usr/local/bin/brokenops-backend.sh
+    #!/bin/bash
+    set -euo pipefail
+    IP=$(cat /etc/brokenops/backend-ip)
+    exec /usr/bin/python3 -m http.server 5000 --bind "$IP" --directory /srv/brokenops-backend
+    EOF
+  - chmod +x /usr/local/bin/brokenops-backend.sh
+  - |
+    cat <<'EOF' > /etc/systemd/system/brokenops-backend.service
+    [Unit]
+    Description=BrokenOps backend
+    After=network.target
 
-        [Service]
-        Type=simple
-        ExecStart=/usr/local/bin/brokenops-backend.sh
-        Restart=always
-        RestartSec=2
+    [Service]
+    Type=simple
+    ExecStart=/usr/local/bin/brokenops-backend.sh
+    Restart=always
+    RestartSec=2
 
-        [Install]
-        WantedBy=multi-user.target
-        EOF
-      - |
-        cat <<'EOF' > /etc/nginx/sites-available/brokenops.conf
-        server {
-            listen 80 default_server;
-            server_name _;
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - |
+    cat <<'EOF' > /etc/nginx/sites-available/brokenops.conf
+    server {
+        listen 80 default_server;
+        server_name _;
 
-            location / {
-                proxy_set_header Host $host;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-                proxy_pass http://backend.internal.brokenops:5000;
-            }
+        location / {
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_pass http://backend.internal.brokenops:5000;
         }
-        EOF
-      - rm -f /etc/nginx/sites-enabled/default
-      - ln -s /etc/nginx/sites-available/brokenops.conf /etc/nginx/sites-enabled/brokenops.conf
-      - printf '\\n127.0.0.2 backend.internal.brokenops\\n' >> /etc/hosts
-      - systemctl daemon-reload
-      - systemctl enable --now brokenops-backend.service
-      - systemctl enable --now nginx
-      - curl -fsS http://127.0.0.1/ >/dev/null || true
-      - sed -i 's/^127.0.0.2 backend.internal.brokenops$/127.0.0.3 backend.internal.brokenops/' /etc/hosts
-      - echo '127.0.0.3' > /etc/brokenops/backend-ip
-      - systemctl restart brokenops-backend.service
+    }
+    EOF
+  - rm -f /etc/nginx/sites-enabled/default
+  - ln -s /etc/nginx/sites-available/brokenops.conf /etc/nginx/sites-enabled/brokenops.conf
+  - printf '\n127.0.0.2 backend.internal.brokenops\n' >> /etc/hosts
+  - systemctl daemon-reload
+  - systemctl enable --now brokenops-backend.service
+  - systemctl enable --now nginx
