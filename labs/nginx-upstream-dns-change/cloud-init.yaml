@@ -17,6 +17,7 @@ runcmd:
     exec /usr/bin/python3 -m http.server 5000 --bind "$IP" --directory /srv/brokenops-backend
     EOF
   - chmod +x /usr/local/bin/brokenops-backend.sh
+  - ip addr add 10.255.255.2/32 dev lo || true
   - |
     cat <<'EOF' > /etc/systemd/system/brokenops-backend.service
     [Unit]
