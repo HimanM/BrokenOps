@@ -1,0 +1,34 @@
+#cloud-config
+runcmd:
+  - mkdir -p /usr/local/bin /etc/systemd/system /var/lib/brokenops
+  - |
+    cat <<'EOF' > /usr/local/bin/cleanup-note.sh
+    #!/bin/bash
+    set -euo pipefail
+    date -Is > /var/lib/brokenops/cleanup-last-run
+    echo "cleanup ran at $(date -Is)" >> /var/lib/brokenops/cleanup.log
+    EOF
+  - chmod +x /usr/local/bin/cleanup-note.sh
+  - |
+    cat <<'EOF' > /etc/systemd/system/cleanup-note.service
+    [Unit]
+    Description=BrokenOps cleanup note service
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/local/bin/cleanup-note.sh
+    EOF
+  - |
+    cat <<'EOF' > /etc/systemd/system/cleanup-note.timer
+    [Unit]
+    Description=Run the BrokenOps cleanup note service at boot
+
+    [Timer]
+    OnBootSec=0
+    AccuracySec=1s
+    Unit=cleanup-note.service
+
+    [Install]
+    WantedBy=timers.target
+    EOF
+  - systemctl daemon-reload

@@ -1,0 +1,24 @@
+id: systemd-timer-disabled
+name: Systemd Timer Never Runs After Reboot
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: systemd-timer-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A scheduled maintenance job never runs after reboot because its systemd timer is disabled."
+  story: "A team relies on a simple maintenance timer to write a heartbeat file on boot, but after a reboot the task never runs. The timer unit exists, the service works, and the only thing missing is the enablement that tells systemd to start it automatically."
+  objectives:
+    - Inspect the timer and service units
+    - Confirm the scheduled job is not enabled on boot
+    - Enable the timer so the maintenance task runs after reboot
+tags:
+  - linux
+  - systemd
+  - timer
