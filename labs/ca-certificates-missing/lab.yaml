@@ -11,9 +11,6 @@ vm:
   disk: 10G
 cloud_init: cloud-init.yaml
 verify_script: verify.sh
-exposed_ports:
-  - 8443
-port_works_initially: false
 description:
   summary: "A bootstrap service cannot download a package over HTTPS because the trust store was never updated."
   story: "An internal tool is hosted on a local HTTPS endpoint. The bootstrap service tries to fetch the package during boot, but certificate validation fails before the package can be installed. The CA certificate file is present on disk, yet the system trust store was never refreshed."
