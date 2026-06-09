@@ -1,12 +1,12 @@
 ### The Issue
 
-The backend hostname in `/etc/hosts` points at the wrong loopback address, so Nginx resolves the upstream to an address where nothing is listening. The backend service is fine; the name resolution is stale.
+The backend hostname in `/etc/hosts` points at the wrong address, so Nginx resolves the upstream to a place where nothing is listening. The backend service is fine; the name resolution is stale.
 
 ### Step-by-Step Fix
 
 1. **Correct the upstream hostname mapping**:
    ```bash
-   sudo sed -i 's/127.0.0.2 api.internal/127.0.0.1 api.internal/' /etc/hosts
+   sudo sed -i 's/192.0.2.10 api.internal/127.0.0.1 api.internal/' /etc/hosts
    ```
 2. **Restart Nginx so it re-resolves the upstream**:
    ```bash
