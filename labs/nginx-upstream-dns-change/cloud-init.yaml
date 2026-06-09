@@ -52,6 +52,7 @@
       - systemctl daemon-reload
       - systemctl enable --now brokenops-backend.service
       - systemctl enable --now nginx
+      - curl -fsS http://127.0.0.1/ >/dev/null || true
       - sed -i 's/^127.0.0.2 backend.internal.brokenops$/127.0.0.3 backend.internal.brokenops/' /etc/hosts
       - echo '127.0.0.3' > /etc/brokenops/backend-ip
       - systemctl restart brokenops-backend.service
