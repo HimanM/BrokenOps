@@ -1,0 +1,28 @@
+id: nginx-reverse-proxy-dns-change
+name: Nginx Reverse Proxy Breaks After Upstream DNS Change
+category: linux
+difficulty: advanced
+provider: libvirt
+vm:
+  name: nginx-dns-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+port_works_initially: false
+description:
+  summary: "Nginx can no longer reach its upstream because the hostname now resolves to the wrong address."
+  story: "A reverse proxy used to send traffic to a backend host on the local machine, but someone updated the hostname mapping and left Nginx pointing at the old address. The backend is still healthy; the upstream name just resolves incorrectly now."
+  objectives:
+    - Inspect the Nginx reverse proxy configuration
+    - Discover the broken upstream hostname mapping
+    - Fix name resolution so Nginx can reach the backend again
+tags:
+  - linux
+  - nginx
+  - networking
+  - dns
