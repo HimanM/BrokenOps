@@ -11,7 +11,7 @@ if ! systemctl is-active --quiet brokenops-backend; then
   exit 1
 fi
 
-if ! grep -q '^127.0.0.3 backend.internal.brokenops$' /etc/hosts; then
+if ! grep -q '^192.0.2.11 backend.internal.brokenops$' /etc/hosts; then
   echo "FAILURE: The backend hostname does not point to the updated IP address."
   exit 1
 fi
