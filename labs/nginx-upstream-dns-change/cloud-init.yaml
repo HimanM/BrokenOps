@@ -48,9 +48,7 @@
         EOF
       - rm -f /etc/nginx/sites-enabled/default
       - ln -s /etc/nginx/sites-available/brokenops.conf /etc/nginx/sites-enabled/brokenops.conf
-      - printf '
-127.0.0.2 backend.internal.brokenops
-' >> /etc/hosts
+      - printf '\\n127.0.0.2 backend.internal.brokenops\\n' >> /etc/hosts
       - systemctl daemon-reload
       - systemctl enable --now brokenops-backend.service
       - systemctl enable --now nginx
