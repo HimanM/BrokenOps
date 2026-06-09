@@ -1,0 +1,25 @@
+id: systemd-timer-never-runs
+name: Systemd Timer Never Runs After Reboot
+category: linux
+difficulty: intermediate
+provider: libvirt
+vm:
+  name: systemd-timer-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "A scheduled backup job never starts after reboot because the timer is installed with the wrong target."
+  story: "A developer created a backup timer that should run shortly after boot and keep running every minute, but after a reboot nothing happens. The service looks fine at a glance, yet the timer never activates on a normal server boot."
+  objectives:
+    - Inspect the timer and service units for the backup job
+    - Find why the timer is not starting automatically on boot
+    - Fix the unit installation target and enable the timer so the backup job runs
+tags:
+  - linux
+  - systemd
+  - timer
+  - boot
