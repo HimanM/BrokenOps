@@ -1,0 +1,13 @@
+id: "docker-compose-missing-env-vars"
+name: "Docker Compose Missing Required Environment Variables"
+category: "docker"
+difficulty: "beginner"
+description:
+  summary: "docker compose fails until the required environment variables are defined in the project .env file."
+vm:
+  name: "compose-lab"
+  memory: 2048
+  cpu: 2
+  disk: "20G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"

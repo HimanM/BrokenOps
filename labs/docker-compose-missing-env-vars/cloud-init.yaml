@@ -1,0 +1,21 @@
+#cloud-config
+packages:
+  - docker.io
+  - docker-compose-plugin
+runcmd:
+  - mkdir -p /opt/brokenops
+  - |
+    cat <<'EOF' > /opt/brokenops/compose.yml
+    services:
+      web:
+        image: ${BROKENOPS_IMAGE:?BROKENOPS_IMAGE is required}
+        ports:
+          - "${BROKENOPS_PORT:?BROKENOPS_PORT is required}:80"
+        command: ["sh", "-c", "echo BrokenOps web container started; sleep infinity"]
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/.env
+    # Intentionally left incomplete for the lab.
+    # Define the required variables to make docker compose config succeed.
+    EOF
+  - chown -R root:root /opt/brokenops
