@@ -30,6 +30,28 @@ exposed_ports:
 - **`exposed_ports`**: (Optional) List of ports that the web UI should provide "Open" buttons for.
 - **`port_works_initially`**: (Optional, default `false`) If `true`, the CI test will ensure that the exposed ports successfully return an HTTP 200 response upon initial lab provision (useful for labs where the web server is working, but the application is broken elsewhere).
 
+### Exposed Port Guidance
+
+If a lab exposes a port, the service inside the VM must be reachable from outside the guest, not just from `127.0.0.1` inside the VM.
+
+Important rules:
+- Bind the service to `0.0.0.0` or the VM interface that the platform can reach.
+- Do not rely on localhost-only listeners for a port that should work from the Open Port UI.
+- `curl http://127.0.0.1:<port>` working inside the VM is not enough if the UI proxy connects by the VM IP.
+- If the lab is meant to teach a localhost-only or socket-bound service, omit `exposed_ports` instead of exposing a port that cannot be reached.
+- If `port_works_initially: false`, the initial broken state should still be intentional and reproducible; the exposed port should become reachable only after the user fixes the lab.
+
+Example listener setup that works with the UI proxy:
+```bash
+python3 -m http.server 4000 --bind 0.0.0.0
+```
+
+Recommended checklist before opening a PR with exposed ports:
+1. Confirm the service is listening on `0.0.0.0:<port>` or the correct non-loopback interface after the solution.
+2. Confirm the initial failure is the one the lab is teaching, not an accidental proxy or binding problem.
+3. Confirm the browser/Open Port path works after the solution, not just a local shell curl.
+4. Keep `exposed_ports` in `lab.yaml` when the UI should show the port; do not remove it just to make CI pass.
+
 ## 2. `cloud-init.yaml` (Required)
 
 This file tells the `ubuntu-24.04-base.qcow2` image how to configure itself on first boot. Use this to intentionally break the system.
