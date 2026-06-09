@@ -1,0 +1,8 @@
+#cloud-config
+runcmd:
+  - |
+    cat <<'EOF' > /etc/hosts
+    127.0.0.1 localhost
+    127.0.1.1 brokenops-lab
+    10.0.0.50 api-server.internal.brokenops.io
+    EOF
