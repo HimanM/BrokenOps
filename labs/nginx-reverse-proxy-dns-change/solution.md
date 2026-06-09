@@ -1,11 +1,12 @@
 ### The Issue
 
-The reverse proxy is pointed at the wrong backend port, so requests hit nothing until Nginx is reconfigured. The backend itself is fine.
+The reverse proxy is not started with the correct upstream details, so the exposed port never serves the backend until both the host mapping and port are corrected.
 
 ### Step-by-Step Fix
 
-1. **Update the proxy target to the correct port**:
+1. **Update the backend hostname and proxy target**:
    ```bash
+   sudo sed -i 's/169.254.254.254 api.internal/127.0.0.1 api.internal/' /etc/hosts
    sudo sed -i 's/proxy_pass http:\/\/api.internal:3001;/proxy_pass http:\/\/api.internal:3000;/' /etc/nginx/sites-available/brokenops-proxy
    ```
 
