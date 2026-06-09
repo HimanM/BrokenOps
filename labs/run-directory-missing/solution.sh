@@ -12,4 +12,6 @@ if 'RuntimeDirectory=demo-app' not in text:
 PY
 
 systemctl daemon-reload
+mkdir -p /run/demo-app
+systemctl reset-failed demo-app.service || true
 systemctl restart demo-app.service
