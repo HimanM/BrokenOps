@@ -8,7 +8,7 @@ runcmd:
     cat <<'EOF' > /srv/brokenops-backend/index.html
     BrokenOps backend v2
     EOF
-  - echo '192.0.2.11' > /etc/brokenops/backend-ip
+  - echo '10.255.255.2' > /etc/brokenops/backend-ip
   - |
     cat <<'EOF' > /usr/local/bin/brokenops-backend.sh
     #!/bin/bash
