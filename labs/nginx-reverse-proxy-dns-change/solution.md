@@ -6,7 +6,7 @@ The backend hostname in `/etc/hosts` points at the wrong address, so Nginx resol
 
 1. **Correct the upstream hostname mapping**:
    ```bash
-   sudo sed -i 's/10.255.255.1 api.internal/127.0.0.1 api.internal/' /etc/hosts
+   sudo sed -i 's/169.254.254.254 api.internal/127.0.0.1 api.internal/' /etc/hosts
    ```
 2. **Restart Nginx so it re-resolves the upstream**:
    ```bash
