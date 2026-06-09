@@ -1,6 +1,6 @@
 ### The Issue
 
-The service writes a PID file into `/run/demo-app`, but the unit file never asks systemd to create that runtime directory. As a result, the app fails before it can bind to its port.
+The service writes a PID file into `/run/demo-app`, but the unit file never asks systemd to create that runtime directory. As a result, the app fails before it can bind to its port. Reloading the unit alone is not enough; systemd needs the runtime directory directive in place first.
 
 ### Step-by-Step Fix
 
