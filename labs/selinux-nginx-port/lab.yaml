@@ -2,7 +2,6 @@ id: selinux-nginx-port
 name: "SELinux Denies Nginx on Custom Port"
 category: web
 difficulty: intermediate
-provider: libvirt
 vm:
   name: selinux-lab
   image: ubuntu-24.04-base.qcow2

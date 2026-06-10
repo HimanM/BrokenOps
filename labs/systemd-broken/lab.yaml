@@ -2,7 +2,6 @@ id: systemd-broken
 name: Systemd Service Fails After Reboot
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: systemd-lab
   image: ubuntu-24.04-base.qcow2

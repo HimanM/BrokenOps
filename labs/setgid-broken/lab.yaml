@@ -2,7 +2,6 @@ id: setgid-broken
 name: "Missing setgid on Shared Team Directory"
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: setgid-lab
   image: ubuntu-24.04-base.qcow2

@@ -2,7 +2,6 @@ id: dns-broken
 name: DNS Resolution Failure
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: dns-lab
   image: ubuntu-24.04-base.qcow2

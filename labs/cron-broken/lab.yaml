@@ -2,7 +2,6 @@ id: cron-broken
 name: Cron Job Never Executes
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: cron-lab
   image: ubuntu-24.04-base.qcow2

@@ -2,7 +2,6 @@ id: sysctl-broken
 name: Sysctl Hardening Breaks Network Stack
 category: linux
 difficulty: advanced
-provider: libvirt
 vm:
   name: sysctl-lab
   image: ubuntu-24.04-base.qcow2

@@ -2,7 +2,6 @@ id: docker-broken
 name: Docker Daemon Crash
 category: containers
 difficulty: advanced
-provider: libvirt
 vm:
   name: docker-daemon-lab
   image: ubuntu-24.04-base.qcow2

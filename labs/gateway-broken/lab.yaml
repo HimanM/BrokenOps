@@ -2,7 +2,6 @@ id: gateway-broken
 name: Wrong Default Gateway
 category: networking
 difficulty: beginner
-provider: libvirt
 requires_classic_libvirt_network: true
 vm:
   name: gateway-lab

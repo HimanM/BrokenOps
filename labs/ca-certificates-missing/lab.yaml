@@ -2,7 +2,6 @@ id: ca-certificates-missing
 name: HTTPS Downloads Fail Because CA Certificates Are Missing
 category: linux
 difficulty: intermediate
-provider: libvirt
 vm:
   name: ca-certificates-lab
   image: ubuntu-24.04-base.qcow2
