@@ -1,41 +1,45 @@
 ### The Issue
-Network bonding (also known as EtherChannel or trunking) allows multiple network interfaces to act as one. The `mode` parameter defines how traffic is distributed. 
+Modern Linux distributions (especially those using `systemd-networkd` or `Predictable Network Interface Names`) often name network interfaces based on their hardware location (e.g., `ens3`, `enp0s3`) rather than simple indices like `eth0`, `eth1`.
 
-In this scenario, the bond was configured with `mode: active-backup`, which only utilizes one interface for redundancy. The requirement was for `balance-alb` (Adaptive Load Balancing), which provides both increased bandwidth and redundancy without requiring special switch support.
+In this case, the Netplan configuration was attempting to configure an interface named `eth1`, but the actual hardware was detected and named `ens4` by the operating system. Because of this mismatch, Netplan could not apply the settings to the correct device, leaving the secondary interface unconfigured.
 
 ### Step-by-Step Fix
 
-1. **Verify the current bond status**:
+1. **List all network interfaces**:
    ```bash
-   cat /proc/net/bonding/bond0
+   ip addr show
    ```
-   Look for the `Bonding Mode` line. You will see it is set to `fault-tolerance (active-backup)`.
+   OR
+   ```bash
+   ip link show
+   ```
+   Identify an interface that is `DOWN` or doesn't have an IP, likely named `ens4`.
 
 2. **Inspect the Netplan configuration**:
    ```bash
-   cat /etc/netplan/60-bond.yaml
+   cat /etc/netplan/60-internal-nic.yaml
    ```
-   Identify that the `mode` under `parameters` is set to `active-backup`.
+   Notice that the configuration block is under `eth1:`.
 
-3. **Update the configuration**:
-   Edit the Netplan file and change the mode to `balance-alb`. It's also good practice to include an `mii-monitor-interval`.
+3. **Correct the interface name**:
+   Edit the file and change `eth1` to `ens4`.
    ```yaml
-   bonds:
-     bond0:
-       interfaces: [eth1, eth2]
-       parameters:
-         mode: balance-alb
-         mii-monitor-interval: 100
+   network:
+     version: 2
+     renderer: networkd
+     ethernets:
+       ens4:
+         dhcp4: false
+         addresses: [10.10.10.10/24]
    ```
 
-4. **Apply the changes**:
+4. **Apply the configuration**:
    ```bash
    sudo netplan apply
    ```
 
 5. **Verify the fix**:
-   Check the bond status again.
+   Check if `ens4` now has the correct IP address.
    ```bash
-   cat /proc/net/bonding/bond0
+   ip addr show ens4
    ```
-   The `Bonding Mode` should now be `adaptive load balancing`.

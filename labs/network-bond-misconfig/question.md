@@ -1,11 +1,11 @@
 ### Scenario
-The infrastructure team is setting up a high-bandwidth server and requires an adaptive load-balancing bond (`balance-alb`) across two network interfaces. However, the current configuration is only using one interface at a time (active-backup), and it seems to be flapping under load.
+This server was recently migrated to a new virtual environment. While the primary network interface is working fine, the secondary interface, which is supposed to be used for internal database traffic, is not coming up. The previous admin left a Netplan configuration that they claimed should work.
 
 ### Objective
-Diagnose the current bonding configuration, identify why it's not using adaptive load balancing, and fix the Netplan configuration to meet the requirement.
+Diagnose why the secondary network interface is down, identify any naming mismatches in the configuration, and restore connectivity on the correct interface with the assigned IP `10.10.10.10`.
 
 ### Useful Commands
-- `cat /proc/net/bonding/bond0`
+- `ip addr`
 - `ip link show`
+- `cat /etc/netplan/60-internal-nic.yaml`
 - `sudo netplan apply`
-- `cat /etc/netplan/60-bond.yaml`

@@ -1,9 +1,9 @@
-id: network-bond-misconfig
-name: Network Bond Mode Misconfigured
+id: network-interface-name-mismatch
+name: Network Interface Name Mismatch
 category: networking
-difficulty: advanced
+difficulty: intermediate
 vm:
-  name: bond-lab
+  name: nic-name-lab
   image: ubuntu-24.04-base.qcow2
   memory: 1024
   cpu: 1
@@ -12,12 +12,12 @@ cloud_init: cloud-init.yaml
 verify_script: verify.sh
 
 description:
-  summary: "Bonded network interfaces are using an unsupported mode for the current switch infrastructure."
-  story: "The server team has attempted to set up a high-availability network bond, but they used a mode that requires special switch support (802.3ad) which isn't available. You need to change the bonding mode to 'active-backup' to ensure stability."
+  summary: "The second network interface is down because the configuration refers to a non-existent device name."
+  story: "This server was recently migrated to a new hypervisor. While the primary interface works, the secondary interface (intended for internal traffic) is down. It seems the configuration is looking for 'eth1', but the system has named the hardware differently. You need to find the correct device name and update the configuration."
   objectives:
-    - Inspect the current bonding status in /proc/net/bonding/
-    - Identify that the current mode (802.3ad) is non-functional
-    - Correct the Netplan configuration to use the more compatible 'active-backup' mode
+    - Identify the available network interfaces and their states
+    - Locate the incorrect interface name in the Netplan configuration
+    - Update the configuration to use the correct device name and bring the interface up
 tags:
   - networking
   - linux
