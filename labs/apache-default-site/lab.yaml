@@ -12,6 +12,7 @@ cloud_init: cloud-init.yaml
 verify_script: verify.sh
 exposed_ports:
   - 80
+port_works_initially: true
 
 description:
   summary: "Apache continues to serve the default 'It works!' page instead of the newly configured custom application site."
