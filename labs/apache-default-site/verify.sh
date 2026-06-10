@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if Apache is responding with the Custom App content
-if curl -s http://localhost | grep -q "Custom App is Running"; then
+if curl -s http://localhost | grep -q "BrokenOps Custom App is Running"; then
     echo "SUCCESS: The custom application is being served."
     exit 0
 else
