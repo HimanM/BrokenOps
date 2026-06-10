@@ -1,0 +1,25 @@
+id: static-route-missing
+name: Missing Static Route to Internal Subnet
+category: networking
+difficulty: intermediate
+vm:
+  name: routing-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "The server is unable to communicate with a specific internal subnet (10.50.0.0/24) because a required static route is missing."
+  story: "A new internal microservice has been deployed on the 10.50.0.0/24 network. While this server has general internet access, it cannot reach the new service. Network topology requires an explicit static route via the internal gateway at 192.168.123.1. You need to add this route and make it persistent."
+  objectives:
+    - Identify that the 10.50.0.0/24 subnet is unreachable
+    - Add a temporary static route to restore connectivity
+    - Update the Netplan configuration to ensure the route persists across reboots
+tags:
+  - networking
+  - linux
+  - routing
+  - netplan
