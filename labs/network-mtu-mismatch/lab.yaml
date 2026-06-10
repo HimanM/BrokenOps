@@ -1,0 +1,27 @@
+id: network-mtu-mismatch
+name: MTU Mismatch Causes Connectivity Issues
+category: networking
+difficulty: advanced
+vm:
+  name: mtu-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+
+description:
+  summary: "Network connectivity is intermittent: small packets (pings) succeed, but large requests (HTTP) hang or fail due to an MTU mismatch."
+  story: "A web server has been moved to a new VLAN that uses jumbo frames, but the server's own interface configuration seems to be causing issues. While you can ping external hosts, any attempt to download large files or handle heavy web traffic results in timed-out connections. You need to investigate the Maximum Transmission Unit (MTU) settings."
+  objectives:
+    - Verify that small packets pass while large packets are dropped
+    - Identify the incorrectly configured MTU on the primary interface
+    - Adjust the MTU to the standard or required value to restore full connectivity
+tags:
+  - networking
+  - linux
+  - mtu
+  - performance
