@@ -1,0 +1,25 @@
+#cloud-config
+packages:
+  - nginx
+
+runcmd:
+  - |
+    # Configure a simple API response
+    mkdir -p /var/www/api
+    echo '{"status": "ok", "data": "secret_info"}' > /var/www/api/data.json
+    
+    # Configure Nginx for the API without CORS headers
+    cat <<EOF > /etc/nginx/sites-available/default
+    server {
+        listen 80 default_server;
+        server_name _;
+
+        location /api {
+            alias /var/www/api;
+            default_type application/json;
+            # MISSING: CORS headers
+        }
+    }
+    EOF
+    
+    systemctl restart nginx
