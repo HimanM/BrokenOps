@@ -16,11 +16,14 @@ if [ -z "$SLOW_LOG_PATH" ]; then
 fi
 
 # Ensure the file exists (MySQL should create it on start if directory exists)
-if [ ! -f "$SLOW_LOG_PATH" ]; then
+# We know the path should be /var/log/mysql-slow/slow.log
+TARGET_LOG="/var/log/mysql-slow/slow.log"
+
+if [ ! -f "$TARGET_LOG" ]; then
     # Sometimes MySQL needs a few seconds to create the file after restart
     sleep 5
-    if [ ! -f "$SLOW_LOG_PATH" ]; then
-        echo "FAILURE: Slow query log file does not exist: $SLOW_LOG_PATH"
+    if [ ! -f "$TARGET_LOG" ]; then
+        echo "FAILURE: Slow query log file does not exist at expected path: $TARGET_LOG"
         exit 1
     fi
 fi
