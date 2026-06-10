@@ -5,9 +5,16 @@ packages:
 
 runcmd:
   - |
+    # Load dummy module if possible
+    modprobe dummy numdummies=2 || true
+    
     # Create two dummy interfaces to simulate slaves
-    ip link add eth1 type dummy
-    ip link add eth2 type dummy
+    ip link add eth1 type dummy || true
+    ip link add eth2 type dummy || true
+    
+    # Ensure they are UP
+    ip link set eth1 up
+    ip link set eth2 up
     
     # Configure Netplan with a broken bond (using 802.3ad but missing lacp_rate or using wrong mode)
     # Actually, a common error is using balance-rr without proper switch support or wrong miimon
