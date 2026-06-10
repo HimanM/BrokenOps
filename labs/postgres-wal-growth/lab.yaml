@@ -1,0 +1,25 @@
+id: postgres-wal-growth
+name: PostgreSQL WAL Growth Fills Disk
+category: database
+difficulty: advanced
+vm:
+  name: postgres-wal-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 2048
+  cpu: 2
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "The database partition is rapidly filling up due to excessive PostgreSQL WAL (Write Ahead Log) accumulation."
+  story: "Monitoring has alerted us that the database server is running out of disk space. Investigation shows that /var/lib/postgresql is being consumed by hundreds of WAL segments. You need to identify why PostgreSQL is not recycling these logs and fix the root cause."
+  objectives:
+    - Identify the growth of pg_wal directory
+    - Check for stale replication slots or long-running transactions
+    - Remove the stale replication slot to allow WAL recycling
+tags:
+  - postgresql
+  - database
+  - linux
+  - storage

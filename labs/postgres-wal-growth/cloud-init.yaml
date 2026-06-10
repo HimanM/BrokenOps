@@ -1,0 +1,18 @@
+#cloud-config
+packages:
+  - postgresql
+  - postgresql-contrib
+
+runcmd:
+  - |
+    # Start PostgreSQL
+    systemctl start postgresql
+    
+    # Create a stale physical replication slot
+    # This prevents WAL segments from being removed until the slot is used or dropped
+    sudo -u postgres psql -c "SELECT pg_create_physical_replication_slot('stale_replica');"
+    
+    # Generate some 'fake' WAL traffic to fill things up (simulated)
+    # We'll just create a table and put some data in it
+    sudo -u postgres psql -c "CREATE TABLE filler AS SELECT generate_series(1, 100000) AS id;"
+    sudo -u postgres psql -c "CHECKPOINT;"
