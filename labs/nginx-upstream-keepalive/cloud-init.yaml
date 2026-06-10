@@ -7,23 +7,24 @@ runcmd:
   - |
     # Create a backend that closes connections immediately after 1 request
     cat <<EOF > /usr/local/bin/backend.py
-    import http.server
-    import socketserver
+import http.server
+import socketserver
 
-    PORT = 8081
+PORT = 8081
 
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            # Explicitly tell client to close connection
-            self.send_header('Connection', 'close')
-            self.end_headers()
-            self.wfile.write(b"Backend Response")
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        # Explicitly tell client to close connection
+        self.send_header('Connection', 'close')
+        self.end_headers()
+        self.wfile.write(b"Backend Response")
 
-    # Force the server to NOT use keep-alive
-    http.server.test(Handler, port=PORT, bind="")
-    EOF
+with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    print("serving at port", PORT)
+    httpd.serve_forever()
+EOF
     chmod +x /usr/local/bin/backend.py
     nohup python3 /usr/local/bin/backend.py > /var/log/backend.log 2>&1 &
 
