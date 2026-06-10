@@ -1,13 +1,24 @@
-id: "docker-subnet-conflict"
-name: "Docker Subnet Conflict"
-category: "docker"
-difficulty: "intermediate"
-description:
-  summary: "Containers attached to a custom network are unable to reach external internet services."
+id: docker-subnet-conflict
+name: Docker Subnet Conflict
+category: docker
+difficulty: intermediate
 vm:
-  name: "docker-lab"
+  name: docker-lab
+  image: ubuntu-24.04-base.qcow2
   memory: 1024
   cpu: 1
-  disk: "10G"
-cloud_init: "cloud-init.yaml"
-verify_script: "verify.sh"
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "Containers attached to a custom network are unable to reach external internet services."
+  story: "A developer created a custom Docker network for their application, but noticed that containers on this network cannot reach any external websites. It appears the chosen subnet conflicts with something else in the environment."
+  objectives:
+    - Identify the subnet conflict causing routing issues
+    - Recreate the Docker network with a non-conflicting subnet
+    - Verify that containers can now reach the internet
+tags:
+  - docker
+  - networking
+  - linux
