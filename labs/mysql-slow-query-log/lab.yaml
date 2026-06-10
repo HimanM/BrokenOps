@@ -1,0 +1,25 @@
+id: mysql-slow-query-log
+name: MySQL Slow Query Log Misconfigured
+category: database
+difficulty: beginner
+vm:
+  name: mysql-slow-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 2048
+  cpu: 2
+  disk: 20G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "MySQL fails to start because the slow query log is directed to a non-existent or unwritable directory."
+  story: "The database administrator tried to enable slow query logging to troubleshoot performance issues. However, after applying the changes and attempting to restart MySQL, the service refuses to start. You need to investigate the configuration and fix the log path issue."
+  objectives:
+    - Identify why the MySQL service is failing to start
+    - Locate the misconfigured slow query log path in the MySQL configuration
+    - Fix the directory permissions or path and restore the database service
+tags:
+  - mysql
+  - database
+  - linux
+  - logs

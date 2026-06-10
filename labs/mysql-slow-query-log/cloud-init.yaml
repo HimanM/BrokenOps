@@ -1,0 +1,15 @@
+#cloud-config
+packages:
+  - mysql-server
+
+runcmd:
+  - |
+    # Configure MySQL to use an invalid slow query log path
+    cat <<EOF >> /etc/mysql/mysql.conf.d/mysqld.cnf
+    [mysqld]
+    slow_query_log = 1
+    slow_query_log_file = /var/log/mysql-slow/slow.log
+    EOF
+    
+    # Try to restart MySQL - it should fail because the directory doesn't exist
+    systemctl restart mysql || true
