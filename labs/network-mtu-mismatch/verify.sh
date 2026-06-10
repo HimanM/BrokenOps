@@ -1,10 +1,23 @@
 #!/bin/bash
 
-# Check if eth0 MTU is at least 1500
-MTU_VALUE=$(cat /sys/class/net/eth0/mtu)
+# Find primary interface (usually the one with the default route)
+PRIMARY_IF=$(ip route | grep default | awk '{print $5}' | head -n 1)
+
+if [ -z "$PRIMARY_IF" ]; then
+    # Fallback to eth0 if default route not found
+    PRIMARY_IF="eth0"
+fi
+
+# Check MTU using ip command
+MTU_VALUE=$(ip link show "$PRIMARY_IF" | grep -oP 'mtu \K\d+')
+
+if [ -z "$MTU_VALUE" ]; then
+    echo "FAILURE: Could not determine MTU for interface $PRIMARY_IF."
+    exit 1
+fi
 
 if [ "$MTU_VALUE" -lt 1500 ]; then
-    echo "FAILURE: eth0 MTU is still too low ($MTU_VALUE)."
+    echo "FAILURE: $PRIMARY_IF MTU is still too low ($MTU_VALUE)."
     exit 1
 fi
 
