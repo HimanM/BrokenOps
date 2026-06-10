@@ -12,6 +12,7 @@ cloud_init: cloud-init.yaml
 verify_script: verify.sh
 exposed_ports:
   - 80
+port_works_initially: true
 
 description:
   summary: "Network connectivity is intermittent: small packets (pings) succeed, but large requests (HTTP) hang or fail due to an MTU mismatch."
