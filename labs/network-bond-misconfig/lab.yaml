@@ -1,0 +1,24 @@
+id: network-bond-misconfig
+name: Network Bond Mode Misconfigured
+category: networking
+difficulty: advanced
+vm:
+  name: bond-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "Bonded network interfaces are flapping and dropping traffic due to a mode mismatch."
+  story: "The server team has attempted to set up a high-availability network bond using two interfaces. However, the connection is extremely unstable, and the bond status shows that only one member is active at a time. You need to investigate the Netplan/bonding configuration and fix the mode settings."
+  objectives:
+    - Inspect the current bonding status in /proc/net/bonding/
+    - Identify the conflict between the bond mode and the underlying interface settings
+    - Correct the Netplan configuration to ensure a stable bond
+tags:
+  - networking
+  - linux
+  - netplan

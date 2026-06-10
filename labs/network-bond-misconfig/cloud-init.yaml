@@ -1,0 +1,35 @@
+#cloud-config
+packages:
+  - ifenslave
+  - net-tools
+
+runcmd:
+  - |
+    # Create two dummy interfaces to simulate slaves
+    ip link add eth1 type dummy
+    ip link add eth2 type dummy
+    
+    # Configure Netplan with a broken bond (using 802.3ad but missing lacp_rate or using wrong mode)
+    # Actually, a common error is using balance-rr without proper switch support or wrong miimon
+    cat <<EOF > /etc/netplan/60-bond.yaml
+    network:
+      version: 2
+      renderer: networkd
+      ethernets:
+        eth1:
+          optional: true
+        eth2:
+          optional: true
+      bonds:
+        bond0:
+          interfaces: [eth1, eth2]
+          parameters:
+            mode: active-backup
+            # The 'break': misconfigured primary or missing miimon which causes flapping in some scenarios
+            # But for a clear lab break, we'll use 'mode: active-backup' but tell users it should be '802.3ad'
+            # OR we use '802.3ad' but omit the required LACP settings.
+            primary: eth1
+    EOF
+    
+    # We'll set the requirement to be 'balance-alb' for this specific scenario
+    netplan apply
