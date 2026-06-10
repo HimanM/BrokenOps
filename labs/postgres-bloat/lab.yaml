@@ -1,0 +1,25 @@
+id: postgres-bloat
+name: PostgreSQL Autovacuum Disabled Causes Bloat
+category: database
+difficulty: advanced
+vm:
+  name: postgres-bloat-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 2048
+  cpu: 2
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "Database performance is degrading due to excessive table bloat because autovacuum is disabled."
+  story: "A high-traffic application is experiencing slow queries on its primary data table. Initial investigation shows that the table size is much larger than expected for the amount of data it holds. You need to investigate the PostgreSQL vacuum settings and fix the performance issue."
+  objectives:
+    - Check the current autovacuum settings in PostgreSQL
+    - Identify the table bloat on the 'busy_table'
+    - Enable autovacuum and run manual maintenance to clean up existing bloat
+tags:
+  - postgresql
+  - database
+  - performance
+  - linux
