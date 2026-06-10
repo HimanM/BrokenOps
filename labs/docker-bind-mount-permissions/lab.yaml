@@ -1,16 +1,27 @@
-id: "docker-bind-mount-permissions"
-name: "Docker Bind Mount Permissions"
-category: "docker"
-difficulty: "intermediate"
-description:
-  summary: "Application container cannot write to its data volume due to host permission mismatch"
+id: docker-bind-mount-permissions
+name: Docker Bind Mount Permissions
+category: docker
+difficulty: intermediate
 vm:
-  name: "docker-perm-lab"
+  name: docker-perm-lab
+  image: ubuntu-24.04-base.qcow2
   memory: 2048
   cpu: 2
-  disk: "10G"
-cloud_init: "cloud-init.yaml"
-verify_script: "verify.sh"
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
 exposed_ports:
   - 8080
 port_works_initially: true
+
+description:
+  summary: "Application container cannot write to its data volume due to host permission mismatch"
+  story: "A microservice named 'web-app' is running as a Docker container. It is configured to write heartbeat data to a persistent volume mounted at '/data' inside the container, which maps to '/opt/app-data' on the host. However, the application logs show that it is failing to write to this directory."
+  objectives:
+    - Diagnose why the container cannot write to the mounted volume
+    - Fix the host-side permissions to allow the containerized application to write data
+    - Verify that the heartbeat file is successfully created
+tags:
+  - docker
+  - permissions
+  - linux

@@ -1,13 +1,24 @@
-id: "acl-misconfiguration"
-name: "ACL Misconfiguration"
-category: "linux"
-difficulty: "intermediate"
-description:
-  summary: "An application cannot write to its log directory despite seemingly correct standard permissions."
+id: acl-misconfiguration
+name: ACL Misconfiguration
+category: linux
+difficulty: intermediate
 vm:
-  name: "acl-lab"
+  name: acl-lab
+  image: ubuntu-24.04-base.qcow2
   memory: 1024
   cpu: 1
-  disk: "10G"
-cloud_init: "cloud-init.yaml"
-verify_script: "verify.sh"
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "An application cannot write to its log directory despite seemingly correct standard permissions."
+  story: "A web application running as the 'webapp' user is failing to write its logs to /var/log/webapp. Standard permissions look fine, but a hidden Access Control List (ACL) is blocking the write. You must find and fix it."
+  objectives:
+    - Confirm the write failure as the webapp user
+    - Inspect the directory's extended ACLs
+    - Restore write access for the webapp group via ACLs
+tags:
+  - linux
+  - permissions
+  - acl

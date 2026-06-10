@@ -1,0 +1,27 @@
+id: nginx-bad-gateway
+name: Nginx Bad Gateway
+category: web
+difficulty: beginner
+vm:
+  name: nginx-bad-gateway-vm
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+
+description:
+  summary: "The web server returns a 502 Bad Gateway error. Diagnose the connection issue between Nginx and the upstream application."
+  story: "The company's landing page is showing a '502 Bad Gateway' error. Initial investigations show Nginx is running, but it seems unable to talk to the backend Python application. You need to find the configuration error and fix it."
+  objectives:
+    - Verify the 502 Bad Gateway error
+    - Identify the port mismatch between Nginx and the backend
+    - Update Nginx configuration and restore service
+tags:
+  - nginx
+  - python
+  - networking
+  - web

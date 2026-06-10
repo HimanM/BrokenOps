@@ -1,13 +1,24 @@
-id: "zombie-processes"
-name: "Clean Up Zombie Processes"
-category: "linux"
-difficulty: "intermediate"
-description:
-  summary: "The system has an accumulating number of zombie processes. Identify the bad parent process and clean them up."
+id: zombie-processes
+name: Clean Up Zombie Processes
+category: linux
+difficulty: intermediate
 vm:
-  name: "zombie-lab"
+  name: zombie-lab
+  image: ubuntu-24.04-base.qcow2
   memory: 1024
   cpu: 1
-  disk: "10G"
-cloud_init: "cloud-init.yaml"
-verify_script: "verify.sh"
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "The system has an accumulating number of zombie processes. Identify the bad parent process and clean them up."
+  story: "A monitoring alert indicates an increasing number of zombie (defunct) processes. While they don't use much memory, they are filling up the process table. You need to find which script is creating them without reaping them and stop it."
+  objectives:
+    - Identify zombie processes in the process table
+    - Find the parent process responsible for the zombies
+    - Terminate the parent process to allow the system to reap the zombies
+tags:
+  - linux
+  - processes
+  - python
