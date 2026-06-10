@@ -1,0 +1,29 @@
+#cloud-config
+packages:
+  - docker.io
+  - squid
+
+runcmd:
+  - |
+    # Setup a local dummy proxy on port 3128
+    systemctl start squid
+    
+    # Configure a rule that blocks direct external access for the docker user
+    # (Simulated environment: we'll just fail the pull if proxy isn't set)
+    # For the lab, we want the pull to fail. We'll simulate this by 
+    # ensuring Docker doesn't have the proxy environment variables.
+    
+    # Pre-pull an image to make it fast later, then remove it
+    docker pull alpine:latest
+    docker rmi alpine:latest
+    
+    # We'll mock the failure by pointing Docker to a non-existent proxy initially
+    mkdir -p /etc/systemd/system/docker.service.d
+    cat <<EOF > /etc/systemd/system/docker.service.d/http-proxy.conf
+    [Service]
+    Environment="HTTP_PROXY=http://127.0.0.1:9999"
+    Environment="HTTPS_PROXY=http://127.0.0.1:9999"
+    EOF
+    
+    systemctl daemon-reload
+    systemctl restart docker
