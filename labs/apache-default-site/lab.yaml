@@ -1,0 +1,27 @@
+id: apache-default-site
+name: Apache Serves Default Site Instead of Custom Site
+category: web
+difficulty: beginner
+vm:
+  name: apache-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+
+description:
+  summary: "Apache continues to serve the default 'It works!' page instead of the newly configured custom application site."
+  story: "A web developer deployed a custom application on Apache and enabled the new virtual host configuration. However, when visiting the server's IP address, they still see the default Ubuntu Apache welcome page. You need to investigate why the custom site isn't taking precedence."
+  objectives:
+    - Verify that the default Apache page is being served
+    - Identify the virtual host priority issue
+    - Disable the default site or adjust configuration so the custom app is served
+tags:
+  - apache
+  - web
+  - linux
+  - networking
