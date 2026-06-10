@@ -177,6 +177,7 @@ export default function LabView() {
     async (action: 'launch' | 'stop' | 'reset') => {
       setActionLoading(action);
       if (action === 'launch' || action === 'reset') setProvisioningStatus('launching');
+      if (action === 'stop') setProvisioningStatus('idle');
 
       try {
         const method = action === 'stop' ? 'DELETE' : 'POST';
