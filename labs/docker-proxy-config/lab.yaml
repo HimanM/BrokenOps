@@ -1,0 +1,25 @@
+id: docker-proxy-config
+name: Docker Pulls Fail Behind Corporate Proxy
+category: docker
+difficulty: intermediate
+vm:
+  name: docker-proxy-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 2048
+  cpu: 2
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "Docker is unable to pull images even though the host has internet access via a corporate proxy."
+  story: "The company has moved all servers behind a mandatory corporate proxy. While you can curl external websites from the shell, Docker pulls are timing out. You need to configure the Docker daemon to use the proxy for its network requests."
+  objectives:
+    - Identify that Docker pulls are failing due to connectivity issues
+    - Configure the Docker daemon with the correct proxy environment variables
+    - Verify that Docker can successfully pull an image (simulated via a local proxy check or configuration assertion)
+tags:
+  - docker
+  - networking
+  - linux
+  - proxy
