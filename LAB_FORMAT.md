@@ -54,6 +54,28 @@ Recommended checklist before opening a PR with exposed ports:
 3. Confirm the browser/Open Port path works after the solution, not just a local shell curl.
 4. Keep `exposed_ports` in `lab.yaml` when the UI should show the port; do not remove it just to make CI pass.
 
+### `initial_access` (Optional)
+
+Determines the privilege level of the SSH session presented to the player in the web terminal.
+
+- **`full`** (default): The terminal connects as `root` with full privileges. This is the standard behavior for all existing labs.
+- **`restricted`**: The terminal connects as a non-privileged user (`opsuser`). The player must exploit a misconfiguration (e.g., a writable sensitive file, a setuid binary, or an overly permissive sudo rule) to escalate to root.
+
+When `initial_access: restricted` is set, the backend automatically:
+1. Creates an `opsuser` user in cloud-init with the same SSH key used for `root`.
+2. Connects the web terminal as `opsuser` instead of `root`.
+3. Continues to run `verify.sh` and `solution.sh` as `root` internally (backend bypass), so CI pipelines are unaffected.
+
+**Example:**
+```yaml
+initial_access: restricted
+```
+
+**Important notes for restricted labs:**
+- The lab's `cloud-init.yaml` must intentionally break root access (e.g., change the root password to a random value, remove `opsuser` from the `sudo` group).
+- The lab must provide a realistic escalation path (e.g., `sudo` misconfiguration, writable `/etc/passwd`, or a SUID binary).
+- `verify.sh` should assert that the player has successfully restored normal access (e.g., `opsuser` is back in the `sudo` group and `/etc/sudoers` is valid).
+
 ## 2. `cloud-init.yaml` (Required)
 
 This file tells the `ubuntu-24.04-base.qcow2` image how to configure itself on first boot. Use this to intentionally break the system.
