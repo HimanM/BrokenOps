@@ -1,0 +1,70 @@
+name: Lab Idea
+about: Propose a new BrokenOps troubleshooting lab.
+title: "[Lab Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your idea for a new lab. A great lab focuses on a single, realistic failure that a junior engineer can troubleshoot in a VM.
+  - type: input
+    id: lab-name
+    attributes:
+      label: Lab name
+      description: A short, descriptive name.
+      placeholder: e.g., "Broken Kubernetes Ingress"
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What domain does this lab belong to?
+      options:
+        - linux
+        - networking
+        - database
+        - web
+        - docker
+        - cloud
+        - security
+        - ci-cd
+        - kubernetes
+        - monitoring
+        - storage
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      options:
+        - beginner
+        - intermediate
+        - advanced
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario / Story
+      description: What went wrong? Who broke it? Why?
+      placeholder: A developer pushed a change that broke...
+    validations:
+      required: true
+  - type: textarea
+    id: break-mechanism
+    attributes:
+      label: How to break it
+      description: Describe the cloud-init commands or misconfigurations needed to put the VM in a broken state.
+      placeholder: sed -i 's/listen 80/listen 80808/' /etc/nginx/sites-enabled/default
+  - type: textarea
+    id: fix-steps
+    attributes:
+      label: Solution steps
+      description: High-level steps to fix the problem.
+  - type: textarea
+    id: verify
+    attributes:
+      label: Verification idea
+      description: How would verify.sh check that the lab is solved?

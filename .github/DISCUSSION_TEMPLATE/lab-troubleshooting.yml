@@ -1,0 +1,39 @@
+name: Lab is broken or misleading
+title: "[Lab Report] "
+about: Report an issue with an existing lab (unclear instructions, broken cloud-init, misleading solution, etc.)
+body:
+  - type: input
+    id: lab-id
+    attributes:
+      label: Lab ID
+      placeholder: e.g., nginx-broken
+    validations:
+      required: true
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue type
+      options:
+        - cloud-init does not break the environment
+        - verify.sh is incorrect
+        - solution.sh does not fix the lab
+        - misleading or unclear instructions
+        - conceptual error in question.md or solution.md
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Explain what's wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
