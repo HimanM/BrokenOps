@@ -9,8 +9,9 @@ fi
 # THE REAL TEST: Check the iptables rule order
 # We want to ensure that the ACCEPT rule for port 80 comes BEFORE any DROP rule that would match it.
 # We'll check the rule numbers.
-DROP_LINE=$(iptables -L INPUT --line-numbers -n | grep "DROP" | grep "dpts:80:100" | awk '{print $1}')
-ACCEPT_LINE=$(iptables -L INPUT --line-numbers -n | grep "ACCEPT" | grep "dpt:80" | awk '{print $1}')
+# We use head -n 1 to ensure we only get one line in case of multiple matches
+DROP_LINE=$(iptables -L INPUT --line-numbers -n | grep "DROP" | grep "dpts:80:100" | awk '{print $1}' | head -n 1)
+ACCEPT_LINE=$(iptables -L INPUT --line-numbers -n | grep "ACCEPT" | grep "dpt:80" | awk '{print $1}' | head -n 1)
 
 if [ -z "$DROP_LINE" ]; then
     # If there's no drop rule, it's 'fixed' or never broken
