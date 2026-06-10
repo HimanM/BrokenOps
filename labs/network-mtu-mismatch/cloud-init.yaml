@@ -5,28 +5,24 @@ packages:
 
 runcmd:
   - |
-    # Configure eth0 with a very low MTU to trigger failures for standard packets
-    # In a real cloud env, this might break SSH, but we'll try to set it low but 
-    # large enough for small pings/SSH packets. Standard MTU is 1500.
-    # 576 is the minimum IPv4 MTU. 
-    ifconfig eth0 mtu 600
+    # Find primary interface
+    PRIMARY_IF=$(ip route | grep default | awk '{print $5}' | head -n 1)
+    if [ -z "$PRIMARY_IF" ]; then PRIMARY_IF="eth0"; fi
     
-    # Alternatively, use ip command
-    # ip link set dev eth0 mtu 600
+    # Configure with a very low MTU
+    ip link set dev "$PRIMARY_IF" mtu 600
     
-    # We want to ensure it's persistent in Netplan for the user to find
+    # Create a persistent Netplan config for the player to find
+    # We use a broad match for the interface to ensure it applies
     cat <<EOF > /etc/netplan/60-mtu.yaml
     network:
       version: 2
       renderer: networkd
       ethernets:
-        eth0:
+        $PRIMARY_IF:
           dhcp4: true
           mtu: 600
     EOF
     
     # Create a large file for testing downloads
     dd if=/dev/urandom of=/var/www/html/largefile.bin bs=1M count=10
-    
-    # We don't netplan apply here because it might kill our cloud-init/SSH session
-    # We'll just leave the config file for them to find and the live state broken.

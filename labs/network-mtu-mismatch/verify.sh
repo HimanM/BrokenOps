@@ -1,12 +1,8 @@
 #!/bin/bash
 
-# Find primary interface (usually the one with the default route)
+# Find primary interface
 PRIMARY_IF=$(ip route | grep default | awk '{print $5}' | head -n 1)
-
-if [ -z "$PRIMARY_IF" ]; then
-    # Fallback to eth0 if default route not found
-    PRIMARY_IF="eth0"
-fi
+if [ -z "$PRIMARY_IF" ]; then PRIMARY_IF="eth0"; fi
 
 # Check MTU using ip command
 MTU_VALUE=$(ip link show "$PRIMARY_IF" | grep -oP 'mtu \K\d+')
@@ -22,10 +18,10 @@ if [ "$MTU_VALUE" -lt 1500 ]; then
 fi
 
 # Try to download the large file locally to verify it doesn't hang
-if curl -s http://localhost/largefile.bin -o /dev/null; then
+if curl -s --max-time 10 http://localhost/largefile.bin -o /dev/null; then
     echo "SUCCESS: MTU is correct and large packets are passing."
     exit 0
 else
-    echo "FAILURE: Large file download failed even with correct MTU."
+    echo "FAILURE: Large file download failed or timed out even with correct MTU."
     exit 1
 fi
