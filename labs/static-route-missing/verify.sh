@@ -2,12 +2,12 @@
 
 # Check if a route to 10.50.0.0/24 exists via 192.168.123.1
 if ip route show 10.50.0.0/24 | grep -q "via 192.168.123.1"; then
-    # Also verify it's in Netplan
-    if grep -q "10.50.0.0/24" /etc/netplan/*.yaml; then
+    # Also verify it's in Netplan - we check for the destination and gateway in any Netplan file
+    if grep -r "10.50.0.0/24" /etc/netplan/ && grep -r "192.168.123.1" /etc/netplan/; then
         echo "SUCCESS: Static route is configured and persistent."
         exit 0
     else
-        echo "FAILURE: Route exists in live state but is not persistent in Netplan."
+        echo "FAILURE: Route exists in live state but is not found in Netplan configurations."
         exit 1
     fi
 else
