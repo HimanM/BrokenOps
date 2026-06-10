@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # 1. Check if Nginx configuration contains the necessary directives for keepalive
-if ! grep -q "proxy_http_version 1.1;" /etc/nginx/sites-available/default; then
-    echo "FAILURE: proxy_http_version 1.1 is missing."
+# We use grep -v to ignore commented out lines and ensure the directive is actually there
+if ! grep "proxy_http_version 1.1;" /etc/nginx/sites-available/default | grep -qv "#"; then
+    echo "FAILURE: proxy_http_version 1.1 is missing or commented out."
     exit 1
 fi
 
-if ! grep -q "proxy_set_header Connection \"\";" /etc/nginx/sites-available/default; then
-    echo "FAILURE: proxy_set_header Connection \"\"; is missing."
+if ! grep "proxy_set_header Connection \"\";" /etc/nginx/sites-available/default | grep -qv "#"; then
+    echo "FAILURE: proxy_set_header Connection \"\"; is missing or commented out."
     exit 1
 fi
 
