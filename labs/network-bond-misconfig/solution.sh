@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# Update Netplan configuration to use active-backup mode
+# 1. Update the live configuration
+# We must take the bond down to change the mode
+ip link set bond0 down
+ip link set bond0 type bond mode active-backup
+ip link set bond0 up
+
+# 2. Update the persistent Netplan configuration
 cat <<EOF > /etc/netplan/60-bond.yaml
 network:
   version: 2
@@ -19,5 +25,5 @@ network:
         primary: eth1
 EOF
 
-# Apply the new configuration
+# Apply persistent config
 netplan apply

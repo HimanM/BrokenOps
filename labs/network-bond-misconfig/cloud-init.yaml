@@ -5,17 +5,28 @@ packages:
 
 runcmd:
   - |
-    # Load bonding and dummy modules
+    # Attempt to load bonding module
     modprobe bonding || true
-    modprobe dummy numdummies=2 || true
+    
+    # Create the bond0 interface manually to ensure it exists
+    ip link add bond0 type bond
+    ip link set bond0 type bond mode 802.3ad
     
     # Create two dummy interfaces
+    modprobe dummy numdummies=2 || true
     ip link add eth1 type dummy || true
     ip link add eth2 type dummy || true
+    
+    # Enslave them
+    ip link set eth1 master bond0
+    ip link set eth2 master bond0
+    
+    # Bring everything up
     ip link set eth1 up
     ip link set eth2 up
+    ip link set bond0 up
     
-    # Configure Netplan with '802.3ad' (the break)
+    # Create a persistent Netplan config for the player to find
     cat <<EOF > /etc/netplan/60-bond.yaml
     network:
       version: 2
@@ -32,5 +43,3 @@ runcmd:
             mode: 802.3ad
             mii-monitor-interval: 100
     EOF
-    
-    netplan apply
