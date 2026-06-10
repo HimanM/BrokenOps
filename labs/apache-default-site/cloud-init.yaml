@@ -1,0 +1,25 @@
+#cloud-config
+packages:
+  - apache2
+
+runcmd:
+  - |
+    # Create custom application directory and index
+    mkdir -p /var/www/custom-app
+    echo "<h1>BrokenOps Custom App is Running</h1>" > /var/www/custom-app/index.html
+    
+    # Create custom virtual host configuration
+    cat <<EOF > /etc/apache2/sites-available/custom-app.conf
+    <VirtualHost *:80>
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/custom-app
+        ErrorLog \${APACHE_LOG_DIR}/custom-error.log
+        CustomLog \${APACHE_LOG_DIR}/custom-access.log combined
+    </VirtualHost>
+    EOF
+    
+    # Enable the custom site
+    a2ensite custom-app.conf
+    
+    # Reload Apache
+    systemctl reload apache2
