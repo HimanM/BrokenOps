@@ -1,13 +1,25 @@
-id: "mysql-auth-plugin"
-name: "MySQL Authentication Plugin Mismatch"
-category: "database"
-difficulty: "intermediate"
-description:
-  summary: "An application is unable to authenticate with the MySQL database because the user account is configured with an incompatible authentication plugin."
+id: mysql-auth-plugin
+name: MySQL Authentication Plugin Mismatch
+category: database
+difficulty: intermediate
 vm:
-  name: "mysql-auth-lab"
+  name: mysql-auth-lab
+  image: ubuntu-24.04-base.qcow2
   memory: 2048
   cpu: 2
-  disk: "20G"
-cloud_init: "cloud-init.yaml"
-verify_script: "verify.sh"
+  disk: 20G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "An application is unable to authenticate with the MySQL database because the user account is configured with an incompatible authentication plugin."
+  story: "A legacy application is trying to connect to a new MySQL 8.0 instance. However, the connection fails with an authentication error. It appears the default authentication plugin used by MySQL 8.0 is not supported by the application's client library."
+  objectives:
+    - Identify the authentication plugin mismatch error
+    - Change the MySQL user's authentication plugin to 'mysql_native_password'
+    - Verify that the application can now successfully authenticate
+tags:
+  - mysql
+  - database
+  - linux
+  - security
