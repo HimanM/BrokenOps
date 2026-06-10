@@ -5,19 +5,17 @@ packages:
 
 runcmd:
   - |
-    # Load dummy module if possible
+    # Load bonding and dummy modules
+    modprobe bonding || true
     modprobe dummy numdummies=2 || true
     
-    # Create two dummy interfaces to simulate slaves
+    # Create two dummy interfaces
     ip link add eth1 type dummy || true
     ip link add eth2 type dummy || true
-    
-    # Ensure they are UP
     ip link set eth1 up
     ip link set eth2 up
     
-    # Configure Netplan with a broken bond (using 802.3ad but missing lacp_rate or using wrong mode)
-    # Actually, a common error is using balance-rr without proper switch support or wrong miimon
+    # Configure Netplan with '802.3ad' (the break)
     cat <<EOF > /etc/netplan/60-bond.yaml
     network:
       version: 2
@@ -31,12 +29,8 @@ runcmd:
         bond0:
           interfaces: [eth1, eth2]
           parameters:
-            mode: active-backup
-            # The 'break': misconfigured primary or missing miimon which causes flapping in some scenarios
-            # But for a clear lab break, we'll use 'mode: active-backup' but tell users it should be '802.3ad'
-            # OR we use '802.3ad' but omit the required LACP settings.
-            primary: eth1
+            mode: 802.3ad
+            mii-monitor-interval: 100
     EOF
     
-    # We'll set the requirement to be 'balance-alb' for this specific scenario
     netplan apply

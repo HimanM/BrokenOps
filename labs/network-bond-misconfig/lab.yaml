@@ -12,12 +12,12 @@ cloud_init: cloud-init.yaml
 verify_script: verify.sh
 
 description:
-  summary: "Bonded network interfaces are flapping and dropping traffic due to a mode mismatch."
-  story: "The server team has attempted to set up a high-availability network bond using two interfaces. However, the connection is extremely unstable, and the bond status shows that only one member is active at a time. You need to investigate the Netplan/bonding configuration and fix the mode settings."
+  summary: "Bonded network interfaces are using an unsupported mode for the current switch infrastructure."
+  story: "The server team has attempted to set up a high-availability network bond, but they used a mode that requires special switch support (802.3ad) which isn't available. You need to change the bonding mode to 'active-backup' to ensure stability."
   objectives:
     - Inspect the current bonding status in /proc/net/bonding/
-    - Identify the conflict between the bond mode and the underlying interface settings
-    - Correct the Netplan configuration to ensure a stable bond
+    - Identify that the current mode (802.3ad) is non-functional
+    - Correct the Netplan configuration to use the more compatible 'active-backup' mode
 tags:
   - networking
   - linux
