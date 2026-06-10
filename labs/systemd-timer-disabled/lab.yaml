@@ -2,7 +2,6 @@ id: systemd-timer-disabled
 name: Systemd Timer Never Runs After Reboot
 category: linux
 difficulty: intermediate
-provider: libvirt
 vm:
   name: systemd-timer-lab
   image: ubuntu-24.04-base.qcow2

@@ -2,7 +2,6 @@ id: fstab-broken
 name: Filesystem Missing After Reboot
 category: linux
 difficulty: intermediate
-provider: libvirt
 vm:
   name: fstab-lab
   image: ubuntu-24.04-base.qcow2

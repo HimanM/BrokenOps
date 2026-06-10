@@ -2,7 +2,6 @@ id: swap-broken
 name: Swap File Not Persistent
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: swap-lab
   image: ubuntu-24.04-base.qcow2

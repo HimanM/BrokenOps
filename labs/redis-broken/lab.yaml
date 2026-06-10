@@ -2,7 +2,6 @@ id: redis-broken
 name: Redis Database Crash
 category: databases
 difficulty: intermediate
-provider: libvirt
 vm:
   name: redis-lab
   image: ubuntu-24.04-base.qcow2

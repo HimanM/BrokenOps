@@ -2,7 +2,6 @@ id: password-aging-broken
 name: "User Locked by Password Aging"
 category: linux
 difficulty: intermediate
-provider: libvirt
 vm:
   name: password-lab
   image: ubuntu-24.04-base.qcow2

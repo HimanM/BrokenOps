@@ -1,6 +1,6 @@
 id: "redis-persistence-permissions"
 name: "Redis Persistence Failure"
-category: "databases"
+category: "database"
 difficulty: "intermediate"
 description:
   summary: "Redis successfully processes client commands but cannot persist data to disk due to a permissions issue on the dump directory."

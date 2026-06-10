@@ -2,7 +2,6 @@ id: nginx-upstream-dns-change
 name: Nginx Reverse Proxy Breaks After Upstream DNS Change
 category: web
 difficulty: advanced
-provider: libvirt
 vm:
   name: nginx-dns-lab
   image: ubuntu-24.04-base.qcow2

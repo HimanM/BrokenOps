@@ -2,7 +2,6 @@ id: lvm-data-full
 name: "LVM Data Volume Full"
 category: linux
 difficulty: advanced
-provider: libvirt
 vm:
   name: lvm-lab
   image: ubuntu-24.04-base.qcow2

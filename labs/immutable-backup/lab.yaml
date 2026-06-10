@@ -2,7 +2,6 @@ id: immutable-backup
 name: Backup Fails Due to Immutable File
 category: linux
 difficulty: intermediate
-provider: libvirt
 vm:
   name: backup-lab
   image: ubuntu-24.04-base.qcow2

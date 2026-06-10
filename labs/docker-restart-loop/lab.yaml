@@ -2,7 +2,6 @@ id: docker-restart-loop
 name: Container Restart Loop
 category: containers
 difficulty: intermediate
-provider: libvirt
 vm:
   name: docker-restart-lab
   image: ubuntu-24.04-base.qcow2

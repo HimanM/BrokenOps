@@ -2,7 +2,6 @@ id: run-directory-missing
 name: Application Fails to Start Because /run Directory Is Not Created at Boot
 category: linux
 difficulty: intermediate
-provider: libvirt
 vm:
   name: run-directory-lab
   image: ubuntu-24.04-base.qcow2

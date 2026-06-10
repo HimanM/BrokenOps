@@ -2,7 +2,6 @@ id: sticky-bit-missing
 name: Sticky Bit Missing on Shared Directory
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: sticky-lab
   image: ubuntu-24.04-base.qcow2

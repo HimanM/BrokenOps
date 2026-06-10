@@ -2,7 +2,6 @@ id: full-disk
 name: The Full Filesystem
 category: linux
 difficulty: beginner
-provider: libvirt
 vm:
   name: full-disk-lab
   image: ubuntu-24.04-base.qcow2

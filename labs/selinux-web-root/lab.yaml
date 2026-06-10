@@ -2,7 +2,6 @@ id: selinux-web-root
 name: "Broken SELinux Context on Web Root"
 category: web
 difficulty: intermediate
-provider: libvirt
 vm:
   name: selinux-web
   image: ubuntu-24.04-base.qcow2
