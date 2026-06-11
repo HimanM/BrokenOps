@@ -42,3 +42,5 @@ runcmd:
           - backend
     EOF
   - chown -R root:root /opt/brokenops/compose-service-dns-breaks-after-rename
+  - nohup sh -c 'python3 -m http.server 8000 --directory /opt/brokenops/compose-service-dns-breaks-after-rename/backend >/tmp/brokenops-compose-backend.log 2>&1' >/dev/null 2>&1 &
+  - nohup sh -c 'python3 -m http.server 8080 --directory /opt/brokenops/compose-service-dns-breaks-after-rename/proxy >/tmp/brokenops-compose-proxy.log 2>&1' >/dev/null 2>&1 &
