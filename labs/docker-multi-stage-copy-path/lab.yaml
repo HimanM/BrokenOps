@@ -1,0 +1,13 @@
+id: "docker-multi-stage-copy-path"
+name: "Docker Multi-Stage COPY Path"
+category: "docker"
+difficulty: "intermediate"
+description:
+  summary: "A multi-stage Docker build fails because the final stage copies from the wrong artifact path."
+vm:
+  name: "docker-copy-lab"
+  memory: 2048
+  cpu: 2
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
