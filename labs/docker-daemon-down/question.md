@@ -1,10 +1,10 @@
 ### Scenario
-The DevOps team recently tried to standardize Docker configurations across all servers. After applying a new `daemon.json` configuration file, the Docker daemon failed to start on this host. This has caused all containerized services to go offline.
+The host is reachable, but Docker commands hang because the daemon was left in a broken state after a previous maintenance change. The team cannot deploy containers until the service is healthy again. The fix needs to restore the daemon without disturbing the rest of the machine. The on-call engineer needs to bring it back without a full rebuild.
 
 ### Objective
-Diagnose why the Docker daemon is failing to start and restore service.
+Determine why the Docker daemon will not start and restore normal container management on the host.
 
 ### Useful Commands
-- `systemctl status docker`
-- `journalctl -u docker`
+- `sudo systemctl status docker`
+- `sudo journalctl -u docker`
 - `docker ps`

@@ -110,25 +110,34 @@ Markdown files containing the task description and the solution guide.
 ### `question.md` Template
 ```markdown
 ### Scenario
-[A brief story or context about the failure]
+[A short real-world story that explains who noticed the issue and what broke]
 
 ### Objective
-[A bulleted list or paragraph describing what needs to be accomplished]
+[What the learner must restore, diagnose, or verify]
 
 ### Useful Commands
 - `command1`
 - `command2`
+- `command3`
 ```
 
 ### `solution.md` Template
 ```markdown
 ### The Issue
-[A brief explanation of what was actually broken]
+[A brief explanation of the root cause]
 
 ### Step-by-Step Fix
-1. **[Action name]**:
-   ```bash
-   [command]
-   ```
-2. ...
+1. **[Inspect / confirm / diagnose]**:
+   - Explain what to look at and why.
+   - Include a command only when it helps the learner confirm the state.
+2. **[Make the fix manually]**:
+   - Prefer a step-by-step edit or service action.
+   - If you include a command, keep it as an optional helper rather than a full automation script.
+3. **[Verify]**:
+   - Show the expected outcome after the fix.
 ```
+
+### Writing style notes
+- Keep `question.md` scenarios concrete and realistic.
+- Use consistent headings across labs.
+- Avoid turning `solution.md` into a shell script; it should read like a guided fix, with optional commands such as `sed` when they help explain the manual step.
