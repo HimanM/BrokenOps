@@ -1,16 +1,11 @@
 ### Scenario
-
-A developer was trying to configure the Docker daemon to use a custom data root (`/var/lib/docker_custom`), but something went wrong and now the `docker` service refuses to start. 
+The development team standardized Docker settings across their hosts, but the daemon will not start after a configuration change. Container workloads are offline until the daemon configuration is corrected. Container workloads are offline until the daemon configuration is corrected, so this host needs a quick but careful recovery.
 
 ### Objective
-
-
-Your task is to:
-1. Locate the Docker daemon configuration file.
-2. Identify why it is causing the daemon to crash.
-3. Fix the issue and ensure the `docker` service successfully starts.
+Diagnose the Docker daemon failure, fix the configuration problem, and bring the service back online.
 
 ### Useful Commands
-- `systemctl status docker`
-- `dockerd --validate`
-- `journalctl -u docker.service`
+- `sudo systemctl status docker`
+- `sudo journalctl -u docker -n 50`
+- `sudo dockerd --validate`
+- `cat /etc/docker/daemon.json`
