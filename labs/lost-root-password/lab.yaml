@@ -1,0 +1,25 @@
+id: lost-root-password
+name: Lost Root Password
+category: linux
+difficulty: intermediate
+provider: libvirt
+initial_access: restricted
+vm:
+  name: lost-root-password-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "The root password is lost and sudo access is restricted. Regain root privileges."
+  story: "A new sysadmin changed the root password and forgot it. You have SSH access as the opsuser user but cannot use sudo. Find a way to escalate your privileges and restore proper access."
+  objectives:
+    - Identify the privilege escalation vector
+    - Gain root access
+    - Fix the system to restore normal sudo access
+tags:
+  - linux
+  - security
+  - privilege-escalation

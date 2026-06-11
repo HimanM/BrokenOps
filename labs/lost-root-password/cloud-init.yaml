@@ -1,0 +1,14 @@
+#cloud-config
+packages:
+  - sudo
+
+runcmd:
+  - echo "root:$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)" | chpasswd
+  - id opsuser || useradd -m -s /bin/bash opsuser
+  - echo "opsuser:opsuser123" | chpasswd
+  - gpasswd -d opsuser sudo 2>/dev/null || true
+  - gpasswd -d opsuser admin 2>/dev/null || true
+  - usermod -G opsuser opsuser
+  - 'echo "opsuser ALL=(root) NOPASSWD: /usr/bin/find" >> /etc/sudoers'
+  - echo "ACCESS_REGAINED" > /root/flag.txt
+  - chmod 600 /root/flag.txt
