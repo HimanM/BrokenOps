@@ -1,0 +1,47 @@
+#cloud-config
+packages:
+  - docker.io
+  - docker-compose-plugin
+runcmd:
+  - mkdir -p /opt/brokenops/compose-service-dns-breaks-after-rename/backend
+  - mkdir -p /opt/brokenops/compose-service-dns-breaks-after-rename/proxy
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/backend/index.html
+    <h1>BrokenOps backend is alive</h1>
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/backend/Dockerfile
+    FROM python:3.11-alpine
+    WORKDIR /srv
+    COPY index.html /srv/index.html
+    CMD ["python3", "-m", "http.server", "8000", "--directory", "/srv"]
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/proxy/index.html
+    <h1>BrokenOps proxy is serving content</h1>
+    <p>Upstream host is configured separately.</p>
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/proxy/Dockerfile
+    FROM python:3.11-alpine
+    WORKDIR /srv
+    COPY index.html /srv/index.html
+    ENV UPSTREAM_HOST=web
+    CMD ["python3", "-m", "http.server", "8080", "--directory", "/srv"]
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/compose.yml
+    services:
+      backend:
+        build: ./backend
+      proxy:
+        build: ./proxy
+        ports:
+          - "8080:8080"
+        depends_on:
+          - backend
+    EOF
+  - chown -R root:root /opt/brokenops/compose-service-dns-breaks-after-rename
+  - docker rm -f brokenops-compose-backend brokenops-compose-proxy >/dev/null 2>&1 || true
+  - docker run -d --name brokenops-compose-backend -p 8000:80 -v /opt/brokenops/compose-service-dns-breaks-after-rename/backend/index.html:/usr/share/nginx/html/index.html:ro nginx:alpine >/tmp/brokenops-compose-backend.log 2>&1 || true
+  - docker run -d --name brokenops-compose-proxy -p 8080:80 -v /opt/brokenops/compose-service-dns-breaks-after-rename/proxy/index.html:/usr/share/nginx/html/index.html:ro nginx:alpine >/tmp/brokenops-compose-proxy.log 2>&1 || true
