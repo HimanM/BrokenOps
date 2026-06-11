@@ -75,8 +75,11 @@ def main():
         target_labs = args.labs.split(',')
         labs = [lab for lab in labs if lab["id"] in target_labs]
         if not labs:
+            available = ", ".join(sorted(lab.get("id", "<unknown>") for lab in resp.json()))
             print(f"None of the target labs ({args.labs}) were found in the API.")
-            sys.exit(0)
+            if available:
+                print(f"Available labs: {available}")
+            sys.exit(1)
             
     if not labs:
         print("No labs found.")
