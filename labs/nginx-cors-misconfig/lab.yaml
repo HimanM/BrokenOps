@@ -1,0 +1,28 @@
+id: nginx-cors-misconfig
+name: CORS Policy Misconfiguration
+category: web
+difficulty: intermediate
+vm:
+  name: nginx-cors-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+port_works_initially: true
+
+description:
+  summary: "Frontend application is unable to call the backend API due to missing or incorrect CORS headers."
+  story: "A new frontend application has been deployed on a separate domain. However, users are reporting that the application is broken. Browser console logs show CORS errors when attempting to fetch data from the API. You need to configure Nginx to provide the correct CORS headers, including handling preflight OPTIONS requests."
+  objectives:
+    - Identify the missing CORS headers using simulated browser requests
+    - Configure Nginx to allow the specific frontend origin and handle preflight requests
+    - Verify that API requests now include the necessary 'Access-Control-Allow-Origin' headers
+tags:
+  - nginx
+  - web
+  - security
+  - networking
