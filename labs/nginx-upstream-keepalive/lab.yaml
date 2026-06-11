@@ -1,0 +1,28 @@
+id: nginx-upstream-keepalive
+name: Nginx Upstream Keepalive Misconfiguration
+category: web
+difficulty: advanced
+vm:
+  name: nginx-keepalive-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+port_works_initially: true
+
+description:
+  summary: "Intermittent 502 errors appear because the Nginx upstream keepalive is misconfigured."
+  story: "The company's API is occasionally returning '502 Bad Gateway' errors under moderate load. Logs suggest that Nginx is trying to reuse backend connections that have already been closed. You need to fix the upstream keepalive configuration to ensure reliable communication with the backend."
+  objectives:
+    - Identify the intermittent 502 errors in the Nginx logs
+    - Locate the misconfigured upstream keepalive settings in Nginx
+    - Fix the proxy headers and protocol version to correctly support keepalive connections
+tags:
+  - nginx
+  - networking
+  - web
+  - performance
