@@ -1,0 +1,38 @@
+#cloud-config
+packages:
+  - docker.io
+  - docker-compose-plugin
+runcmd:
+  - mkdir -p /opt/brokenops/compose-service-dns-breaks-after-rename/backend
+  - mkdir -p /opt/brokenops/compose-service-dns-breaks-after-rename/proxy
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/backend/index.html
+    <h1>BrokenOps backend is alive</h1>
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/backend/Dockerfile
+    FROM python:3.11-alpine
+    WORKDIR /srv
+    COPY index.html /srv/index.html
+    CMD ["python3", "-m", "http.server", "8000", "--directory", "/srv"]
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/proxy/Dockerfile
+    FROM python:3.11-alpine
+    RUN apk add --no-cache curl
+    WORKDIR /srv
+    CMD ["sh", "-c", "curl -fsS http://web:8000/ > /srv/index.html && python3 -m http.server 8080 --directory /srv"]
+    EOF
+  - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/compose.yml
+    services:
+      backend:
+        build: ./backend
+      proxy:
+        build: ./proxy
+        ports:
+          - "8080:8080"
+        depends_on:
+          - backend
+    EOF
+  - chown -R root:root /opt/brokenops/compose-service-dns-breaks-after-rename
