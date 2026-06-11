@@ -1,0 +1,33 @@
+#cloud-config
+packages:
+  - samba
+  - smbclient
+
+runcmd:
+  - |
+    # Create the engineering group and user
+    groupadd engineers
+    useradd -m -G engineers devuser
+    # Set linux password
+    echo "devuser:BrokenOps123" | chpasswd
+    # Set samba password
+    (echo "BrokenOps123"; echo "BrokenOps123") | smbpasswd -a devuser
+    
+    # Create the share directory
+    mkdir -p /srv/samba/engineering
+    chown -R root:engineers /srv/samba/engineering
+    chmod -R 0770 /srv/samba/engineering
+    echo "Top Secret Plans" > /srv/samba/engineering/plans.txt
+    
+    # Configure Samba with the WRONG group name in valid users
+    cat <<EOF >> /etc/samba/smb.conf
+    
+    [engineering]
+       path = /srv/samba/engineering
+       browseable = yes
+       read only = no
+       guest ok = no
+       valid users = @engineer
+    EOF
+    
+    systemctl restart smbd

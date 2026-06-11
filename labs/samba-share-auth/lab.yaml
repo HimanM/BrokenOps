@@ -1,0 +1,25 @@
+id: samba-share-auth
+name: Samba Share Rejects Valid Users
+category: networking
+difficulty: intermediate
+vm:
+  name: samba-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "Users are unable to access a Samba share even with valid credentials due to a group mapping mismatch."
+  story: "The IT department has set up a new Samba share for the 'engineering' team. However, even though users have the correct passwords and are in the local 'engineers' group, their connection attempts are being rejected. You need to investigate the Samba configuration and fix the access control issue."
+  objectives:
+    - Verify the authentication failure when connecting to the 'engineering' share
+    - Identify the discrepancy between the local group and the Samba 'valid users' configuration
+    - Fix the 'smb.conf' to correctly allow access for the engineering team
+tags:
+  - samba
+  - networking
+  - linux
+  - authentication
