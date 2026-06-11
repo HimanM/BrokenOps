@@ -209,15 +209,15 @@ def launch_lab(lab_id: str):
                     
                 root_user["ssh_authorized_keys"].append(pub_key)
 
-                # Handle restricted initial_access: add operator user with SSH key
+                # Handle restricted initial_access: add the restricted user with SSH key
                 if initial_access == "restricted":
-                    operator_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == "opsuser"), None)
-                    if not operator_user:
-                        operator_user = {"name": "opsuser", "ssh_authorized_keys": [], "shell": "/bin/bash"}
-                        ud_yaml["users"].append(operator_user)
-                    if "ssh_authorized_keys" not in operator_user:
-                        operator_user["ssh_authorized_keys"] = []
-                    operator_user["ssh_authorized_keys"].append(pub_key)
+                    restricted_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == "opsuser"), None)
+                    if not restricted_user:
+                        restricted_user = {"name": "opsuser", "ssh_authorized_keys": [], "shell": "/bin/bash"}
+                        ud_yaml["users"].append(restricted_user)
+                    if "ssh_authorized_keys" not in restricted_user:
+                        restricted_user["ssh_authorized_keys"] = []
+                    restricted_user["ssh_authorized_keys"].append(pub_key)
 
                 user_data_content = "#cloud-config\n" + yaml.dump(ud_yaml, width=10000)
                 usernames = [u.get("name") for u in ud_yaml.get("users", []) if isinstance(u, dict)]
@@ -343,7 +343,7 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
         await websocket.send_text(f"\r\n[Info] Connecting to VM at {vm_ip}...\r\n")
         
         priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
-        username = 'operator' if initial_access == 'restricted' else 'root'
+        username = 'opsuser' if initial_access == 'restricted' else 'root'
 
         for _ in range(15): # Try for up to 30 seconds
             try:
