@@ -137,7 +137,9 @@ def get_lab(lab_id: str):
 def launch_lab(lab_id: str):
     try:
         lab_config = parser.parse_lab(lab_id)
-        
+        initial_access = lab_config.get("initial_access", "full")
+        restricted_user_name = lab_config.get("restricted_user", "opsuser")
+
         vm_name = lab_config["vm"]["name"]
         memory_mb = lab_config["vm"]["memory"]
         vcpus = lab_config["vm"]["cpu"]
@@ -206,7 +208,17 @@ def launch_lab(lab_id: str):
                     root_user["ssh_authorized_keys"] = []
                     
                 root_user["ssh_authorized_keys"].append(pub_key)
-                
+
+                # Handle restricted initial_access: add the configured restricted user with SSH key
+                if initial_access == "restricted":
+                    restricted_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == restricted_user_name), None)
+                    if not restricted_user:
+                        restricted_user = {"name": restricted_user_name, "ssh_authorized_keys": [], "shell": "/bin/bash"}
+                        ud_yaml["users"].append(restricted_user)
+                    if "ssh_authorized_keys" not in restricted_user:
+                        restricted_user["ssh_authorized_keys"] = []
+                    restricted_user["ssh_authorized_keys"].append(pub_key)
+
                 user_data_content = "#cloud-config\n" + yaml.dump(ud_yaml, width=10000)
             except Exception as e:
                 print(f"Warning: Failed to parse user-data YAML: {e}")
@@ -235,6 +247,8 @@ def launch_lab(lab_id: str):
 def stop_lab(lab_id: str):
     try:
         lab_config = parser.parse_lab(lab_id)
+        initial_access = lab_config.get("initial_access", "full")
+        restricted_user_name = lab_config.get("restricted_user", "opsuser")
         vm_name = lab_config["vm"]["name"]
         
         engine.stop_vm(vm_name) # Ignore success/failure so reset works
@@ -331,7 +345,7 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
         
         for _ in range(15): # Try for up to 30 seconds
             try:
-                conn = await asyncssh.connect(vm_ip, username='root', client_keys=[priv_key_path], known_hosts=None)
+                conn = await asyncssh.connect(vm_ip, username=restricted_user_name if initial_access == 'restricted' else 'root', client_keys=[priv_key_path], known_hosts=None)
                 break
             except Exception:
                 await asyncio.sleep(2)
