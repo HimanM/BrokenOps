@@ -1,0 +1,24 @@
+id: package-repo-broken
+name: Package Manager Repository Misconfigured
+category: linux
+difficulty: beginner
+vm:
+  name: repo-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+
+description:
+  summary: "The system is unable to install or update software because the package manager's repository configuration is broken."
+  story: "A systems administrator tried to switch the server to a faster local repository mirror, but something went wrong. Now, every time you try to run 'apt update', you get errors about invalid URLs or missing release files. You need to identify the broken repository configuration and restore access to the official Ubuntu repositories."
+  objectives:
+    - Reproduce the repository update failure
+    - Identify the incorrectly configured source file in /etc/apt/sources.list.d/
+    - Restore a valid repository configuration and verify that 'apt update' succeeds
+tags:
+  - linux
+  - apt
+  - maintenance
