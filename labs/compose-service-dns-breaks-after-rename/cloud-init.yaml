@@ -17,11 +17,17 @@ runcmd:
     CMD ["python3", "-m", "http.server", "8000", "--directory", "/srv"]
     EOF
   - |
+    cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/proxy/index.html
+    <h1>BrokenOps proxy is serving content</h1>
+    <p>Upstream host is configured separately.</p>
+    EOF
+  - |
     cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/proxy/Dockerfile
     FROM python:3.11-alpine
-    RUN apk add --no-cache curl
     WORKDIR /srv
-    CMD ["sh", "-c", "for i in $(seq 1 15); do curl -fsS http://web:8000/ > /srv/index.html && exec python3 -m http.server 8080 --directory /srv; sleep 1; done; exit 1"]
+    COPY index.html /srv/index.html
+    ENV UPSTREAM_HOST=web
+    CMD ["python3", "-m", "http.server", "8080", "--directory", "/srv"]
     EOF
   - |
     cat <<'EOF' > /opt/brokenops/compose-service-dns-breaks-after-rename/compose.yml

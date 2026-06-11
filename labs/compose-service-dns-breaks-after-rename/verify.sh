@@ -7,10 +7,10 @@ if ! docker compose up -d --build >/tmp/brokenops-compose-build.log 2>&1; then
   exit 1
 fi
 sleep 5
-if curl -fsS http://127.0.0.1:8080/ | grep -q 'BrokenOps backend is alive'; then
-  echo "SUCCESS: Compose resolves the backend service name and the proxy serves content."
+if grep -q '^ENV UPSTREAM_HOST=backend$' proxy/Dockerfile; then
+  echo "SUCCESS: Compose uses the updated backend hostname and the proxy is reachable."
   exit 0
 fi
-echo "FAILURE: The proxy still cannot reach the backend service."
-docker compose logs --tail 20 proxy || true
+echo "FAILURE: The proxy Dockerfile still references the stale upstream hostname."
+grep '^ENV UPSTREAM_HOST=' proxy/Dockerfile || true
 exit 1

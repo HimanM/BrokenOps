@@ -3,7 +3,7 @@ name: "Compose Service DNS Breaks After Rename"
 category: "docker"
 difficulty: "intermediate"
 description:
-  summary: "A Compose proxy points at the old service name after the backend was renamed."
+  summary: "A Compose proxy keeps an outdated upstream hostname after the backend was renamed."
 vm:
   name: "docker-compose-dns-lab"
   memory: 2048
@@ -13,4 +13,4 @@ cloud_init: "cloud-init.yaml"
 verify_script: "verify.sh"
 exposed_ports:
   - 8080
-port_works_initially: false
+port_works_initially: true

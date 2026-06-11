@@ -1,4 +1,4 @@
 #!/bin/bash
 set -euo pipefail
 cd /opt/brokenops/compose-service-dns-breaks-after-rename
-sed -i 's/http:\/\/web:8000/http:\/\/backend:8000/' proxy/Dockerfile
+sed -i 's/UPSTREAM_HOST=web/UPSTREAM_HOST=backend/' proxy/Dockerfile
