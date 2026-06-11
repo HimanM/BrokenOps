@@ -1,0 +1,12 @@
+#cloud-config
+runcmd:
+  - |
+    # 1. Create a broken repository file
+    # We use a non-existent codename like 'broken-release'
+    cat <<EOF > /etc/apt/sources.list.d/broken.list
+    deb http://archive.ubuntu.com/ubuntu/ broken-release main restricted
+    EOF
+    
+    # 2. To ensure it really fails, we can also mess with the main sources.list
+    # But usually a single broken file in sources.list.d is enough to block apt update
+    # effectively with a non-zero exit code.

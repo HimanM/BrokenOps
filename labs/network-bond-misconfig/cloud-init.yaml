@@ -1,0 +1,21 @@
+#cloud-config
+runcmd:
+  - |
+    # Load dummy module and create an interface named 'ens4'
+    modprobe dummy || true
+    ip link add ens4 type dummy || true
+    ip link set ens4 up
+    
+    # Create a Netplan config that refers to 'eth1' instead of 'ens4'
+    cat <<EOF > /etc/netplan/60-internal-nic.yaml
+    network:
+      version: 2
+      renderer: networkd
+      ethernets:
+        eth1:
+          dhcp4: false
+          addresses: [10.10.10.10/24]
+    EOF
+    
+    # Try to apply (it will likely complain about missing eth1)
+    netplan apply || true

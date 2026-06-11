@@ -1,0 +1,50 @@
+#cloud-config
+packages:
+  - nginx
+  - python3
+
+runcmd:
+  - |
+    # Create a backend that closes connections immediately after 1 request
+    cat <<EOF > /usr/local/bin/backend.py
+    import http.server
+    import socketserver
+
+    PORT = 8081
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            # Explicitly tell client to close connection
+            self.send_header('Connection', 'close')
+            self.end_headers()
+            self.wfile.write(b"Backend Response")
+
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print("serving at port", PORT)
+        httpd.serve_forever()
+    EOF
+    chmod +x /usr/local/bin/backend.py
+    nohup python3 /usr/local/bin/backend.py > /var/log/backend.log 2>&1 &
+
+    # Configure Nginx with broken keepalive (HTTP/1.0 by default, no Connection header)
+    cat <<EOF > /etc/nginx/sites-available/default
+    upstream backend_nodes {
+        server 127.0.0.1:8081;
+        keepalive 32;
+    }
+
+    server {
+        listen 80 default_server;
+        server_name _;
+
+        location / {
+            proxy_pass http://backend_nodes;
+            # MISSING: proxy_http_version 1.1;
+            # MISSING: proxy_set_header Connection "";
+        }
+    }
+    EOF
+    
+    systemctl restart nginx

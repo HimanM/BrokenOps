@@ -1,0 +1,27 @@
+id: apache-rewrite-disabled
+name: Apache Rewrite Module Disabled
+category: web
+difficulty: beginner
+vm:
+  name: apache-rewrite-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+
+description:
+  summary: "Application routes are returning 404 errors because the Apache rewrite module is disabled."
+  story: "A developer has deployed a PHP application that uses clean URLs (e.g., /dashboard instead of /index.php?page=dashboard). However, all these clean URLs are returning 404 Not Found errors. Standard files like index.html work fine. You need to enable the necessary Apache module to support these routes."
+  objectives:
+    - Verify that standard files work but custom routes return 404
+    - Identify the missing Apache module (mod_rewrite)
+    - Enable the module and verify that application routes now work correctly
+tags:
+  - apache
+  - web
+  - linux
+  - networking

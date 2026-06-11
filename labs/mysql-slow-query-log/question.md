@@ -1,8 +1,8 @@
 ### Scenario
-The database administrator tried to enable slow query logging to troubleshoot performance issues. However, after applying the configuration changes and attempting to restart MySQL, the service refuses to start.
+The database administrator tried to enable slow query logging to investigate performance issues. After the change was applied, MySQL no longer starts, so the team cannot even inspect the workload. The configuration error has to be corrected before the team can inspect the workload.
 
 ### Objective
-Diagnose why the MySQL service is failing to start, identify the configuration error, and restore the database service with slow query logging enabled.
+Find the configuration mistake blocking MySQL startup and restore the service with slow query logging enabled.
 
 ### Useful Commands
 - `sudo systemctl status mysql`

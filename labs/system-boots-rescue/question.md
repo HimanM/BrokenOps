@@ -1,8 +1,8 @@
 ### Scenario
-The server was recently rebooted for maintenance, but now it fails to start normal services. Every time it boots, it seems to land in a restricted maintenance or rescue mode. The team is unable to reach the hosted applications.
+The server was rebooted for maintenance, but instead of coming up normally it drops into rescue or maintenance mode. The hosted applications never start, and the team needs the machine back in its standard boot target. The fix needs to happen before users notice the outage. The team wants a clean return to normal boot behavior, not a temporary workaround.
 
 ### Objective
-Diagnose why the system is booting into rescue mode and restore it to its normal operational state (multi-user mode).
+Diagnose why the host is booting into rescue mode and restore the default multi-user target.
 
 ### Useful Commands
 - `systemctl get-default`

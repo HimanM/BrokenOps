@@ -105,6 +105,7 @@ class LabInfo(BaseModel):
     category: str
     difficulty: str
     description: dict
+    initial_access: str = "full"
 
 @app.get("/labs", response_model=List[LabInfo])
 def list_labs():
@@ -220,6 +221,8 @@ def launch_lab(lab_id: str):
                     restricted_user["ssh_authorized_keys"].append(pub_key)
 
                 user_data_content = "#cloud-config\n" + yaml.dump(ud_yaml, width=10000)
+                usernames = [u.get("name") for u in ud_yaml.get("users", []) if isinstance(u, dict)]
+                print(f"DEBUG: lab_id={lab_id} initial_access={initial_access} users={usernames}")
             except Exception as e:
                 print(f"Warning: Failed to parse user-data YAML: {e}")
 
@@ -321,9 +324,10 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
     await websocket.accept()
     conn = None
     restricted_rcfile_path = None
-    
+
     try:
         lab_config = parser.parse_lab(lab_id)
+        initial_access = lab_config.get("initial_access", "full")
         vm_name = lab_config["vm"]["name"]
         
         # Poll for IP address (wait for boot)
@@ -342,14 +346,15 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
         await websocket.send_text(f"\r\n[Info] Connecting to VM at {vm_ip}...\r\n")
         
         priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
-        
+        username = restricted_user_name if initial_access == 'restricted' else 'root'
+
         for _ in range(15): # Try for up to 30 seconds
             try:
-                conn = await asyncssh.connect(vm_ip, username=restricted_user_name if initial_access == 'restricted' else 'root', client_keys=[priv_key_path], known_hosts=None)
+                conn = await asyncssh.connect(vm_ip, username=username, client_keys=[priv_key_path], known_hosts=None)
                 break
             except Exception:
                 await asyncio.sleep(2)
-                
+
         if not conn:
             await websocket.send_text("\r\n[Error] SSH Connection timed out. VM may still be booting.\r\n")
             await websocket.close()

@@ -1,0 +1,9 @@
+#cloud-config
+runcmd:
+  - |
+    # Ensure standard networking is up
+    # We'll simulate the internal gateway being on the same subnet as eth0
+    # Current IP is likely 192.168.123.x
+    
+    # We'll just ensure no route to 10.50.0.0/24 exists initially
+    ip route del 10.50.0.0/24 > /dev/null 2>&1 || true

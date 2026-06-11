@@ -1,0 +1,24 @@
+#cloud-config
+packages:
+  - postgresql
+  - postgresql-contrib
+
+runcmd:
+  - |
+    # Start PostgreSQL
+    systemctl start postgresql
+    
+    # Disable autovacuum globally
+    sudo -u postgres psql -c "ALTER SYSTEM SET autovacuum = off;"
+    sudo -u postgres psql -c "SELECT pg_reload_conf();"
+    
+    # Create a table and generate some data + bloat
+    sudo -u postgres psql -c "CREATE TABLE busy_table (id serial primary key, val text);"
+    sudo -u postgres psql -c "INSERT INTO busy_table (val) SELECT 'initial' FROM generate_series(1, 10000);"
+    
+    # Generate dead tuples (updates)
+    sudo -u postgres psql -c "UPDATE busy_table SET val = 'updated' WHERE id % 2 = 0;"
+    sudo -u postgres psql -c "DELETE FROM busy_table WHERE id % 3 = 0;"
+    sudo -u postgres psql -c "UPDATE busy_table SET val = 'bloated' WHERE id % 5 = 0;"
+    
+    # We want users to see 'off' in the settings

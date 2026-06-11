@@ -59,7 +59,7 @@ Recommended checklist before opening a PR with exposed ports:
 Determines the privilege level of the SSH session presented to the player in the web terminal.
 
 - **`full`** (default): The terminal connects as `root` with full privileges. This is the standard behavior for all existing labs.
-- **`restricted`**: The terminal connects as a non-privileged user (`opsuser`). The player must exploit a misconfiguration (e.g., a writable sensitive file, a setuid binary, or an overly permissive sudo rule) to escalate to root.
+- **`restricted`**: The terminal connects as a non-privileged user (`opsuser` by default). The player must exploit a misconfiguration (e.g., a writable sensitive file, a setuid binary, or an overly permissive sudo rule) to escalate to root.
 
 When `initial_access: restricted` is set, the backend automatically:
 1. Creates the configured restricted user in cloud-init with the same SSH key used for `root`.
@@ -74,6 +74,11 @@ restricted_user: intern
 ```
 
 If omitted, the backend uses `opsuser` as the default restricted account name.
+
+**Example:**
+```yaml
+initial_access: restricted
+```
 
 **Important notes for restricted labs:**
 - The lab's `cloud-init.yaml` must intentionally break root access (e.g., change the root password to a random value, remove the restricted user from the `sudo` group).
@@ -136,25 +141,34 @@ Markdown files containing the task description and the solution guide.
 ### `question.md` Template
 ```markdown
 ### Scenario
-[A brief story or context about the failure]
+[A short real-world story that explains who noticed the issue and what broke]
 
 ### Objective
-[A bulleted list or paragraph describing what needs to be accomplished]
+[What the learner must restore, diagnose, or verify]
 
 ### Useful Commands
 - `command1`
 - `command2`
+- `command3`
 ```
 
 ### `solution.md` Template
 ```markdown
 ### The Issue
-[A brief explanation of what was actually broken]
+[A brief explanation of the root cause]
 
 ### Step-by-Step Fix
-1. **[Action name]**:
-   ```bash
-   [command]
-   ```
-2. ...
+1. **[Inspect / confirm / diagnose]**:
+   - Explain what to look at and why.
+   - Include a command only when it helps the learner confirm the state.
+2. **[Make the fix manually]**:
+   - Prefer a step-by-step edit or service action.
+   - If you include a command, keep it as an optional helper rather than a full automation script.
+3. **[Verify]**:
+   - Show the expected outcome after the fix.
 ```
+
+### Writing style notes
+- Keep `question.md` scenarios concrete and realistic.
+- Use consistent headings across labs.
+- Avoid turning `solution.md` into a shell script; it should read like a guided fix, with optional commands such as `sed` when they help explain the manual step.

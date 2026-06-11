@@ -1,0 +1,44 @@
+#cloud-config
+packages:
+  - apache2
+  - php
+  - libapache2-mod-php
+
+runcmd:
+  - |
+    # Create application directory
+    mkdir -p /var/www/html/app
+    
+    # Create entry point
+    echo "<?php echo 'Welcome to the App: ' . \$_SERVER['REQUEST_URI']; ?>" > /var/www/html/app/index.php
+    
+    # Create .htaccess for routing
+    cat <<EOF > /var/www/html/app/.htaccess
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+    EOF
+    
+    # Ensure standard permissions
+    chown -R www-data:www-data /var/www/html/app
+    
+    # Configure vhost to allow overrides but mod_rewrite is disabled by default
+    cat <<EOF > /etc/apache2/sites-available/app.conf
+    <VirtualHost *:80>
+        DocumentRoot /var/www/html/app
+        <Directory /var/www/html/app>
+            Options Indexes FollowSymLinks
+            AllowOverride All
+            Require all granted
+        </Directory>
+    </VirtualHost>
+    EOF
+    
+    a2ensite app.conf
+    a2dissite 000-default.conf
+    
+    # Explicitly disable rewrite module if it was enabled
+    a2dismod rewrite || true
+    
+    systemctl restart apache2
