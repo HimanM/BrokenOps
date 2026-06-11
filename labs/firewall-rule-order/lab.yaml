@@ -1,0 +1,27 @@
+id: firewall-rule-order
+name: Firewall Rule Order Blocks Service
+category: networking
+difficulty: intermediate
+vm:
+  name: firewall-lab
+  image: ubuntu-24.04-base.qcow2
+  memory: 1024
+  cpu: 1
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+exposed_ports:
+  - 80
+
+description:
+  summary: "The web service is running and listening, but it remains unreachable from the outside because a firewall rule is blocking traffic before it can be allowed."
+  story: "A systems administrator recently tightened the security policy on this web server. They added a rule to allow HTTP traffic, but for some reason, the site is still not loading. You need to investigate the firewall configuration (iptables) and identify why the 'allow' rule is not working as expected."
+  objectives:
+    - Verify that the web service is listening on port 80
+    - Inspect the order of active firewall rules
+    - Reorder or fix the firewall rules to ensure HTTP traffic is correctly allowed
+tags:
+  - networking
+  - linux
+  - security
+  - iptables
