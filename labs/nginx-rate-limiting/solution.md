@@ -1,48 +1,31 @@
 ### The Issue
-The Nginx rate limiting was misconfigured with a very low base rate (`1r/m`) and no `burst` parameter. Without a burst allowance, Nginx strictly rejects any request that arrives less than 1 minute after the previous one, which is too restrictive for modern applications and browser behavior.
+Nginx rate limiting was set far too aggressively: the base rate was only `1r/m`, and the configuration did not leave any burst room for normal browser retries or quick back-to-back API calls. That makes the endpoint feel broken even though the server is up.
 
 ### Step-by-Step Fix
 
-1. **Verify the error**:
-   Try sending rapid requests to the API.
+1. **Confirm the symptom**:
+   Send one or two requests to the API and note the `429 Too Many Requests` response.
    ```bash
-   for i in {1..5}; do curl -I http://localhost/api/; done
+   curl -I http://localhost/api/
    ```
-   You will see multiple `429 Too Many Requests` responses.
 
-2. **Locate the configuration**:
-   Rate limits are usually defined in `conf.d` or directly in the `http` block.
+2. **Inspect the rate-limit configuration**:
+   Check the shared zone and the site configuration that applies the rule.
    ```bash
    ls /etc/nginx/conf.d/
    cat /etc/nginx/conf.d/rate_limit.conf
+   cat /etc/nginx/sites-available/default
    ```
-   You will see `rate=1r/m`.
 
-3. **Tune the configuration**:
-   Increase the base rate and, more importantly, add a `burst` parameter to the `limit_req` directive in the site configuration.
-   
-   In `/etc/nginx/conf.d/rate_limit.conf`:
-   ```nginx
-   limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10r/s;
-   ```
-   
-   In `/etc/nginx/sites-available/default`:
-   ```nginx
-   location /api/ {
-       limit_req zone=mylimit burst=10 nodelay;
-       # ...
-   }
-   ```
-   The `burst` parameter allows users to exceed the base rate temporarily, and `nodelay` ensures that these burst requests are processed immediately rather than being queued.
+3. **Adjust the rule to allow brief bursts**:
+   Increase the base rate and add a `burst` value in the `limit_req` directive so normal user behavior does not get blocked immediately.
 
-4. **Test and Restart**:
+4. **Reload Nginx and test again**:
+   Validate the config, reload the service, then repeat the request from step 1.
    ```bash
    sudo nginx -t
    sudo systemctl restart nginx
    ```
 
-5. **Verify**:
-   Run the test loop again. All 5 requests should now return `200 OK`.
-   ```bash
-   for i in {1..5}; do curl -I http://localhost/api/; done
-   ```
+5. **Verify the fix**:
+   After the reload, the endpoint should answer normally instead of rate-limiting ordinary traffic.
