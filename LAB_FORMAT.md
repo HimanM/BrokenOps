@@ -59,12 +59,21 @@ Recommended checklist before opening a PR with exposed ports:
 Determines the privilege level of the SSH session presented to the player in the web terminal.
 
 - **`full`** (default): The terminal connects as `root` with full privileges. This is the standard behavior for all existing labs.
-- **`restricted`**: The terminal connects as a non-privileged user (`opsuser`). The player must exploit a misconfiguration (e.g., a writable sensitive file, a setuid binary, or an overly permissive sudo rule) to escalate to root.
+- **`restricted`**: The terminal connects as a non-privileged user (`opsuser` by default). The player must exploit a misconfiguration (e.g., a writable sensitive file, a setuid binary, or an overly permissive sudo rule) to escalate to root.
 
 When `initial_access: restricted` is set, the backend automatically:
-1. Creates an `opsuser` user in cloud-init with the same SSH key used for `root`.
-2. Connects the web terminal as `opsuser` instead of `root`.
+1. Creates the configured restricted user in cloud-init with the same SSH key used for `root`.
+2. Connects the web terminal as that restricted user instead of `root`.
 3. Continues to run `verify.sh` and `solution.sh` as `root` internally (backend bypass), so CI pipelines are unaffected.
+
+To customize the restricted username, add `restricted_user` alongside `initial_access`:
+
+```yaml
+initial_access: restricted
+restricted_user: intern
+```
+
+If omitted, the backend uses `opsuser` as the default restricted account name.
 
 **Example:**
 ```yaml
@@ -72,9 +81,9 @@ initial_access: restricted
 ```
 
 **Important notes for restricted labs:**
-- The lab's `cloud-init.yaml` must intentionally break root access (e.g., change the root password to a random value, remove `opsuser` from the `sudo` group).
+- The lab's `cloud-init.yaml` must intentionally break root access (e.g., change the root password to a random value, remove the restricted user from the `sudo` group).
 - The lab must provide a realistic escalation path (e.g., `sudo` misconfiguration, writable `/etc/passwd`, or a SUID binary).
-- `verify.sh` should assert that the player has successfully restored normal access (e.g., `opsuser` is back in the `sudo` group and `/etc/sudoers` is valid).
+- `verify.sh` should assert that the player has successfully restored normal access (e.g., the restricted user is back in the `sudo` group and `/etc/sudoers` is valid).
 
 ## 2. `cloud-init.yaml` (Required)
 

@@ -139,6 +139,7 @@ def launch_lab(lab_id: str):
     try:
         lab_config = parser.parse_lab(lab_id)
         initial_access = lab_config.get("initial_access", "full")
+        restricted_user_name = lab_config.get("restricted_user", "opsuser")
 
         vm_name = lab_config["vm"]["name"]
         memory_mb = lab_config["vm"]["memory"]
@@ -209,11 +210,11 @@ def launch_lab(lab_id: str):
                     
                 root_user["ssh_authorized_keys"].append(pub_key)
 
-                # Handle restricted initial_access: add the restricted user with SSH key
+                # Handle restricted initial_access: add the configured restricted user with SSH key
                 if initial_access == "restricted":
-                    restricted_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == "opsuser"), None)
+                    restricted_user = next((u for u in ud_yaml["users"] if isinstance(u, dict) and u.get("name") == restricted_user_name), None)
                     if not restricted_user:
-                        restricted_user = {"name": "opsuser", "ssh_authorized_keys": [], "shell": "/bin/bash"}
+                        restricted_user = {"name": restricted_user_name, "ssh_authorized_keys": [], "shell": "/bin/bash"}
                         ud_yaml["users"].append(restricted_user)
                     if "ssh_authorized_keys" not in restricted_user:
                         restricted_user["ssh_authorized_keys"] = []
@@ -249,6 +250,8 @@ def launch_lab(lab_id: str):
 def stop_lab(lab_id: str):
     try:
         lab_config = parser.parse_lab(lab_id)
+        initial_access = lab_config.get("initial_access", "full")
+        restricted_user_name = lab_config.get("restricted_user", "opsuser")
         vm_name = lab_config["vm"]["name"]
         
         engine.stop_vm(vm_name) # Ignore success/failure so reset works
@@ -343,7 +346,7 @@ async def websocket_terminal(websocket: WebSocket, lab_id: str):
         await websocket.send_text(f"\r\n[Info] Connecting to VM at {vm_ip}...\r\n")
         
         priv_key_path = os.path.join(PROJECT_ROOT, "keys", "id_ed25519")
-        username = 'opsuser' if initial_access == 'restricted' else 'root'
+        username = restricted_user_name if initial_access == 'restricted' else 'root'
 
         for _ in range(15): # Try for up to 30 seconds
             try:
