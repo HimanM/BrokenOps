@@ -25,7 +25,7 @@ jobs:
       - name: Create Release Archive
         run: |
           mkdir -p release_package
-          cp -r docker-compose.yml deploy.sh backend frontend labs release_package/
+          cp -r docker-compose.yml deploy.sh backend frontend labs ansible scripts tests docs README.md LICENSE LAB_FORMAT.md CONTRIBUTING.md CODE_OF_CONDUCT.md release_package/
           zip -r brokenops-release.zip release_package/
 
       - name: Create GitHub Release
