@@ -1,0 +1,16 @@
+id: "docker-loopback-bind"
+name: "Container Port Binds Only to Loopback"
+category: "docker"
+difficulty: "intermediate"
+description:
+  summary: "An exposed container port still fails because the service listens on 127.0.0.1 only."
+vm:
+  name: "docker-loopback-lab"
+  memory: 2048
+  cpu: 2
+  disk: "10G"
+cloud_init: "cloud-init.yaml"
+verify_script: "verify.sh"
+exposed_ports:
+  - 8080
+port_works_initially: false

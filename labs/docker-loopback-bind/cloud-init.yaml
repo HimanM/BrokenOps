@@ -1,0 +1,24 @@
+#cloud-config
+packages:
+  - docker.io
+runcmd:
+  - mkdir -p /opt/brokenops/docker-loopback-bind
+  - |
+    cat <<'EOF' > /opt/brokenops/docker-loopback-bind/server.py
+    #!/usr/bin/env python3
+    from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+    server = ThreadingHTTPServer(('127.0.0.1', 8080), SimpleHTTPRequestHandler)
+    print('serving on 127.0.0.1:8080')
+    server.serve_forever()
+    EOF
+  - chmod +x /opt/brokenops/docker-loopback-bind/server.py
+  - |
+    cat <<'EOF' > /opt/brokenops/docker-loopback-bind/Dockerfile
+    FROM python:3.11-alpine
+    WORKDIR /app
+    COPY server.py /app/server.py
+    EXPOSE 8080
+    CMD ["python3", "/app/server.py"]
+    EOF
+  - chown -R root:root /opt/brokenops/docker-loopback-bind
