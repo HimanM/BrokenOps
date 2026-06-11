@@ -9,7 +9,7 @@ runcmd:
     RUN mkdir -p /out && echo 'BrokenOps multi-stage build' > /out/app.txt
 
     FROM alpine:3.19
-    COPY --from=builder /out/app.txt /app/app.txt
+    COPY --from=builder /out/app.tx /app/app.txt
     CMD ["cat", "/app/app.txt"]
     EOF
   - chown -R root:root /opt/brokenops/docker-multi-stage-copy-path
