@@ -1,0 +1,25 @@
+id: rsyslog-forwarding-broken
+name: Rsyslog Remote Forwarding Not Working
+category: linux
+difficulty: advanced
+vm:
+  name: rsyslog-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "Local logs are written, but they never reach the remote collector."
+  story: "A systems administrator set up remote log forwarding so the local server can ship syslog events to a central collector. The collector is running, but forwarded messages never arrive. Fix the rsyslog forwarding rule so remote logs are delivered again."
+  objectives:
+    - Inspect the rsyslog forwarding configuration
+    - Find why messages are not reaching the collector
+    - Fix the forwarding protocol or endpoint and confirm receipt on the collector
+    - Ensure rsyslog remains healthy after the change
+tags:
+  - linux
+  - rsyslog
+  - logging
+  - networking

@@ -1,0 +1,24 @@
+id: time-drift-broken
+name: Time Drift Breaks TLS and Package Operations
+category: linux
+difficulty: intermediate
+vm:
+  name: time-drift-lab
+  image: ubuntu-24.04-base.qcow2
+  cpu: 1
+  memory: 1024
+  disk: 10G
+cloud_init: cloud-init.yaml
+verify_script: verify.sh
+description:
+  summary: "TLS requests and package updates fail because the system clock is badly skewed."
+  story: "A maintenance script stopped refreshing packages after the machine's clock drifted far into the past. HTTPS checks now fail with certificate time errors, and apt can no longer reach a local package mirror. Restore correct time synchronization."
+  objectives:
+    - Inspect the system clock and time synchronization status
+    - Find why the machine time is skewed far into the past
+    - Restore proper time sync and confirm TLS and apt operations work again
+tags:
+  - linux
+  - time
+  - tls
+  - apt
