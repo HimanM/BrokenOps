@@ -1,0 +1,31 @@
+#cloud-config
+packages:
+  - rsyslog
+  - socat
+write_files:
+  - path: /etc/systemd/system/collector.service
+    owner: root:root
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=BrokenOps syslog collector
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/socat -u TCP-LISTEN:1514,reuseaddr,fork OPEN:/var/log/collector.log,append
+      Restart=always
+      RestartSec=1
+
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/rsyslog.d/50-forward.conf
+    owner: root:root
+    permissions: '0644'
+    content: |
+      *.* @127.0.0.1:1514
+runcmd:
+  - systemctl daemon-reload
+  - touch /var/log/collector.log
+  - systemctl enable --now collector.service
+  - systemctl enable --now rsyslog
+  - systemctl restart rsyslog
