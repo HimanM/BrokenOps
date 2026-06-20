@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-10T09:00:14.690Z",
+  "generatedAt": "2026-06-19T18:05:15.920Z",
   "requirements": {
     "maxLab": {
       "memory": 2048,
@@ -14,15 +14,15 @@
   },
   "labs": [
     {
-      "id": "nginx-bad-gateway",
-      "title": "Nginx Bad Gateway",
-      "summary": "Scenario The monitoring team has alerted us that the company's main landing page is down, showing a \"502 Bad Gateway\" error.",
-      "category": "web",
-      "difficulty": "beginner",
-      "labId": "nginx-bad-gateway",
-      "updatedAt": "2026-06-10T09:00:13.093Z",
+      "id": "time-drift-broken",
+      "title": "Time Drift Breaks TLS and Package Operations",
+      "summary": "Scenario A maintenance script stopped refreshing packages after the machine's clock drifted far into the past.",
+      "category": "linux",
+      "difficulty": "intermediate",
+      "labId": "time-drift-broken",
+      "updatedAt": "2026-06-19T18:05:15.908Z",
       "commit": "",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/nginx-bad-gateway",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/time-drift-broken",
       "resources": {
         "memory": 1024,
         "cpu": 1,
@@ -30,63 +30,15 @@
       }
     },
     {
-      "id": "ca-certificates-missing",
-      "title": "HTTPS Downloads Fail Because CA Certificates Are Missing",
-      "summary": "Scenario A bootstrap service is supposed to download and install a tiny internal package from a local HTTPS endpoint.",
+      "id": "rsyslog-forwarding-broken",
+      "title": "Rsyslog Remote Forwarding Not Working",
+      "summary": "Scenario Local logs are written normally, but they never reach the central collector.",
       "category": "linux",
-      "difficulty": "intermediate",
-      "labId": "ca-certificates-missing",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/ca-certificates-missing",
-      "resources": {
-        "memory": 1024,
-        "cpu": 1,
-        "disk": 10
-      }
-    },
-    {
-      "id": "cron-broken",
-      "title": "Cron Job Never Executes",
-      "summary": "Scenario A system administrator configured a cron job to run a cleanup script /opt/cleanup.sh every minute.",
-      "category": "linux",
-      "difficulty": "beginner",
-      "labId": "cron-broken",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/cron-broken",
-      "resources": {
-        "memory": 1024,
-        "cpu": 1,
-        "disk": 10
-      }
-    },
-    {
-      "id": "dns-broken",
-      "title": "DNS Resolution Failure",
-      "summary": "Scenario A teammate changed DNS settings on this server.",
-      "category": "linux",
-      "difficulty": "beginner",
-      "labId": "dns-broken",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/dns-broken",
-      "resources": {
-        "memory": 1024,
-        "cpu": 1,
-        "disk": 10
-      }
-    },
-    {
-      "id": "docker-broken",
-      "title": "Docker Daemon Crash",
-      "summary": "Scenario A developer was trying to configure the Docker daemon to use a custom data root (/var/lib/docker_custom), but something went wrong and now the docker service refuses to st",
-      "category": "containers",
       "difficulty": "advanced",
-      "labId": "docker-broken",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-broken",
+      "labId": "rsyslog-forwarding-broken",
+      "updatedAt": "2026-06-19T18:05:15.817Z",
+      "commit": "",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/rsyslog-forwarding-broken",
       "resources": {
         "memory": 1024,
         "cpu": 1,
@@ -94,47 +46,95 @@
       }
     },
     {
-      "id": "docker-restart-loop",
-      "title": "Container Restart Loop",
-      "summary": "Scenario A web application container web-app has been deployed on this server.",
-      "category": "containers",
+      "id": "compose-service-dns-breaks-after-rename",
+      "title": "Compose Service DNS Breaks After Rename",
+      "summary": "Scenario A Compose-based proxy still references an old backend hostname after the service was renamed.",
+      "category": "docker",
       "difficulty": "intermediate",
-      "labId": "docker-restart-loop",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-restart-loop",
+      "labId": "compose-service-dns-breaks-after-rename",
+      "updatedAt": "2026-06-11T07:08:39Z",
+      "commit": "401e96d5c6abece75cc8c03ae4e3e4978b9f1ad1",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/compose-service-dns-breaks-after-rename",
       "resources": {
-        "memory": 1024,
-        "cpu": 1,
+        "memory": 2048,
+        "cpu": 2,
         "disk": 10
       }
     },
     {
-      "id": "fstab-broken",
-      "title": "Filesystem Missing After Reboot",
-      "summary": "Scenario A teammate configured a secondary storage volume (modeled as /opt/data.img) to automatically mount at /mnt/data on boot.",
-      "category": "linux",
-      "difficulty": "intermediate",
-      "labId": "fstab-broken",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/fstab-broken",
-      "resources": {
-        "memory": 1024,
-        "cpu": 1,
-        "disk": 10
-      }
-    },
-    {
-      "id": "full-disk",
-      "title": "The Full Filesystem",
-      "summary": "Scenario A critical service on this system has failed to start or is operating extremely slowly.",
-      "category": "linux",
+      "id": "docker-entrypoint-flags",
+      "title": "Container Entrypoint Uses Wrong Command Flags",
+      "summary": "Scenario A container image builds, but the application exits right away because the default command still uses an obsolete flag name.",
+      "category": "docker",
       "difficulty": "beginner",
-      "labId": "full-disk",
-      "updatedAt": "2026-06-10T13:36:17+05:30",
-      "commit": "620c6961a1686b5117c37f67ea7fa6d31814bfac",
-      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/full-disk",
+      "labId": "docker-entrypoint-flags",
+      "updatedAt": "2026-06-11T07:08:39Z",
+      "commit": "401e96d5c6abece75cc8c03ae4e3e4978b9f1ad1",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-entrypoint-flags",
+      "resources": {
+        "memory": 2048,
+        "cpu": 2,
+        "disk": 10
+      }
+    },
+    {
+      "id": "docker-loopback-bind",
+      "title": "Container Port Binds Only to Loopback",
+      "summary": "Scenario The container starts, but the Open Port path cannot reach it because the service only listens on localhost inside the container.",
+      "category": "docker",
+      "difficulty": "intermediate",
+      "labId": "docker-loopback-bind",
+      "updatedAt": "2026-06-11T07:08:39Z",
+      "commit": "401e96d5c6abece75cc8c03ae4e3e4978b9f1ad1",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-loopback-bind",
+      "resources": {
+        "memory": 2048,
+        "cpu": 2,
+        "disk": 10
+      }
+    },
+    {
+      "id": "docker-multi-stage-copy-path",
+      "title": "Docker Multi-Stage COPY Path",
+      "summary": "Scenario A container image stopped building after a refactor changed the artifact path in a multi-stage Dockerfile.",
+      "category": "docker",
+      "difficulty": "intermediate",
+      "labId": "docker-multi-stage-copy-path",
+      "updatedAt": "2026-06-11T07:08:39Z",
+      "commit": "401e96d5c6abece75cc8c03ae4e3e4978b9f1ad1",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/docker-multi-stage-copy-path",
+      "resources": {
+        "memory": 2048,
+        "cpu": 2,
+        "disk": 10
+      }
+    },
+    {
+      "id": "mysql-max-connections",
+      "title": "MySQL Max Connections Too Low",
+      "summary": "Scenario The application team reports that their service is frequently crashing with \"Too many connections\" errors from the MySQL database during peak traffic.",
+      "category": "database",
+      "difficulty": "advanced",
+      "labId": "mysql-max-connections",
+      "updatedAt": "2026-06-11T10:34:25+05:30",
+      "commit": "b808c27234405689f673dc646fedd176d90cdc4c",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/mysql-max-connections",
+      "resources": {
+        "memory": 2048,
+        "cpu": 2,
+        "disk": 20
+      }
+    },
+    {
+      "id": "nginx-rate-limiting",
+      "title": "Nginx Aggressive Rate Limiting",
+      "summary": "Scenario Users are reporting that the /api/ endpoint of our web application is intermittently failing with 429 Too Many Requests errors, even when they aren't sending many requests",
+      "category": "web",
+      "difficulty": "advanced",
+      "labId": "nginx-rate-limiting",
+      "updatedAt": "2026-06-11T10:34:25+05:30",
+      "commit": "b808c27234405689f673dc646fedd176d90cdc4c",
+      "url": "https://github.com/HimanM/BrokenOps/tree/main/labs/nginx-rate-limiting",
       "resources": {
         "memory": 1024,
         "cpu": 1,
